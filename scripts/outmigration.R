@@ -7,7 +7,8 @@ ace <- read_csv("../data/sources/ace-institutional-classifications.csv")
 merged <- left_join(hd2024, ace, by = c("UNITID" = "unitid"))
 
 # select variables and create a dataset for analysis
-data <- merged %>% select(UNITID, INSTNM, CITY, ZIP, ICLEVEL, DEGGRANT, HBCU, TRIBAL, CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, CONTROL, INSTCAT, `Institutional Classification`, `Student Access and Earnings Classification`)
+data <- merged %>% select(LONGITUD, LATITUDE, UNITID, INSTNM, CITY, ZIP, ICLEVEL, DEGGRANT, HBCU, TRIBAL, CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, CONTROL, INSTCAT, `Institutional Classification`, `Student Access and Earnings Classification`)
+
 
 # create HSI status variable
 data$HSI <- 0
@@ -65,7 +66,23 @@ selectivity_lookup <- tibble(SELECTIVITY = c(-2, -1, 1:6), selectivity_label = c
 write_csv(data, "~/Documents/GitHub/out_migration/data/outmigration_data.csv")
 
 
-
 # load preliminary cleaned data
 library(readr)
 outmigration_data <- read_csv("~/Documents/GitHub/out_migration/data/outmigration_data.csv")
+
+#Turning non desired variables into NA
+library(dplyr)
+
+outmigration_data <- outmigration_data |>
+    mutate(INSTCAT = ifelse(INSTCAT == 1, NA, INSTCAT), 
+           INSTCAT = ifelse(INSTCAT == -1, NA, INSTCAT), 
+           INSTCAT = ifelse(INSTCAT == -2, NA, INSTCAT), 
+           CONTROL = ifelse(CONTROL == 3, NA, CONTROL), 
+           CSA= ifelse(CSA == -2, NA, CSA), 
+           CBSATYPE= ifelse(CBSATYPE == -2, NA, CBSATYPE))
+
+
+
+
+
+
