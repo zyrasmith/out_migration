@@ -76,6 +76,8 @@ outmigration_data <- outmigration_data |>
     mutate(instcat = ifelse(instcat == 1, NA, instcat), 
            instcat = ifelse(instcat == -1, NA, instcat), 
            instcat = ifelse(instcat == -2, NA, instcat), 
+           #instcat = ifelse(instcat %n% c(-2, -1, 1), NA, instcat),
            control = ifelse(control == 3, NA, control), 
+           #control = ifelse(control %n% c(-1, 3), NA, control),
            csa = ifelse(csa == -2, NA, csa), 
            cbsatype = ifelse(cbsatype == -2, NA, cbsatype))
