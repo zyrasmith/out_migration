@@ -72,7 +72,7 @@ data <- data |>
 
 
 #Turning non desired variables into NA
-outmigration_data <- outmigration_data |>
+data <- data |>
     mutate(instcat = ifelse(instcat == 1, NA, instcat), 
            instcat = ifelse(instcat == -1, NA, instcat), 
            instcat = ifelse(instcat == -2, NA, instcat), 
