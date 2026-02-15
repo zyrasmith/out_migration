@@ -67,7 +67,7 @@ data <- data |>
     is.na(c_seaclass) ~ -1,
     c_seaclass == "Not Classified" ~ -2)) |> 
   #data |> count(c_level) |> count(c_seaclass)
-  filter(iclevel != -3 & iclevel != 3 )
+  filter(iclevel != -3 & iclevel != 3)
 
 
 
