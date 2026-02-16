@@ -7,7 +7,7 @@ library(stringr)
 
 # load IPEDS data and merge with the Carnegie Classification
 hd2024 <- read_csv("data/sources/hd2024.csv")
-ace <- read_csv("data/sources/ace-institutional-classifications.csv")
+ace <- read_csv("data/sources/2025-Public-Data-File.xlsx")
 data <- left_join(hd2024, ace, by = c("UNITID" = "unitid"))
 
 # select variables and create a dataset for analysis
@@ -15,8 +15,8 @@ data <- data %>% select(LONGITUD, LATITUDE,
                           UNITID, INSTNM, 
                           CITY, STABBR, ZIP, ICLEVEL, DEGGRANT, HBCU, TRIBAL, 
                           CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
-                          CONTROL, INSTCAT,
-                          `Institutional Classification`, `Student Access and Earnings Classification`)
+                          CONTROL, INSTCAT, LOCALE, 
+                          ic2025, saec2025)
 
 
 # create HSI status variable
@@ -33,8 +33,8 @@ data <- data |> rename(instnm = INSTNM, hsi = HSI, longitude = LONGITUD, latitud
                        iclevel = ICLEVEL, deggrant = DEGGRANT, hbcu = HBCU, tribal = TRIBAL,
                        cbsa = CBSA, cbsatype = CBSATYPE, csa = CSA, countycd = COUNTYCD,
                        countynm = COUNTYNM, control = CONTROL, instcat = INSTCAT,
-                       c_level = `Institutional Classification`, 
-                       c_seaclass = `Student Access and Earnings Classification`) |> 
+                       c_level = ic2025, 
+                       c_seaclass = saec2025) |> 
                 select(unitid, instnm, city, stabbr, countycd, countynm, cbsa, cbsatype, csa, 
                        zip,longitude, latitude, 
                        control, iclevel, instcat, deggrant, c_level, c_seaclass,
