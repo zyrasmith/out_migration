@@ -2,6 +2,7 @@ library(readr)
 library(dplyr)
 library(readxl)
 library(stringr)
+library(tidycensus)
 
 #setwd("~/GitHub/out_migration/")
 
@@ -28,7 +29,10 @@ data <- X2025_HSILists %>%
   mutate(HSI = if_else(is.na(HSI), 0, HSI))
 
 # rename variables
-data <- data |> rename(instnm = INSTNM, hsi = HSI, longitude = LONGITUD, latitude = LATITUDE,
+data <- data |> rename(instnm = INSTNM, 
+                       hsi = HSI, 
+                       longitude = LONGITUD, 
+                       latitude = LATITUDE,
                        unitid = UNITID, city = CITY, stabbr = STABBR, zip = ZIP,
                        iclevel = ICLEVEL, deggrant = DEGGRANT, hbcu = HBCU, tribal = TRIBAL,
                        cbsa = CBSA, cbsatype = CBSATYPE, csa = CSA, countycd = COUNTYCD,
@@ -81,3 +85,46 @@ data <- data |>
            #control = ifelse(control %n% c(-1, 3), NA, control),
            csa = ifelse(csa == -2, NA, csa), 
            cbsatype = ifelse(cbsatype == -2, NA, cbsatype))
+
+
+
+
+## ---------------------------
+##' [Census/ACS Data]
+## ---------------------------
+
+urban <- urban_areas(cb = FALSE, year = 2021) |>
+  mutate(states = str_extract(NAME10, ",(.*)")) |>
+  filter(!str_detect(states, "AS|VI|MP|GU"))
+
+census <- get_acs(geography = "cbsa",
+                  year = 2021,
+                  variables = c("B01003_001E", # Total population
+                                "DP03_0021PE", # % commute transit
+                                "DP04_0058PE", # % no vehicle households
+                                "DP02_0068PE", # % bach or higher
+                                "DP02PR_0068PE", # % bach or higher for PR
+                                "DP03_0119PE", # % below poverty
+                                "B03002_003E", # total white (alone, not hispanic)
+                                "B03002_004E", # total black (alone, not hispanic)
+                                "B03002_012E", # total hispanic
+                                "B03002_001E" #total by ethnicity
+                  ),
+                  output = "wide") 
+
+urban <- left_join(urban, census, by = c("GEOID10" = "GEOID"))
+
+urban <- urban |>
+  mutate(perc_white = B03002_003E/B03002_001E*100,
+         perc_black = B03002_004E/B03002_001E*100,
+         perc_hisp = B03002_012E/B03002_001E*100,
+         perc_bach = coalesce(DP02_0068PE, DP02PR_0068PE),
+         tot_pop = B03002_001E*100/100000,
+         pop_sqmile = B01003_001E/(ALAND10/2.59e+6)) |> # sq meters to sq miles |> 
+  select(GEOID10, NAME10, UATYP10, states,
+         perc_white, perc_black, perc_hisp,
+         perc_commute_transit = DP03_0021PE, 
+         perc_novehicle = DP04_0058PE, 
+         perc_poverty = DP03_0119PE, 
+         perc_bach, tot_pop, pop_sqmile)
+
