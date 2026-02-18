@@ -1,11 +1,19 @@
+## ---------------------------
+##' [libraries]
+## ---------------------------
 library(readr)
 library(dplyr)
 library(readxl)
 library(stringr)
 library(tidycensus)
 
+
 #setwd("~/GitHub/out_migration/")
 
+
+## ---------------------------
+##' [IPEDS/Carnegie Classification Data]
+## ---------------------------
 # load IPEDS data and merge with the Carnegie Classification
 hd2024 <- read_csv("data/sources/hd2024.csv")
 ace <- read_csv("data/sources/ace-institutional-classifications.csv")
@@ -18,7 +26,7 @@ data <- data %>% select(LONGITUD, LATITUDE,
                           CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
                           CONTROL, INSTCAT,
                           `Institutional Classification`, `Student Access and Earnings Classification`)
-
+#Q. Why don't we use 'CARNEGIEIC' or 'CARNEGIESAEC' variables in IPEDS?
 
 # create HSI status variable
 X2025_HSILists <- read_excel("data/sources/2025_HSILists.xlsx")
@@ -93,12 +101,12 @@ data <- data |>
 ##' [Census/ACS Data]
 ## ---------------------------
 
-urban <- urban_areas(cb = FALSE, year = 2021) |>
+urban <- urban_areas(cb = FALSE, year = 2024) |>
   mutate(states = str_extract(NAME10, ",(.*)")) |>
   filter(!str_detect(states, "AS|VI|MP|GU"))
 
 census <- get_acs(geography = "cbsa",
-                  year = 2021,
+                  year = 2024,
                   variables = c("B01003_001E", # Total population
                                 "DP03_0021PE", # % commute transit
                                 "DP04_0058PE", # % no vehicle households
