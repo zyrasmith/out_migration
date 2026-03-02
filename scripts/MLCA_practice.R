@@ -6,9 +6,10 @@ library(dplyr)
 library(readxl)
 library(stringr)
 library(tidycensus)
-library(tigris)
+library(tigris)       #maybe we don't need this package
 options(tigris_use_cache = TRUE)
 library(sf)
+library(multilevLCA)
 
 #setwd("~/GitHub/out_migration/")
 
@@ -92,6 +93,7 @@ census <- get_acs(geography = "cbsa",
                                 "B03002_001E" #total by ethnicity
                   ),
                   output = "wide") 
+# Q. which variables should be included?
 
 
 #urban <- left_join(urban, census, by = c("GEOID10" = "GEOID"))
@@ -100,9 +102,9 @@ urban <- urban |>
   mutate(perc_white = B03002_003E/B03002_001E*100,
          perc_black = B03002_004E/B03002_001E*100,
          perc_hisp = B03002_012E/B03002_001E*100,
-         perc_bach = coalesce(DP02_0068PE, DP02PR_0068PE),
+         perc_bach = coalesce(DP02_0068PE, DP02PR_0068PE), #Q. which variable should be used for % bach or higher?
          tot_pop = B03002_001E*100/100000,
-         pop_sqmile = B01003_001E/(ALAND10/2.59e+6)) |> # sq meters to sq miles |> 
+         pop_sqmile = B01003_001E/(ALAND10/2.59e+6)) |> # sq meters to sq miles #Q. is this the way to calculate population density?
   select(GEOID10, NAME10, UATYP10, states,
          perc_white, perc_black, perc_hisp,
          perc_commute_transit = DP03_0021PE, 
@@ -128,7 +130,22 @@ tiger <- pop |>
 ## ---------------------------
 ##' [MLCA]
 ## ---------------------------
-install.packages("multilevLCA")
-library(multilevLCA)
 
+# Example structure, replace with our actual data and variable names
+# data: Our data frame
+# Y: Vector of column names for observed indicator variables
+# id_high: Column name for the higher-level group ID
+# iT: Number of lower-level (individual) classes
+# iM: Number of higher-level (group) classes
+
+model_fit <- multiLCA(
+  data = data_frame,
+  Y = c("item1", "item2", "item3", "item4"), # Your indicator items
+  id_high = "group_id_column",               # The column identifying groups
+  iT = 3,                                    # e.g., 3 lower-level classes
+  iM = 2                                     # e.g., 2 higher-level classes
+)
+
+# View a summary of the model results
+summary(model_fit)
 
