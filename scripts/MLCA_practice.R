@@ -44,7 +44,7 @@ data <- data |> rename(instnm = INSTNM,
   select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
          locale, zip, stabbr, longitude, latitude, 
          control, iclevel, instcat, deggrant, 
-         carnegieic, carnegiesaec, ic2025, saec2025,
+         carnegieic, carnegiesaec,
          hbcu, hsi, tribal)
 
 
