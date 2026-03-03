@@ -29,10 +29,7 @@ data <- data |> select(LONGITUD, LATITUDE,
                         HBCU, TRIBAL, 
                         CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
                         CONTROL, INSTCAT,
-                        CARNEGIEIC, CARNEGIESAEC,
-                        ic2025, saec2025, hsi)
-# Q. CARNEGIEIC & ic2025, CARNEGIESAEC & saec2025 are supposed to be the same variables, but they are not.
-
+                        CARNEGIEIC, CARNEGIESAEC, hsi)
 
 # rename variables
 data <- data |> rename(instnm = INSTNM, 
