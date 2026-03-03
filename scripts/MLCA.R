@@ -10,6 +10,7 @@ library(tigris)       #maybe we don't need this package
 options(tigris_use_cache = TRUE)
 library(sf)
 library(multilevLCA)
+library(tidyverse)
 
 #setwd("~/GitHub/out_migration/")
 
@@ -66,62 +67,32 @@ data <- data |>
 ##' [Census/ACS Data]
 ## ---------------------------
 
-#urban <- urban_areas(cb = FALSE, year = 2024) |>
-#  mutate(states = str_extract(NAME10, ",(.*)")) |>
-#  filter(!str_detect(states, "AS|VI|MP|GU"))
-# -> Q. Is this process necessary?
-
 census <- get_acs(geography = "cbsa",
                   year = 2024,
                   variables = c("B01003_001E", # Total population
-                                "B19001_001E", # Total Household Income in the Past 12 Months
                                 "B19013_001E", # Median Household Income in the Past 12 Months
-                                "B19025_001E", # Aggregated Household Income in the Past 12 Months
-                                "DP03_0051E", # INCOME AND BENEFITS_Total households (estimate)
-                                "DP03_0051PE", # INCOME AND BENEFITS_Total households (percent)
                                 "DP03_0119PE", # % below poverty
-                                "DP02_0065E", # Population 25 years and over!!Bachelor's degree (estimate)
-                                "DP02_0065PE", # Population 25 years and over!!Bachelor's degree (percent)
                                 "DP02_0068PE", # % bach or higher
-                                "DP02PR_0068PE", # % bach or higher for PR
                                 "B03002_003E", # total white (alone, not hispanic)
                                 "B03002_004E", # total black (alone, not hispanic)
                                 "B03002_012E", # total hispanic
                                 "B03002_001E" #total by ethnicity
                   ),
                   output = "wide") 
-# Q. which variables should be included?
 
 
-#urban <- left_join(urban, census, by = c("GEOID10" = "GEOID"))
-
-urban <- urban |>
+아무거나 <- urban |>
   mutate(perc_white = B03002_003E/B03002_001E*100,
          perc_black = B03002_004E/B03002_001E*100,
          perc_hisp = B03002_012E/B03002_001E*100,
-         perc_bach = coalesce(DP02_0068PE, DP02PR_0068PE), #Q. which variable should be used for % bach or higher?
          tot_pop = B03002_001E*100/100000,
-         pop_sqmile = B01003_001E/(ALAND10/2.59e+6)) |> # sq meters to sq miles #Q. is this the way to calculate population density?
+         pop_sqmile = B01003_001E/(ALAND10/2.59e+6)) |>
   select(GEOID10, NAME10, UATYP10, states,
          perc_white, perc_black, perc_hisp,
          perc_commute_transit = DP03_0021PE, 
          perc_novehicle = DP04_0058PE, 
          perc_poverty = DP03_0119PE, 
          perc_bach, tot_pop, pop_sqmile)
-
-# TIGER boundary for Population Density
-counties_sf <- counties(year = 2024, cb = TRUE)   # ALAND unit = m²
-pop <- get_acs(geography = "county",
-               variables = "B01003_001", # Total population
-               year = 2024,
-               survey = "acs5") # American Community Survey 5-year estimates (mean of 2020-2024)
-tiger <- pop |> 
-  left_join(counties_sf |> st_drop_geometry() |> select(GEOID, ALAND),
-            by = "GEOID")  |> 
-  mutate(
-    land_area_km2 = ALAND / 1e6,
-    density = estimate / land_area_km2
-    )
 
 
 ## ---------------------------
