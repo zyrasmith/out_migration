@@ -34,9 +34,9 @@ data <- data |> select(LONGITUD, LATITUDE,
 
 # rename variables
 data <- data |> 
-  rename_all(tolower)|> #converts all column names in a data frame to lowercase
+  rename_all(tolower) |> #converts all column names in a data frame to lowercase
   select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
-         locale, zip, stabbr, longitude, latitude, 
+         locale, zip, stabbr, longitud, latitude, 
          control, iclevel, instcat, deggrant, 
          carnegieic, carnegiesaec,
          hbcu, hsi, tribal)
