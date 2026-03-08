@@ -59,7 +59,6 @@ data <- data |>
          control = ifelse(control %n% c(-1, 3), NA, control),
          csa = ifelse(csa == -2, NA, csa), 
          cbsatype = ifelse(cbsatype == -2, NA, cbsatype),
-         stabbr = ifelse(stabbr %n% c(VI, PR, PW, MP, MH, GU), NA, stabbr), 
          deggrant = ifelse(deggrant %n% c(2, -3), NA, deggrant), 
          locale = ifelse(locale == -3, NA, locale), 
          cbsa = ifelse(cbsa == -2, NA, cbsa), 
