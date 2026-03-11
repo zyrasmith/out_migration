@@ -33,17 +33,10 @@ data <- data |> select(LONGITUD, LATITUDE,
                         CARNEGIEIC, CARNEGIESAEC, hsi)
 
 # rename variables
-data <- data |> rename(instnm = INSTNM, 
-                       longitude = LONGITUD, 
-                       latitude = LATITUDE,
-                       unitid = UNITID, city = CITY, stabbr = STABBR, zip = ZIP,
-                       iclevel = ICLEVEL, deggrant = DEGGRANT, locale = LOCALE,
-                       hbcu = HBCU, tribal = TRIBAL,
-                       cbsa = CBSA, cbsatype = CBSATYPE, csa = CSA, countycd = COUNTYCD,
-                       countynm = COUNTYNM, control = CONTROL, instcat = INSTCAT,
-                       carnegieic = CARNEGIEIC, carnegiesaec = CARNEGIESAEC) |> 
+data <- data |> 
+  rename_all(tolower) |> #converts all column names in a data frame to lowercase
   select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
-         locale, zip, stabbr, longitude, latitude, 
+         locale, zip, stabbr, longitud, latitude, 
          control, iclevel, instcat, deggrant, 
          carnegieic, carnegiesaec,
          hbcu, hsi, tribal)
