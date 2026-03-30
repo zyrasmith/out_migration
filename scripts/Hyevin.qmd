@@ -1,0 +1,281 @@
+---
+title: MLCA
+author: Hyevin Shin
+format: html
+---
+
+```{r setup}
+## ---------------------------
+##' [libraries]
+## ---------------------------
+
+library(tidyverse)
+library(readxl)
+library(tidycensus)
+library(multilevLCA)
+
+```
+
+
+```{r data}
+## ---------------------------
+##' [IPEDS/Carnegie Classification Data]
+## ---------------------------
+
+# load IPEDS data and merge with the Carnegie Classification
+ipeds24 <- read_csv("../data/sources/hd2024.csv")
+carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
+data <- left_join(ipeds24, carnegie, by = c("UNITID" = "unitid"))
+
+# select variables and create a dataset for analysis
+data <- data |> select(LONGITUD, LATITUDE, 
+                        UNITID, INSTNM, 
+                        CITY, STABBR, ZIP, ICLEVEL, DEGGRANT, LOCALE,
+                        HBCU, TRIBAL, 
+                        CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
+                        CONTROL, INSTCAT,
+                        CARNEGIEIC, CARNEGIESAEC, hsi)
+
+# rename variables
+data <- data |> 
+  rename_all(tolower) |> #converts all column names in a data frame to lowercase
+  select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
+         locale, zip, stabbr, longitud, latitude, 
+         control, iclevel, instcat, deggrant, 
+         carnegieic, carnegiesaec,
+         hbcu, hsi, tribal)
+
+# IPEDS school size data
+schoolsize <- read_csv("../data/sources/ef2024a.csv")
+schoolsize <- schoolsize |> 
+  filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
+  select(UNITID, EFTOTLT) |> #Grand total
+  mutate(size = case_when(
+      EFTOTLT <= 3000 ~ 0,  #small
+      EFTOTLT <= 10000 ~ 1,  #medium
+      EFTOTLT > 10000 ~ 2, #large
+      TRUE ~ NA_real_))
+
+data <- left_join(data, schoolsize, by = c("unitid" = "UNITID"))
+
+```
+
+
+```{r cleaning}
+## ---------------------------
+##' [Data Cleaning]
+## ---------------------------
+
+data <- data |> 
+  mutate(
+         control = ifelse(control == -3, NA, control),
+         public = case_when(
+            control == 1 ~ 1,                             # 0: private
+            control == 2 ~ 0,                             # 1: public 
+            TRUE ~ NA_real_
+            ),   
+         
+         iclevel = ifelse(iclevel == -3, NA, iclevel),
+         twoyear = case_when(
+            iclevel == 1 ~ 0,                             # 0: 4 or more
+            iclevel == 2 ~ 1,                             # 1: at least 2 & less than 4
+            TRUE ~ NA_real_
+            ),     
+         
+         msi = case_when(                                 # 0: non of them
+            hbcu == 1 ~ 1,                                # 1: HBCU
+            hsi == 1 ~ 2,                                 # 2: HSI
+            tribal == 1 ~ 3,                              # 3: TCU
+            hbcu == 2 & hsi == 0 & tribal == 2 ~ 0,
+            is.na(hbcu) | is.na(hsi) | is.na(tribal) ~ NA_real_,
+            TRUE ~ NA_real_
+            ),
+         
+         locale = ifelse(locale == -3, NA, locale), 
+         rurality = case_when(
+            locale %in% c(31,32,33,41,42,43) ~ 0,         # 0: Town + Rural
+            locale %in% c(21,22,23) ~ 1,                  # 1: Suburb
+            locale %in% c(11,12,13) ~ 2,                  # 2: City
+            TRUE ~ NA_real_),           
+         
+         carnegiesaec = ifelse(carnegiesaec == -2, NA, carnegiesaec),
+         asc = case_when(
+           carnegiesaec == 1 ~ 0,
+           carnegiesaec == 3 ~ 1,
+           carnegiesaec == 5 ~ 2,
+           carnegiesaec == 2 ~ 3,
+           carnegiesaec == 4 ~ 4,
+           carnegiesaec == 6 ~ 5,
+           TRUE ~ NA_real_),
+         cbsa = as.character(cbsa)
+       ) |> 
+    filter(!is.na(control), control != 3) |>              # 3: private for-profit
+    filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
+    select(unitid, cbsa, public, twoyear, size, msi, rurality, asc)
+
+```
+
+
+```{r census/ACS data}
+## ---------------------------
+##' [Census/ACS Data]
+## ---------------------------
+
+census <- get_acs(geography = "cbsa",
+                  year = 2024,
+                  variables = c("B01003_001E", # Total population
+                                "B19013_001E", # Median Household Income in the Past 12 Months
+                                "DP03_0119PE", # % below poverty
+                                "DP02_0068PE", # % bach or higher
+                                "B03002_003E", # total white (alone, not hispanic)
+                                "B03002_004E", # total black (alone, not hispanic)
+                                "B03002_012E", # total hispanic
+                                "B03002_006E", # total asian (alone, not hispanic)
+                                "B03002_001E"  # total by ethnicity
+                  ),
+                  output = "wide") 
+
+
+census <- census |>
+  mutate(perc_white = B03002_003E/B03002_001E*100,
+         perc_black = B03002_004E/B03002_001E*100,
+         perc_hisp = B03002_012E/B03002_001E*100,
+         perc_asian = B03002_006E/B03002_001E*100,
+         tot_pop = B01003_001E/100000) |>
+  rename(perc_ba = DP02_0068PE,
+         med_income = B19013_001E,
+         perc_pov = DP03_0119PE) |> 
+  select(tot_pop, perc_ba,
+         med_income, perc_pov,
+         perc_white, perc_black, perc_hisp, perc_asian,
+         GEOID) |> 
+  mutate(GEOID = as.character(GEOID))
+
+data <- data |>
+  left_join(census, by = c("cbsa" = "GEOID"))
+
+```
+
+```{r MCLA}
+## ---------------------------
+##' [MLCA Analysis Data]
+## ---------------------------
+
+data_mlca0 <- data |>
+  filter(!is.na(cbsa),
+         !is.na(public),
+         !is.na(twoyear),
+         !is.na(size),
+         !is.na(msi),
+         !is.na(rurality),
+         !is.na(asc))
+
+glimpse(data_mlca0)
+summary(data_mlca0)
+data_mlca0 |> count(cbsa, name = "n_institutions") |> summary() # number of institutions within a CBSA
+
+
+data_mlca1 <- data_mlca0 |>
+  add_count(cbsa, name = "n_institutions") |>
+  filter(n_institutions >= 5) |>   # remove CBSAs with fewer than 5 institutions ?????
+  select(-n_institutions) |>
+  as.data.frame()
+
+
+## ---------------------------
+##' [Find the best # of Classes]
+## ---------------------------
+
+Y <- c("public", "twoyear", "size", "msi", "rurality", "asc")    # indicators
+
+set.seed(1234)
+
+msas0 <- multiLCA(
+  data = data_mlca1,
+  Y = Y,
+  iT = 2:5,               # lower-level classes
+  id_high = "cbsa",
+  iM = 1:4                # higher-level classes
+)
+
+msas0
+#모델핏 비교!!!!!
+
+#ERROR
+#Error: sort_index(): detected NaN
+#Possibilities
+
+1. Sparse categories
+# Some categories have very few observations (e.g., "msi = 3" only has 21 observations),
+# leading to empty cells within latent classes → NaN probabilities
+
+2. Zero counts within classes
+# A category may not appear in certain latent classes (0 frequency),
+# causing invalid probability estimates (0/0)
+
+3. Small group sizes (multilevel issue)
+# Some higher-level units (e.g., CBSA) have too few observations,
+# making estimation unstable in multilevel models (cf. even after controling CBSAs "#institution >= 5")
+
+4. Too many classes relative to data
+# Large numbers of iT (lower-level) or iM (higher-level) classes
+# can over-partition the data and create empty cells
+
+5. Missing values not fully removed
+# Remaining NA values in indicators or group IDs can disrupt estimation
+
+
+
+set.seed(1234)
+
+msas1 <- multiLCA(
+  data = data_mlca1,
+  Y = Y,
+  iT = 숫자 넣기,                                  
+  id_high = "cbsa",
+  iM = 숫자 넣기,
+  extout = TRUE #additional outputs
+  )             #e.g., classification error, modal class assignment, posterior probabilities
+
+msas1
+summary(msas1)
+plot(msas1)
+
+
+
+## ---------------------------
+##' [MLCA including covariates with the best class model]
+## ---------------------------
+
+Zh <- c("tot_pop", "perc_ba", "med_income", "perc_pov",
+        "perc_white", "perc_black", "perc_hisp", "perc_asian")
+
+data_mlca2 <- data_mlca1 |>
+  filter(!is.na(tot_pop),
+         !is.na(perc_ba),
+         !is.na(med_income),
+         !is.na(perc_pov),
+         !is.na(perc_white),
+         !is.na(perc_black),
+         !is.na(perc_hisp),
+         !is.na(perc_asian))
+
+
+set.seed(1234)
+
+msas2 <- multiLCA(
+  data = data_mlca2,
+  Y = Y,
+  iT = ,
+  id_high = "cbsa",
+  iM = ,
+  Zh = Zh
+)
+
+
+msas2
+summary(msas2)
+plot(msas2)
+
+```
+

@@ -48,19 +48,16 @@ data <- data |>
 ## ---------------------------
 data <- data |> 
   filter(iclevel != -3 & iclevel != 3) |> 
-  mutate(instcat = ifelse(instcat %n% c(-2, -1, 1), NA, instcat),
-         control = ifelse(control %n% c(-1, 3), NA, control),
+  mutate(instcat = ifelse(instcat %in% c(-2, -1, 1), NA, instcat),
+         control = ifelse(control %in% c(-1, 3), NA, control),
          csa = ifelse(csa == -2, NA, csa), 
          cbsatype = ifelse(cbsatype == -2, NA, cbsatype),
-         deggrant = ifelse(deggrant %n% c(2, -3), NA, deggrant), 
+         deggrant = ifelse(deggrant %in% c(2, -3), NA, deggrant), 
          locale = ifelse(locale == -3, NA, locale), 
          cbsa = ifelse(cbsa == -2, NA, cbsa), 
-         carnegieic = ifelse(carnegieic %n% c(-2, 21, 22, 23, 24, 25, 26, 27, 28, 
+         carnegieic = ifelse(carnegieic %in% c(-2, 21, 22, 23, 24, 25, 26, 27, 28, 
                                               29, 30, 31), NA, carnegieic), 
          carnegiesaec = ifelse(carnegiesaec == -2, NA, carnegiesaec))
-    
-#should be updated
-
 
 
 ## ---------------------------
@@ -81,7 +78,7 @@ census <- get_acs(geography = "cbsa",
                   output = "wide") 
 
 
-아무거나 <- urban |>
+아무거나 <- 여기데이터고치기 |>
   mutate(perc_white = B03002_003E/B03002_001E*100,
          perc_black = B03002_004E/B03002_001E*100,
          perc_hisp = B03002_012E/B03002_001E*100,
@@ -93,6 +90,8 @@ census <- get_acs(geography = "cbsa",
          perc_novehicle = DP04_0058PE, 
          perc_poverty = DP03_0119PE, 
          perc_bach, tot_pop, pop_sqmile)
+
+
 
 
 ## ---------------------------
@@ -113,6 +112,8 @@ model_fit <- multiLCA(
   iT = 3,                                    # e.g., 3 lower-level classes
   iM = 2                                     # e.g., 2 higher-level classes
 )
+
+
 
 # View a summary of the model results
 summary(model_fit)
