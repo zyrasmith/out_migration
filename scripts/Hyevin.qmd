@@ -113,6 +113,9 @@ data <- data |>
     filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
     select(unitid, cbsa, public, twoyear, size, msi, rurality, asc)
 
+
+# housing
+
 ```
 
 
@@ -181,6 +184,7 @@ data_mlca1 <- data_mlca0 |>
   select(-n_institutions) |>
   as.data.frame()
 
+#data_mlca0 |> group_by(cbsa) |> filter(cbsa == -2) |> tally()
 
 ## ---------------------------
 ##' [Find the best # of Classes]
@@ -193,7 +197,7 @@ set.seed(1234)
 msas0 <- multiLCA(
   data = data_mlca1,
   Y = Y,
-  iT = 2:5,               # lower-level classes
+  iT = 2:10,               # lower-level classes
   id_high = "cbsa",
   iM = 1:4                # higher-level classes
 )
