@@ -107,6 +107,8 @@ data <- data |>
            carnegiesaec == 4 ~ 4,
            carnegiesaec == 6 ~ 5,
            TRUE ~ NA_real_),
+         
+         cbsa = ifelse(cbsa == -2, NA, cbsa), 
          cbsa = as.character(cbsa)
        ) |> 
     filter(!is.na(control), control != 3) |>              # 3: private for-profit
@@ -173,18 +175,20 @@ data_mlca0 <- data |>
          !is.na(rurality),
          !is.na(asc))
 
+
 glimpse(data_mlca0)
 summary(data_mlca0)
 data_mlca0 |> count(cbsa, name = "n_institutions") |> summary() # number of institutions within a CBSA
 
 
+# Q. remove CBSAs with fewer than 5 institutions ?????
 data_mlca1 <- data_mlca0 |>
   add_count(cbsa, name = "n_institutions") |>
-  filter(n_institutions >= 5) |>   # remove CBSAs with fewer than 5 institutions ?????
+  filter(n_institutions >= 5) |>   
   select(-n_institutions) |>
   as.data.frame()
 
-#data_mlca0 |> group_by(cbsa) |> filter(cbsa == -2) |> tally()
+
 
 ## ---------------------------
 ##' [Find the best # of Classes]
@@ -197,47 +201,72 @@ set.seed(1234)
 msas0 <- multiLCA(
   data = data_mlca1,
   Y = Y,
-  iT = 2:10,               # lower-level classes
-  id_high = "cbsa",
-  iM = 1:4                # higher-level classes
+  iT = 5:9,               # lower-level classes
+#  id_high = "cbsa",
+#  iM = 1:4               # higher-level classes
 )
 
-msas0
-#모델핏 비교!!!!!
+# the best number of level1 classes is 7
+msas0                     # compare model fits
 
-#ERROR
+#when including level2 equations -> Error: sort_index(): detected NaN
+
+
+
+## ---------------------------
+##' [..... stepwise approach for dealing with the error]
+## ---------------------------
+
+set.seed(1234)
+
+msas00 <- multiLCA(
+  data = data_mlca1,
+  Y = Y,
+  iT = 7,
+  id_high = "cbsa",
+  iM = 1:4
+)
+
+# when # of level1 classes is 7, the best number of level2 classes is 3
+msas00                     # compare model fits
+
+
+
+# CHECK AGAIN
+
+set.seed(1234)
+
+msas000 <- multiLCA(
+  data = data_mlca1,
+  Y = Y,
+  iT = 6:8,
+  id_high = "cbsa",
+  iM = 3
+)
+
 #Error: sort_index(): detected NaN
-#Possibilities
+# Note:
+# When tested separately with iM fixed at 3,
+# the model converged for iT = 7,
+# but did not converge for iT = 6 or iT = 8.
+# -> Among the nearby alternatives, the 7-by-3 solution appears to be the only stable candidate
 
-1. Sparse categories
-# Some categories have very few observations (e.g., "msi = 3" only has 21 observations),
-# leading to empty cells within latent classes → NaN probabilities
-
-2. Zero counts within classes
-# A category may not appear in certain latent classes (0 frequency),
-# causing invalid probability estimates (0/0)
-
-3. Small group sizes (multilevel issue)
-# Some higher-level units (e.g., CBSA) have too few observations,
-# making estimation unstable in multilevel models (cf. even after controling CBSAs "#institution >= 5")
-
-4. Too many classes relative to data
-# Large numbers of iT (lower-level) or iM (higher-level) classes
-# can over-partition the data and create empty cells
-
-5. Missing values not fully removed
-# Remaining NA values in indicators or group IDs can disrupt estimation
+msas000                     # compare model fits
 
 
+
+## ---------------------------
+##' [Final model]
+## ---------------------------
 
 set.seed(1234)
 
 msas1 <- multiLCA(
   data = data_mlca1,
   Y = Y,
-  iT = 숫자 넣기,                                  
+  iT = 7,                                  
   id_high = "cbsa",
-  iM = 숫자 넣기,
+  iM = 3,
   extout = TRUE #additional outputs
   )             #e.g., classification error, modal class assignment, posterior probabilities
 
@@ -262,7 +291,8 @@ data_mlca2 <- data_mlca1 |>
          !is.na(perc_white),
          !is.na(perc_black),
          !is.na(perc_hisp),
-         !is.na(perc_asian))
+         !is.na(perc_asian)) |> 
+  as.data.frame()
 
 
 set.seed(1234)
@@ -270,10 +300,29 @@ set.seed(1234)
 msas2 <- multiLCA(
   data = data_mlca2,
   Y = Y,
-  iT = ,
+  iT = 7,
   id_high = "cbsa",
-  iM = ,
-  Zh = Zh
+  iM = 3,
+  Zh = Zh,
+  extout = TRUE
+)
+
+#Error: Zh specified, Z not
+
+
+
+# temporary solution
+# Q. do we need level-1 covariates? if not, the model doesn't work :(
+
+msas2 <- multiLCA(
+  data = data_mlca2,
+  Y = Y,
+  iT = 7,
+  id_high = "cbsa",
+  iM = 3,
+  Z = Z,             # what variables should be our covariates?
+  Zh = Zh,
+  extout = TRUE
 )
 
 
