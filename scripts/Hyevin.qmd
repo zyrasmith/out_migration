@@ -24,30 +24,26 @@ library(multilevLCA)
 
 # load IPEDS data and merge with the Carnegie Classification
 ipeds24 <- read_csv("../data/sources/hd2024.csv")
-ipeds_cost <- read_csv("../data/sources/cost1_2024.csv")
 carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
-data <- ipeds24 %>% 
-  left_join(carnegie, by = c("UNITID" = "unitid")) %>% 
-  left_join(ipeds_cost, by = "UNITID")
-
+data <- left_join(ipeds24, carnegie, by = c("UNITID" = "unitid"))
 
 # select variables and create a dataset for analysis
-x <- data |> select(LONGITUD, LATITUDE, 
+data <- data |> select(LONGITUD, LATITUDE, 
                         UNITID, INSTNM, 
                         CITY, STABBR, ZIP, ICLEVEL, DEGGRANT, LOCALE,
                         HBCU, TRIBAL, 
                         CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
                         CONTROL, INSTCAT,
-                        CARNEGIEIC, CARNEGIESAEC, hsi, ROOM)
+                        CARNEGIEIC, CARNEGIESAEC, hsi)
 
 # rename variables
-data <- x |> 
+data <- data |> 
   rename_all(tolower) |> #converts all column names in a data frame to lowercase
   select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
          locale, zip, stabbr, longitud, latitude, 
          control, iclevel, instcat, deggrant, 
          carnegieic, carnegiesaec,
-         hbcu, hsi, tribal, room)
+         hbcu, hsi, tribal)
 
 # IPEDS school size data
 schoolsize <- read_csv("../data/sources/ef2024a.csv")
@@ -70,13 +66,8 @@ data <- left_join(data, schoolsize, by = c("unitid" = "UNITID"))
 ##' [Data Cleaning]
 ## ---------------------------
 
-x <- data |> 
+data <- data |> 
   mutate(
-         housing = case_when(
-           room == 1 ~1, 
-           room == 2 ~0, 
-           TRUE ~NA_real_
-         ),
          control = ifelse(control == -3, NA, control),
          public = case_when(
             control == 1 ~ 1,                             # 0: private
@@ -120,11 +111,11 @@ x <- data |>
          cbsa = ifelse(cbsa == -2, NA, cbsa), 
          cbsa = as.character(cbsa)
        ) |> 
-    
-    select(-c(room, locale, tribal, hbcu, hsi))
-           
+    filter(!is.na(control), control != 3) |>              # 3: private for-profit
+    filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
+    select(unitid, cbsa, public, twoyear, size, msi, rurality, asc)
 
-data <- x
+
 # housing
 
 ```
@@ -169,17 +160,6 @@ data <- data |>
   left_join(census, by = c("cbsa" = "GEOID"))
 
 ```
-
-
-```{r Create Sample}
-filter(!is.na(control), control != 3) |>              # 3: private for-profit
-filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
-```
-
-
-
-
-
 
 ```{r MCLA}
 ## ---------------------------
