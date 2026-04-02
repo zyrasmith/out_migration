@@ -14,6 +14,8 @@ library(readxl)
 library(tidycensus)
 library(multilevLCA)
 
+
+rm(list = ls())
 ```
 
 
@@ -172,12 +174,35 @@ data <- data |>
 
 
 ```{r Create Sample}
-filter(!is.na(control), control != 3) |>              # 3: private for-profit
-filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
+
+level_1_vars <- c("public", "twoyear", "size", "msi", "rurality", "asc", housing, carnegiealf, selectivity)
+
+
+level_2_vars <- c()
+
+x <- data %>% 
+  filter(!is.na(control), control != 3) |>              # 3: private for-profit
+  filter(!is.na(iclevel), iclevel != 3)              # 3: less than 2 years
+
+
 ```
 
 
+Sample criteria
+-2-year and 4-year colleges
+-public or private, not-for-profit
+-CARNEGIEALF == 1-5
 
+Sample notes: 
+-remove primarily graduate-degree granting schools 
+
+#Level 1 variables to consider
+-Carnegie classification (carnegieic,)
+
+The proportion of an CBSA's area that is rural, 
+cultural attractions
+
+Drop observations that are not located in CBSAs
 
 
 
