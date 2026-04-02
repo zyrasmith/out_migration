@@ -51,7 +51,7 @@ data <- x |>
          carnegieic, carnegiesaec,
          hbcu, hsi, tribal, room)
 
-# IPEDS school size data
+# IPEDS school size data (Fall 2024 enrollment)
 schoolsize <- read_csv("../data/sources/ef2024a.csv")
 schoolsize <- schoolsize |> 
   filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
