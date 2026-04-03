@@ -202,6 +202,14 @@ Drop observations that are not located in CBSAs✅
 
 
 
+Y (Level-1 indicators): Observed variables defining university latent classes
+
+iM (Level-1 covariates): Variables predicting university class membership
+
+Zh (Level-2 covariates): Regional variables affecting university class probabilities
+
+No Level-2 indicators: Regional effects modeled via covariates, not separate regional classes
+
 
 ```{r MCLA}
 ## ---------------------------
