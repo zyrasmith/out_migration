@@ -14,6 +14,8 @@ library(readxl)
 library(tidycensus)
 library(multilevLCA)
 
+
+rm(list = ls())
 ```
 
 
@@ -23,36 +25,22 @@ library(multilevLCA)
 ## ---------------------------
 
 # load IPEDS data and merge with the Carnegie Classification
-#NM: Loaded new files and named them 
 ipeds24 <- read_csv("../data/sources/hd2024.csv")
 ipeds_cost <- read_csv("../data/sources/cost1_2024.csv")
 carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
-ic2024 <- read_csv("../data/sources/ic2024.csv") #NM: new
-sfa <- read_csv("../data/sources/sfa2324.csv") #NM: new
-adm <- read_csv("../data/sources/adm2024.csv") #NM: new
-
-#NM: Merged new files
 data <- ipeds24 %>% 
   left_join(carnegie, by = c("UNITID" = "unitid")) %>% 
-  left_join(ipeds_cost, by = "UNITID") %>% #NM:New
-  left_join(ic2024, by = "UNITID" ) %>% #NM:New
-  left_join(sfa, by = "UNITID") %>% #NM:New
-  left_join(adm, by = "UNITID") #NM:New
+  left_join(ipeds_cost, by = "UNITID")
 
 
 # select variables and create a dataset for analysis
-#NM: Added new variables from dataset, reflected on lines 
 x <- data |> select(LONGITUD, LATITUDE, 
                         UNITID, INSTNM, 
                         CITY, STABBR, ZIP, ICLEVEL, DEGGRANT, LOCALE,
                         HBCU, TRIBAL, 
                         CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
                         CONTROL, INSTCAT,
-                        CARNEGIEIC, CARNEGIESAEC, hsi, ROOM, 
-                        CARNEGIEAPM, CARNEGIERSCH, CARNEGIEALF,         #NM: from hd2024
-                        RELAFFIL, DISTNCED, ATHASSOC, #NM: from IC2024
-                        LOAN_A, 
-                        ADMSSN, APPLCN, OPENADMP) #NM: from sfa2324
+                        CARNEGIEIC, CARNEGIESAEC, hsi, ROOM)
 
 # rename variables
 data <- x |> 
@@ -60,8 +48,8 @@ data <- x |>
   select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
          locale, zip, stabbr, longitud, latitude, 
          control, iclevel, instcat, deggrant, 
-         carnegieic, carnegiesaec, carnegieapm, carnegiersch, carnegiealf, 
-         hbcu, hsi, tribal, relaffil, room, distnced, athassoc, loan_a, admssn, applcn, openadmp )
+         carnegieic, carnegiesaec,
+         hbcu, hsi, tribal, room)
 
 # IPEDS school size data
 schoolsize <- read_csv("../data/sources/ef2024a.csv")
@@ -74,23 +62,7 @@ schoolsize <- schoolsize |>
       EFTOTLT > 10000 ~ 2, #large
       TRUE ~ NA_real_))
 
-data <- left_join(data, schoolsize, by = c("unitid" = "UNITID")) 
-
-
-```
-
-
-
-
-```{r Create Sample}
-x <- data %>% 
-filter(!is.na(control), control != 3) |>              # 3: private for-profit
-filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
-filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
-filter(instcat >= 2 & instcat <= 4) %>% 
-filter(cbsa != -2)
-
-data <- x
+data <- left_join(data, schoolsize, by = c("unitid" = "UNITID"))
 
 ```
 
@@ -148,20 +120,7 @@ x <- data |>
            TRUE ~ NA_real_),
          
          cbsa = ifelse(cbsa == -2, NA, cbsa), 
-         cbsa = as.character(cbsa),
-         
-        focus = case_when(
-            carnegieapm %in% c(2,3,4,5,6,7,8,9,10,11,12) ~ 2,  #NM- 2: Professions/Special Focus
-            carnegieapm ==  1 ~ 1,                             #NM- 1: Mixed
-            carnegieapm == -2 ~ 0,                             #NM- 0: Not Classified 
-            TRUE ~ NA_real_),            
-        
-        research = case_when( 
-            carnegiersch == -2 ~ 0,                   #NM- 0: No research designation
-            carnegiersch == 3 ~ 1,                    #NM - 1: Research Colleges and Universities 
-            carnegiersch == 2 ~ 2,                    #NM - 2: High Spending
-            carnegiersch == 1 ~ 3,                    #NM- 3: Very High Spending  
-            TRUE ~ NA_real_), 
+         cbsa = as.character(cbsa)
        ) |> 
     
     select(-c(room, locale, tribal, hbcu, hsi))
@@ -209,21 +168,41 @@ census <- census |>
   mutate(GEOID = as.character(GEOID))
 
 data <- data |>
-  left_join(census, by = c("cbsa" = "GEOID")) %>% 
-  group_by(cbsa) %>% 
-  mutate(inst_num = n_distinct(unitid)) %>% 
-  ungroup() %>% 
-  mutate(admrate = admssn/applcn) %>% 
-  mutate(admrate = if_else(openadmp == 1, 1, admrate)) 
+  left_join(census, by = c("cbsa" = "GEOID"))
+
+```
+
+
+```{r Create Sample}
+
+level_1_vars <- c("public", "twoyear", "size", "msi", "rurality", "asc", housing, carnegiealf, selectivity)
+
+
+level_2_vars <- c()
+
+x <- data %>% 
+  filter(!is.na(control), control != 3) |>              # 3: private for-profit
+  filter(!is.na(iclevel), iclevel != 3)              # 3: less than 2 years
 
 
 ```
 
 
+Sample criteria
+-2-year and 4-year colleges
+-public or private, not-for-profit
+-CARNEGIEALF == 1-5
 
+Sample notes: 
+-remove primarily graduate-degree granting schools 
 
+#Level 1 variables to consider
+-Carnegie classification (carnegieic,)
 
+The proportion of an CBSA's area that is rural, 
+cultural attractions
 
+Drop observations that are not located in CBSAs
 
 
 
@@ -250,7 +229,7 @@ data_mlca0 |> count(cbsa, name = "n_institutions") |> summary() # number of inst
 # Q. remove CBSAs with fewer than 5 institutions ?????
 data_mlca1 <- data_mlca0 |>
   add_count(cbsa, name = "n_institutions") |>
-  filter(n_institutions >= 5) |>   
+  # filter(n_institutions >= 5) |>   
   select(-n_institutions) |>
   as.data.frame()
 
@@ -267,7 +246,7 @@ set.seed(1234)
 msas0 <- multiLCA(
   data = data_mlca1,
   Y = Y,
-  iT = 5:9,               # lower-level classes
+  iT = 2:9,               # lower-level classes
 #  id_high = "cbsa",
 #  iM = 1:4               # higher-level classes
 )

@@ -14,6 +14,7 @@ library(readxl)
 library(tidycensus)
 library(multilevLCA)
 
+rm(list = ls())
 ```
 
 
@@ -23,74 +24,44 @@ library(multilevLCA)
 ## ---------------------------
 
 # load IPEDS data and merge with the Carnegie Classification
-#NM: Loaded new files and named them 
+
 ipeds24 <- read_csv("../data/sources/hd2024.csv")
 ipeds_cost <- read_csv("../data/sources/cost1_2024.csv")
+ipeds_schoolsize <- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024
 carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
-ic2024 <- read_csv("../data/sources/ic2024.csv") #NM: new
-sfa <- read_csv("../data/sources/sfa2324.csv") #NM: new
-adm <- read_csv("../data/sources/adm2024.csv") #NM: new
 
-#NM: Merged new files
-data <- ipeds24 %>% 
-  left_join(carnegie, by = c("UNITID" = "unitid")) %>% 
-  left_join(ipeds_cost, by = "UNITID") %>% #NM:New
-  left_join(ic2024, by = "UNITID" ) %>% #NM:New
-  left_join(sfa, by = "UNITID") %>% #NM:New
-  left_join(adm, by = "UNITID") #NM:New
-
-
-# select variables and create a dataset for analysis
-#NM: Added new variables from dataset, reflected on lines 
-x <- data |> select(LONGITUD, LATITUDE, 
-                        UNITID, INSTNM, 
-                        CITY, STABBR, ZIP, ICLEVEL, DEGGRANT, LOCALE,
-                        HBCU, TRIBAL, 
-                        CBSA, CBSATYPE, CSA, COUNTYCD, COUNTYNM, 
-                        CONTROL, INSTCAT,
-                        CARNEGIEIC, CARNEGIESAEC, hsi, ROOM, 
-                        CARNEGIEAPM, CARNEGIERSCH, CARNEGIEALF,         #NM: from hd2024
-                        RELAFFIL, DISTNCED, ATHASSOC, #NM: from IC2024
-                        LOAN_A, 
-                        ADMSSN, APPLCN, OPENADMP) #NM: from sfa2324
-
-# rename variables
-data <- x |> 
-  rename_all(tolower) |> #converts all column names in a data frame to lowercase
-  select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
-         locale, zip, stabbr, longitud, latitude, 
-         control, iclevel, instcat, deggrant, 
-         carnegieic, carnegiesaec, carnegieapm, carnegiersch, carnegiealf, 
-         hbcu, hsi, tribal, relaffil, room, distnced, athassoc, loan_a, admssn, applcn, openadmp )
-
-# IPEDS school size data
-schoolsize <- read_csv("../data/sources/ef2024a.csv")
-schoolsize <- schoolsize |> 
-  filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
-  select(UNITID, EFTOTLT) |> #Grand total
-  mutate(size = case_when(
+ipeds_schoolsize <- ipeds_schoolsize |> 
+    filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
+    select(UNITID, EFTOTLT) |> #Grand total
+    mutate(size = case_when(
       EFTOTLT <= 3000 ~ 0,  #small
       EFTOTLT <= 10000 ~ 1,  #medium
       EFTOTLT > 10000 ~ 2, #large
       TRUE ~ NA_real_))
 
-data <- left_join(data, schoolsize, by = c("unitid" = "UNITID")) 
+carnegie <- carnegie |> 
+  select(unitid, hsi)
+
+data <- ipeds24 |>  
+  left_join(ipeds_cost, by = "UNITID") |> 
+  left_join(ipeds_schoolsize, by = "UNITID") |> 
+  left_join(carnegie, by = c("UNITID" = "unitid"))
 
 
-```
+
+# select variables and create a dataset for analysis
+x <- data |> 
+    rename_all(tolower) |> #converts all column names in a data frame to lowercase
+    select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
+           locale, zip, stabbr, longitud, latitude, 
+           control, iclevel, instcat, deggrant, size,
+           carnegieic, carnegiesaec, carnegiealf,
+           hbcu, hsi, tribal, room)
 
 
-
-
-```{r Create Sample}
-x <- data %>% 
-filter(!is.na(control), control != 3) |>              # 3: private for-profit
-filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
-filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
-filter(instcat >= 2 & instcat <= 4) %>% 
-filter(cbsa != -2)
-
+# assign to "data"
 data <- x
+
 
 ```
 
@@ -102,24 +73,15 @@ data <- x
 
 x <- data |> 
   mutate(
-         housing = case_when(
-           room == 1 ~1, 
-           room == 2 ~0, 
-           TRUE ~NA_real_
-         ),
-         control = ifelse(control == -3, NA, control),
          public = case_when(
             control == 1 ~ 1,                             # 0: private
             control == 2 ~ 0,                             # 1: public 
-            TRUE ~ NA_real_
-            ),   
+            TRUE ~ NA_real_),   
          
-         iclevel = ifelse(iclevel == -3, NA, iclevel),
          twoyear = case_when(
             iclevel == 1 ~ 0,                             # 0: 4 or more
             iclevel == 2 ~ 1,                             # 1: at least 2 & less than 4
-            TRUE ~ NA_real_
-            ),     
+            TRUE ~ NA_real_),     
          
          msi = case_when(                                 # 0: non of them
             hbcu == 1 ~ 1,                                # 1: HBCU
@@ -127,48 +89,44 @@ x <- data |>
             tribal == 1 ~ 3,                              # 3: TCU
             hbcu == 2 & hsi == 0 & tribal == 2 ~ 0,
             is.na(hbcu) | is.na(hsi) | is.na(tribal) ~ NA_real_,
-            TRUE ~ NA_real_
-            ),
+            TRUE ~ NA_real_),
          
-         locale = ifelse(locale == -3, NA, locale), 
          rurality = case_when(
             locale %in% c(31,32,33,41,42,43) ~ 0,         # 0: Town + Rural
             locale %in% c(21,22,23) ~ 1,                  # 1: Suburb
             locale %in% c(11,12,13) ~ 2,                  # 2: City
             TRUE ~ NA_real_),           
+
+         housing = case_when(
+           room == 1 ~ 1,                                 # 0: no housing
+           room == 2 ~ 0,                                 # 1: offer housing
+           TRUE ~NA_real_),    
          
-         carnegiesaec = ifelse(carnegiesaec == -2, NA, carnegiesaec),
          asc = case_when(
-           carnegiesaec == 1 ~ 0,
-           carnegiesaec == 3 ~ 1,
-           carnegiesaec == 5 ~ 2,
-           carnegiesaec == 2 ~ 3,
-           carnegiesaec == 4 ~ 4,
-           carnegiesaec == 6 ~ 5,
+           carnegiesaec == 1 ~ 0,                         # 0: Lower Access, Lower Earnings
+           carnegiesaec == 3 ~ 1,                         # 1: Lower Access, Medium Earnings
+           carnegiesaec == 5 ~ 2,                         # 2: Lower Access, Higher Earnings
+           carnegiesaec == 2 ~ 3,                         # 3: Higher Access, Lower Earnings 
+           carnegiesaec == 4 ~ 4,                         # 4: Higher Access, Medium Earnings
+           carnegiesaec == 6 ~ 5,                         # 5: Higher Access, Higher Earnings
+           TRUE ~ NA_real_),
+#Q. Would it make more sense to reorder this variable so that higher access is coded as a lower level?
+                  
+         awarelev = case_when(
+           carnegiealf == 1:3 ~ 0,                         # 0: associate - baccalaureate
+           carnegiealf == 4 ~ 1,                           # 1: undergrad / grad-Master's
+           carnegiealf == 5 ~ 2,                           # 2: undergrad / grad-Doctorate 
            TRUE ~ NA_real_),
          
          cbsa = ifelse(cbsa == -2, NA, cbsa), 
-         cbsa = as.character(cbsa),
-         
-        focus = case_when(
-            carnegieapm %in% c(2,3,4,5,6,7,8,9,10,11,12) ~ 2,  #NM- 2: Professions/Special Focus
-            carnegieapm ==  1 ~ 1,                             #NM- 1: Mixed
-            carnegieapm == -2 ~ 0,                             #NM- 0: Not Classified 
-            TRUE ~ NA_real_),            
-        
-        research = case_when( 
-            carnegiersch == -2 ~ 0,                   #NM- 0: No research designation
-            carnegiersch == 3 ~ 1,                    #NM - 1: Research Colleges and Universities 
-            carnegiersch == 2 ~ 2,                    #NM - 2: High Spending
-            carnegiersch == 1 ~ 3,                    #NM- 3: Very High Spending  
-            TRUE ~ NA_real_), 
-       ) |> 
+         cbsa = as.character(cbsa)
+       ) #|> 
     
-    select(-c(room, locale, tribal, hbcu, hsi))
-           
+#    select(-c(control, iclevel, hbcu, hsi, tribal, locale, room, carnegiesaec, carnegiealf))
+# Q. Would it be okay to drop all the original variables after recoding them?          
+# I’m wondering if it might be better to comment this out and keep the original variables instead of dropping them.
 
 data <- x
-# housing
 
 ```
 
@@ -209,22 +167,48 @@ census <- census |>
   mutate(GEOID = as.character(GEOID))
 
 data <- data |>
-  left_join(census, by = c("cbsa" = "GEOID")) %>% 
-  group_by(cbsa) %>% 
-  mutate(inst_num = n_distinct(unitid)) %>% 
-  ungroup() %>% 
-  mutate(admrate = admssn/applcn) %>% 
-  mutate(admrate = if_else(openadmp == 1, 1, admrate)) 
-
+  left_join(census, by = c("cbsa" = "GEOID"))
 
 ```
 
 
+```{r Create Sample}
+level_1_vars <- c("public", "twoyear", "size", "msi", "rurality", "housing", "asc", "carnegiealf", "selectivity")
+# we need to decide which variable will be "selectivity"
+
+level_2_vars <- c()
+
+filter(!is.na(control), control != 3) |>              # 3: private for-profit
+filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
+filter(!is.na(carnegiealf), carnegiealf != 6) |>      # 6: graduate-focused
+```
+
+Sample criteria
+-2-year and 4-year colleges✅
+-public or private, not-for-profit✅
+-CARNEGIEALF == 1-5✅
+
+Sample notes: 
+-remove primarily graduate-degree granting schools 
+
+#Level 1 variables to consider
+##indicator as well as covariates
+-Carnegie classification (carnegieic,)
+
+The proportion of an CBSA's area that is rural 
+-cultural attractions
+
+Drop observations that are not located in CBSAs✅
 
 
 
+Y (Level-1 indicators): Observed variables defining university latent classes
 
+iM (Level-1 covariates): Variables predicting university class membership
 
+Zh (Level-2 covariates): Regional variables affecting university class probabilities
+
+No Level-2 indicators: Regional effects modeled via covariates, not separate regional classes
 
 
 ```{r MCLA}
@@ -239,20 +223,20 @@ data_mlca0 <- data |>
          !is.na(size),
          !is.na(msi),
          !is.na(rurality),
-         !is.na(asc))
+         !is.na(housing),
+         !is.na(asc),
+         !is.na(awarelev)
+         )
 
 
 glimpse(data_mlca0)
 summary(data_mlca0)
-data_mlca0 |> count(cbsa, name = "n_institutions") |> summary() # number of institutions within a CBSA
 
+data_mlca0 |> 
+  count(cbsa, name = "n_institutions") |> 
+  summary()
+# number of institutions within a CBSA
 
-# Q. remove CBSAs with fewer than 5 institutions ?????
-data_mlca1 <- data_mlca0 |>
-  add_count(cbsa, name = "n_institutions") |>
-  filter(n_institutions >= 5) |>   
-  select(-n_institutions) |>
-  as.data.frame()
 
 
 
@@ -260,12 +244,14 @@ data_mlca1 <- data_mlca0 |>
 ##' [Find the best # of Classes]
 ## ---------------------------
 
-Y <- c("public", "twoyear", "size", "msi", "rurality", "asc")    # indicators
+Y <- c("public", "twoyear", "size", "msi", "rurality", "housing", "asc", "awardlev")    
+# indicators
+# does "awardlev" make sense as an indicator? or should it be a covariate?
 
 set.seed(1234)
 
 msas0 <- multiLCA(
-  data = data_mlca1,
+  data = data_mlca0,
   Y = Y,
   iT = 5:9,               # lower-level classes
 #  id_high = "cbsa",
@@ -286,7 +272,7 @@ msas0                     # compare model fits
 set.seed(1234)
 
 msas00 <- multiLCA(
-  data = data_mlca1,
+  data = data_mlca0,
   Y = Y,
   iT = 7,
   id_high = "cbsa",
@@ -303,7 +289,7 @@ msas00                     # compare model fits
 set.seed(1234)
 
 msas000 <- multiLCA(
-  data = data_mlca1,
+  data = data_mlca0,
   Y = Y,
   iT = 6:8,
   id_high = "cbsa",
@@ -328,7 +314,7 @@ msas000                     # compare model fits
 set.seed(1234)
 
 msas1 <- multiLCA(
-  data = data_mlca1,
+  data = data_mlca0,
   Y = Y,
   iT = 7,                                  
   id_high = "cbsa",
@@ -349,7 +335,7 @@ plot(msas1)
 Zh <- c("tot_pop", "perc_ba", "med_income", "perc_pov",
         "perc_white", "perc_black", "perc_hisp", "perc_asian")
 
-data_mlca2 <- data_mlca1 |>
+data_mlca1 <- data_mlca0 |>
   filter(!is.na(tot_pop),
          !is.na(perc_ba),
          !is.na(med_income),
@@ -364,7 +350,7 @@ data_mlca2 <- data_mlca1 |>
 set.seed(1234)
 
 msas2 <- multiLCA(
-  data = data_mlca2,
+  data = data_mlca1,
   Y = Y,
   iT = 7,
   id_high = "cbsa",
@@ -381,7 +367,7 @@ msas2 <- multiLCA(
 # Q. do we need level-1 covariates? if not, the model doesn't work :(
 
 msas2 <- multiLCA(
-  data = data_mlca2,
+  data = data_mlca1,
   Y = Y,
   iT = 7,
   id_high = "cbsa",
