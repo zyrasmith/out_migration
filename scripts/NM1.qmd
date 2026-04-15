@@ -14,6 +14,8 @@ library(readxl)
 library(tidycensus)
 library(multilevLCA)
 
+#install.packages("psych")
+library(psych)
 ```
 
 
@@ -162,9 +164,9 @@ x <- data |>
             carnegiersch == 2 ~ 2,                    #NM - 2: High Spending
             carnegiersch == 1 ~ 3,                    #NM- 3: Very High Spending  
             TRUE ~ NA_real_), 
-       ) |> 
+       )# |> 
     
-    select(-c(room, locale, tribal, hbcu, hsi))
+#    select(-c(room, locale, tribal, hbcu, hsi))
            
 
 data <- x
@@ -214,7 +216,14 @@ data <- data |>
   mutate(inst_num = n_distinct(unitid)) %>% 
   ungroup() %>% 
   mutate(admrate = admssn/applcn) %>% 
-  mutate(admrate = if_else(openadmp == 1, 1, admrate)) 
+  mutate(admrate = if_else(openadmp == 1, 1, admrate)) |> 
+  mutate(selectivity = case_when(
+    admrate == 1 ~ 0, # open 
+    admrate >= 0.75 & admrate < 1 ~ 1, # less selective
+    admrate >= 0.40 & admrate < 0.75 ~ 2, # selective
+    admrate < 0.40 ~ 3, # more selective
+    TRUE ~ NA_real_
+  ))
 
 
 ```
@@ -260,12 +269,12 @@ data_mlca1 <- data_mlca0 |>
 ##' [Find the best # of Classes]
 ## ---------------------------
 
-Y <- c("public", "twoyear", "size", "msi", "rurality", "asc")    # indicators
+Y <- c("public", "twoyear", "size", "msi", "rurality", "asc", "housing", "inst_num", "admrate")    # indicators
 
 set.seed(1234)
 
 msas0 <- multiLCA(
-  data = data_mlca1,
+  data = data_mlca0,
   Y = Y,
   iT = 5:9,               # lower-level classes
 #  id_high = "cbsa",

@@ -1,0 +1,361 @@
+---
+title: MLCA
+author: Hyevin Shin
+format: html
+---
+
+```{r setup}
+## ---------------------------
+##' [libraries]
+## ---------------------------
+
+library(tidyverse)
+library(readxl)
+library(tidycensus)
+library(multilevLCA)
+library(psych)
+
+rm(list = ls())
+```
+
+
+```{r data}
+## ---------------------------
+##' [IPEDS/Carnegie Classification Data]
+## ---------------------------
+
+# load IPEDS data and merge with the Carnegie Classification
+
+ipeds24 <- read_csv("../data/sources/hd2024.csv")
+ipeds_cost <- read_csv("../data/sources/cost1_2024.csv")
+ipeds_schoolsize <- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024
+carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
+ic2024 <- read_csv("../data/sources/ic2024.csv") #NM: new
+sfa <- read_csv("../data/sources/sfa2324.csv") #NM: new
+adm <- read_csv("../data/sources/adm2024.csv") #NM: new
+
+ipeds_schoolsize <- ipeds_schoolsize |> 
+    filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
+    select(UNITID, EFTOTLT) |> #Grand total
+    mutate(size = case_when(
+      EFTOTLT <= 3000 ~ 0,  #small
+      EFTOTLT <= 10000 ~ 1,  #medium
+      EFTOTLT > 10000 ~ 2, #large
+      TRUE ~ NA_real_))
+
+carnegie <- carnegie |> 
+  select(unitid, hsi)
+
+#NM: Merged new files
+data <- ipeds24 %>% 
+  left_join(carnegie, by = c("UNITID" = "unitid")) %>% 
+  left_join(ipeds_cost, by = "UNITID") |> 
+  left_join(ipeds_schoolsize, by = "UNITID") %>% #NM:New
+  left_join(ic2024, by = "UNITID" ) %>% #NM:New
+  left_join(sfa, by = "UNITID") %>% #NM:New
+  left_join(adm, by = "UNITID") #NM:New
+
+
+
+# select variables and create a dataset for analysis
+x <- data |> 
+    rename_all(tolower) |> #converts all column names in a data frame to lowercase
+    select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
+           locale, zip, stabbr, longitud, latitude, 
+           control, iclevel, instcat, deggrant, size,
+           carnegieic, carnegiesaec, carnegiealf, carnegieapm, carnegiersch,
+           hbcu, hsi, tribal,
+           room, relaffil, distnced, athassoc,
+           admssn, applcn, openadmp, loan_a)
+
+
+# assign to "data"
+data <- x
+
+
+```
+
+
+```{r Create Sample}
+x <- data %>% 
+  filter(!is.na(control), control != 3) |>              # 3: private for-profit
+  filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
+  filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
+  filter(instcat >= 2 & instcat <= 4) |>                # 1: degree-granting, graduate with no undergraduate degrees
+                                                        # 5-6: non-degree-granting
+  filter(cbsa != -2)
+
+data <- x
+
+```
+
+
+```{r cleaning}
+## ---------------------------
+##' [Data Cleaning]
+## ---------------------------
+
+x <- data |> 
+  mutate(
+         public = case_when(
+            control == 2 ~ 0,                             # 0: private
+            control == 1 ~ 1,                             # 1: public 
+            TRUE ~ NA_real_),   
+         
+         twoyear = case_when(
+            iclevel == 1 ~ 0,                             # 0: 4 or more
+            iclevel == 2 ~ 1,                             # 1: at least 2 & less than 4
+            TRUE ~ NA_real_),     
+         
+         msi = case_when(                                 # 0: non of them
+            hbcu == 1 ~ 1,                                # 1: HBCU
+            hsi == 1 ~ 2,                                 # 2: HSI
+            tribal == 1 ~ 3,                              # 3: TCU
+            hbcu == 2 & hsi == 0 & tribal == 2 ~ 0,
+            is.na(hbcu) | is.na(hsi) | is.na(tribal) ~ NA_real_,
+            TRUE ~ NA_real_),
+         
+         rurality = case_when(
+            locale %in% c(31,32,33,41,42,43) ~ 0,         # 0: Town + Rural
+            locale %in% c(21,22,23) ~ 1,                  # 1: Suburb
+            locale %in% c(11,12,13) ~ 2,                  # 2: City
+            TRUE ~ NA_real_),           
+
+         housing = case_when(
+           room == 2 ~ 0,                                 # 0: no housing
+           room == 1 ~ 1,                                 # 1: offer housing
+           TRUE ~NA_real_),    
+
+         religious = ifelse(relaffil == -2, 0, 1),        # 0: no religious
+                                                          # 1: any religious
+         distance = case_when(
+           distnced == 2 ~ 0,                             # 0: not completely distanced learning
+           distnced == 1 ~ 1,                             # 1: completely distanced learning
+           TRUE ~NA_real_),    
+
+         sports = case_when(
+           athassoc == 2 ~ 0,                             # 0: not a member
+           athassoc == 1 ~ 1,                             # 1: member of National Athletic Association
+           TRUE ~NA_real_),    
+
+         loan = case_when(
+           is.na(loan_a) ~ NA_real_,
+           loan_a <= quantile(loan_a, 0.25, na.rm = TRUE) ~ 0,     # 0: lowest
+           loan_a <= quantile(loan_a, 0.50, na.rm = TRUE) ~ 1,     # 1: low 
+           loan_a <= quantile(loan_a, 0.75, na.rm = TRUE) ~ 2,     # 2: high
+           TRUE ~ 3),                                              # 3: highest
+ 
+# Q. Since MLCA requires variables starting at 0, is it appropriate to divide loan amount into quartiles (0–3)?
+
+         asc = case_when(
+           carnegiesaec == 2 ~ 0,                         # 0: Higher Access, Lower Earnings 
+           carnegiesaec == 4 ~ 1,                         # 1: Higher Access, Medium Earnings
+           carnegiesaec == 6 ~ 2,                         # 2: Higher Access, Higher Earnings
+           carnegiesaec == 1 ~ 3,                         # 3: Lower Access, Lower Earnings
+           carnegiesaec == 3 ~ 4,                         # 4: Lower Access, Medium Earnings
+           carnegiesaec == 5 ~ 5,                         # 5: Lower Access, Higher Earnings
+           TRUE ~ NA_real_),
+
+         awarelev = case_when(
+           carnegiealf %in% c(1,2,3) ~ 0,                  # 0: associate - baccalaureate
+           carnegiealf == 4 ~ 1,                           # 1: undergrad / grad-Master's
+           carnegiealf == 5 ~ 2,                           # 2: undergrad / grad-Doctorate 
+           TRUE ~ NA_real_),
+         
+        focus = case_when(
+            carnegieapm == -2 ~ 0,                             #NM- 0: Not Classified 
+            carnegieapm ==  1 ~ 1,                             #NM- 1: Mixed
+            carnegieapm %in% c(2,3,4,5,6,7,8,9,10,11,12) ~ 2,  #NM- 2: Professions/Special Focus
+            TRUE ~ NA_real_),            
+        
+        research = case_when( 
+            carnegiersch == -2 ~ 0,                   #NM- 0: No research designation
+            carnegiersch == 3 ~ 1,                    #NM- 1: Research Colleges and Universities 
+            carnegiersch == 2 ~ 2,                    #NM- 2: High Spending
+            carnegiersch == 1 ~ 3,                    #NM- 3: Very High Spending  
+            TRUE ~ NA_real_),          
+         
+         cbsa = as.character(cbsa)
+       )
+
+
+data <- x |>
+  group_by(cbsa) %>% 
+  mutate(inst_num = n_distinct(unitid)) %>% 
+  ungroup() %>% 
+  mutate(admrate = admssn/applcn) %>% 
+  mutate(admrate = if_else(openadmp == 1, 1, admrate)) |> 
+  mutate(selectivity = case_when(
+         admrate == 1 ~ 0,                        #0: open 
+         admrate >= 0.75 & admrate < 1 ~ 1,       #1: less selective
+         admrate >= 0.40 & admrate < 0.75 ~ 2,    #2: selective
+         admrate < 0.40 ~ 3,                      #3: more selective
+         TRUE ~ NA_real_
+  ))
+
+```
+
+
+```{r census/ACS data}
+## ---------------------------
+##' [Census/ACS Data]
+## ---------------------------
+
+census <- get_acs(geography = "cbsa",
+                  year = 2024,
+                  variables = c("B01003_001E", # Total population
+                                "B19013_001E", # Median Household Income in the Past 12 Months
+                                "DP03_0119PE", # % below poverty
+                                "DP02_0068PE", # % bach or higher
+                                "B03002_003E", # total white (alone, not hispanic)
+                                "B03002_004E", # total black (alone, not hispanic)
+                                "B03002_012E", # total hispanic
+                                "B03002_006E", # total asian (alone, not hispanic)
+                                "B03002_001E"  # total by ethnicity
+                  ),
+                  output = "wide") 
+
+
+census <- census |>
+  mutate(perc_white = B03002_003E/B03002_001E*100,
+         perc_black = B03002_004E/B03002_001E*100,
+         perc_hisp = B03002_012E/B03002_001E*100,
+         perc_asian = B03002_006E/B03002_001E*100,
+         tot_pop = B01003_001E/100000) |>
+  rename(perc_ba = DP02_0068PE,
+         med_income = B19013_001E,
+         perc_pov = DP03_0119PE) |> 
+  select(tot_pop, perc_ba,
+         med_income, perc_pov,
+         perc_white, perc_black, perc_hisp, perc_asian,
+         GEOID) |> 
+  mutate(GEOID = as.character(GEOID))
+
+data <- data |>
+  left_join(census, by = c("cbsa" = "GEOID"))
+
+```
+
+```{r MCLA}
+## ---------------------------
+##' [MLCA Analysis Data]
+## ---------------------------
+
+# Level-1 indicators: Observed institution characteristics used to define the latent institution classes
+# Level-1 covariates: Intitution-level predictors that explain class membership
+# Level-2 covariates: CBSA-level regional variables that explain differences in institution class probabilities across regions
+
+
+Y <- c("public", "twoyear", "size", "msi", "rurality", "housing",
+                "asc", "awarelev", "focus", "research")                  #indicators
+
+Z <- c("religious", "distance", "sports", 
+                "inst_num", "selectivity", "loan")                       #level-1 covariates
+
+Zh <- c("tot_pop", "perc_ba", "med_income", "perc_pov", 
+                "perc_white", "perc_black", "perc_hisp", "perc_asian")   #level-2 covariates
+
+
+# Q. Is this specification reasonable?
+
+
+data_mlca <- data |>
+  tidyr::drop_na(cbsa, all_of(Y), all_of(Z), all_of(Zh)) |>
+  mutate(across(all_of(Y), ~ {
+    vals <- sort(unique(.[!is.na(.)]))
+    match(., vals) - 1
+  })) |>
+  mutate(cbsa = as.character(cbsa)) |>
+  as.data.frame()
+
+#keep complete cases for all indicators and covariates used in MLCA
+#recode indicators to consecutive integers starting at 0 as required for MLCA
+
+
+
+## ---------------------------
+##' [Find the best # of Classes]
+## ---------------------------
+  
+
+set.seed(1234)
+
+msas0 <- multiLCA(
+  data = data_mlca,
+  Y = Y,
+  iT = 5:9                 # lower-level classes
+#  id_high = "cbsa",
+#  iM = 1:4                # higher-level classes
+)
+
+# the best number of level1 classes is 8
+msas0                     # compare model fits
+
+#when including level2 equations -> Error: sort_index(): detected NaN
+
+
+
+## ---------------------------
+##' [..... stepwise approach for dealing with the error]
+## ---------------------------
+
+set.seed(1234)
+
+msas00 <- multiLCA(
+  data = data_mlca,
+  Y = Y,
+  iT = 8,
+  id_high = "cbsa",
+  iM = 1:2
+)
+
+#AGAIN!!! when including level2 equations -> Error: sort_index(): detected NaN
+
+msas00                     # compare model fits
+
+
+
+## ---------------------------
+##' [Final model]
+## ---------------------------
+
+set.seed(1234)
+
+msas1 <- multiLCA(
+  data = data_mlca0,
+  Y = Y,
+  iT = 8,                                  
+  id_high = "cbsa",
+  iM = ?????,
+  extout = TRUE #additional outputs
+  )             #e.g., classification error, modal class assignment, posterior probabilities
+
+msas1
+summary(msas1)
+plot(msas1)
+
+
+
+## ---------------------------
+##' [MLCA including covariates with the best class model]
+## ---------------------------
+
+set.seed(1234)
+
+msas2 <- multiLCA(
+  data = data_mlca1,
+  Y = Y,
+  iT = 8,
+  id_high = "cbsa",
+  iM = ?????,
+  Z = Z,
+  Zh = Zh,
+  extout = TRUE
+)
+
+msas2
+summary(msas2)
+plot(msas2)
+
+```
+
