@@ -28,20 +28,22 @@ rm(list = ls())
 
 ipeds24 <- read_csv("../data/sources/hd2024.csv")
 ipeds_cost <- read_csv("../data/sources/cost1_2024.csv")
-ipeds_schoolsize <- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024
+#ipeds_schoolsize <- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024
 carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
 ic2024 <- read_csv("../data/sources/ic2024.csv") #NM: new
 sfa <- read_csv("../data/sources/sfa2324.csv") #NM: new
 adm <- read_csv("../data/sources/adm2024.csv") #NM: new
 
-ipeds_schoolsize <- ipeds_schoolsize |> 
-    filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
-    select(UNITID, EFTOTLT) |> #Grand total
-    mutate(size = case_when(
-      EFTOTLT <= 3000 ~ 0,  #small
-      EFTOTLT <= 10000 ~ 1,  #medium
-      EFTOTLT > 10000 ~ 2, #large
-      TRUE ~ NA_real_))
+
+#Let's replace this with the size variable in IPEDS (instsize)
+# ipeds_schoolsize <- ipeds_schoolsize |> 
+#     filter(EFALEVEL == 1) |> #Level of student (1 == all students total)
+#     select(UNITID, EFTOTLT) |> #Grand total
+#     mutate(size = case_when(
+#       EFTOTLT <= 3000 ~ 0,  #small
+#       EFTOTLT <= 10000 ~ 1,  #medium
+#       EFTOTLT > 10000 ~ 2, #large
+#       TRUE ~ NA_real_))
 
 carnegie <- carnegie |> 
   select(unitid, hsi)
@@ -50,7 +52,7 @@ carnegie <- carnegie |>
 data <- ipeds24 %>% 
   left_join(carnegie, by = c("UNITID" = "unitid")) %>% 
   left_join(ipeds_cost, by = "UNITID") |> 
-  left_join(ipeds_schoolsize, by = "UNITID") %>% #NM:New
+  #left_join(ipeds_schoolsize, by = "UNITID") %>% #NM:New
   left_join(ic2024, by = "UNITID" ) %>% #NM:New
   left_join(sfa, by = "UNITID") %>% #NM:New
   left_join(adm, by = "UNITID") #NM:New
@@ -60,9 +62,9 @@ data <- ipeds24 %>%
 # select variables and create a dataset for analysis
 x <- data |> 
     rename_all(tolower) |> #converts all column names in a data frame to lowercase
-    select(unitid, instnm, city, countycd, countynm, cbsa, cbsatype, csa, 
+    select(unitid, instnm, city, stabbr, fips, countycd, countynm, cbsa, cbsatype, csa, 
            locale, zip, stabbr, longitud, latitude, 
-           control, iclevel, instcat, deggrant, size,
+           control, iclevel, instcat, deggrant, instsize,
            carnegieic, carnegiesaec, carnegiealf, carnegieapm, carnegiersch,
            hbcu, hsi, tribal,
            room, relaffil, distnced, athassoc,
@@ -78,12 +80,15 @@ data <- x
 
 ```{r Create Sample}
 x <- data %>% 
+  filter(fips <= 56) |>                                  # Keep only 50 states and DC
+  filter(cbsa != -2) |>                                 # Remove colleges not located in CBSAs 
   filter(!is.na(control), control != 3) |>              # 3: private for-profit
   filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
   filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
   filter(instcat >= 2 & instcat <= 4) |>                # 1: degree-granting, graduate with no undergraduate degrees
                                                         # 5-6: non-degree-granting
-  filter(cbsa != -2)
+  filter(carnegieapm == 1)                              # Keep only colleges classified as "mixed" undergraduate programs
+  
 
 data <- x
 
@@ -119,7 +124,15 @@ x <- data |>
             locale %in% c(31,32,33,41,42,43) ~ 0,         # 0: Town + Rural
             locale %in% c(21,22,23) ~ 1,                  # 1: Suburb
             locale %in% c(11,12,13) ~ 2,                  # 2: City
-            TRUE ~ NA_real_),           
+            TRUE ~ NA_real_),        
+         
+         size = case_when(
+           instsize == 1 ~ 0,                             # 0: < 1,000
+           instsize == 2 ~ 1,                             # 1: 1,000 - 4,999
+           instsize == 3 ~ 2,                             # 1: 5,000 - 9,999
+           instsize == 4 ~ 3,                             # 2: 10,000 - 19,999
+           instsize == 5 ~ 4,                             # 3: >=20,000
+           TRUE ~ NA_real_),
 
          housing = case_when(
            room == 2 ~ 0,                                 # 0: no housing
@@ -156,17 +169,17 @@ x <- data |>
            carnegiesaec == 5 ~ 5,                         # 5: Lower Access, Higher Earnings
            TRUE ~ NA_real_),
 
-         awarelev = case_when(
+         awardlev = case_when(
            carnegiealf %in% c(1,2,3) ~ 0,                  # 0: associate - baccalaureate
            carnegiealf == 4 ~ 1,                           # 1: undergrad / grad-Master's
            carnegiealf == 5 ~ 2,                           # 2: undergrad / grad-Doctorate 
            TRUE ~ NA_real_),
          
-        focus = case_when(
-            carnegieapm == -2 ~ 0,                             #NM- 0: Not Classified 
-            carnegieapm ==  1 ~ 1,                             #NM- 1: Mixed
-            carnegieapm %in% c(2,3,4,5,6,7,8,9,10,11,12) ~ 2,  #NM- 2: Professions/Special Focus
-            TRUE ~ NA_real_),            
+        # focus = case_when(
+        #     carnegieapm == -2 ~ 0,                             #NM- 0: Not Classified 
+        #     carnegieapm ==  1 ~ 1,                             #NM- 1: Mixed
+        #     carnegieapm %in% c(2,3,4,5,6,7,8,9,10,11,12) ~ 2,  #NM- 2: Professions/Special Focus
+        #     TRUE ~ NA_real_),            
         
         research = case_when( 
             carnegiersch == -2 ~ 0,                   #NM- 0: No research designation
@@ -236,10 +249,34 @@ data <- data |>
 
 ```
 
+
+```{r Explore dataset}
+
+data_mlca <- data %>% 
+  select(unitid, instnm, stabbr, cbsa, cbsatype,
+         public, twoyear, size, msi, rurality, housing,
+         awardlev, focus, research,
+         religious, distance, sports, 
+         inst_num, selectivity,
+         tot_pop, perc_ba, med_income, perc_pov,
+         perc_white, perc_black, perc_hisp, perc_asian) %>% 
+  as.data.frame()
+
+describe(data_mlca)
+
+x <- data_mlca %>% 
+  drop_na()
+
+data_mlca %>% anti_join(x, by = "unitid") %>% View()
+
+```
+
 ```{r MCLA}
 ## ---------------------------
 ##' [MLCA Analysis Data]
 ## ---------------------------
+
+
 
 # Level-1 indicators: Observed institution characteristics used to define the latent institution classes
 # Level-1 covariates: Intitution-level predictors that explain class membership
@@ -247,26 +284,29 @@ data <- data |>
 
 
 Y <- c("public", "twoyear", "size", "msi", "rurality", "housing",
-                "asc", "awarelev", "focus", "research")                  #indicators
+                "awardlev", "focus", "research")                  #indicators
+# Remove the "asc" and "loan" variables due to large number of missing observations
 
 Z <- c("religious", "distance", "sports", 
                 "inst_num", "selectivity", "loan")                       #level-1 covariates
+# Remove the "loan" variable due to large number of missing observations
 
 Zh <- c("tot_pop", "perc_ba", "med_income", "perc_pov", 
                 "perc_white", "perc_black", "perc_hisp", "perc_asian")   #level-2 covariates
 
 
-# Q. Is this specification reasonable?
+# Q. Is this specification reasonable? 
+# A. We don't want to drop observations with missing values as it may bias our estimates.
 
 
-data_mlca <- data |>
-  tidyr::drop_na(cbsa, all_of(Y), all_of(Z), all_of(Zh)) |>
-  mutate(across(all_of(Y), ~ {
-    vals <- sort(unique(.[!is.na(.)]))
-    match(., vals) - 1
-  })) |>
-  mutate(cbsa = as.character(cbsa)) |>
-  as.data.frame()
+# data_mlca <- data |>
+#   tidyr::drop_na(cbsa, all_of(Y), all_of(Z), all_of(Zh)) |>
+#   mutate(across(all_of(Y), ~ {
+#     vals <- sort(unique(.[!is.na(.)]))
+#     match(., vals) - 1
+#   })) |>
+#   mutate(cbsa = as.character(cbsa)) |>
+#   as.data.frame()
 
 #keep complete cases for all indicators and covariates used in MLCA
 #recode indicators to consecutive integers starting at 0 as required for MLCA
@@ -283,12 +323,15 @@ set.seed(1234)
 msas0 <- multiLCA(
   data = data_mlca,
   Y = Y,
-  iT = 5:9                 # lower-level classes
-#  id_high = "cbsa",
-#  iM = 1:4                # higher-level classes
+  iT = 5:15,                 # lower-level classes
+  id_high = "cbsa",
+  iM = 1:4,                # higher-level classes
+  incomplete = TRUE        # Use FIML estimation to handle missing values
 )
 
-# the best number of level1 classes is 8
+# the best number of level1 classes is 8 
+# (Zyra got 7 as the best number of classes after adding "incomplete = TRUE")
+
 msas0                     # compare model fits
 
 #when including level2 equations -> Error: sort_index(): detected NaN
@@ -304,9 +347,10 @@ set.seed(1234)
 msas00 <- multiLCA(
   data = data_mlca,
   Y = Y,
-  iT = 8,
+  iT = 5:10,
   id_high = "cbsa",
-  iM = 1:2
+  iM = 1:2,
+  incomplete = TRUE
 )
 
 #AGAIN!!! when including level2 equations -> Error: sort_index(): detected NaN
