@@ -85,9 +85,9 @@ x <- data %>%
   filter(!is.na(control), control != 3) |>              # 3: private for-profit
   filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
   filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
-  filter(instcat >= 2 & instcat <= 4) |>                # 1: degree-granting, graduate with no undergraduate degrees
+  filter(instcat >= 2 & instcat <= 4)                 # 1: degree-granting, graduate with no undergraduate degrees
                                                         # 5-6: non-degree-granting
-  filter(carnegieapm == 1)                              # Keep only colleges classified as "mixed" undergraduate programs
+  #filter(carnegieapm == 1)                              # Keep only colleges classified as "mixed" undergraduate programs
   
 
 data <- x
@@ -255,7 +255,7 @@ data <- data |>
 data_mlca <- data %>% 
   select(unitid, instnm, stabbr, cbsa, cbsatype,
          public, twoyear, size, msi, rurality, housing,
-         awardlev, focus, research,
+         awardlev, research,
          religious, distance, sports, 
          inst_num, selectivity,
          tot_pop, perc_ba, med_income, perc_pov,
@@ -268,6 +268,8 @@ x <- data_mlca %>%
   drop_na()
 
 data_mlca %>% anti_join(x, by = "unitid") %>% View()
+
+data_mlca <- x
 
 ```
 
@@ -284,7 +286,7 @@ data_mlca %>% anti_join(x, by = "unitid") %>% View()
 
 
 Y <- c("public", "twoyear", "size", "msi", "rurality", "housing",
-                "awardlev", "focus", "research")                  #indicators
+                "awardlev",  "research")                  #indicators
 # Remove the "asc" and "loan" variables due to large number of missing observations
 
 Z <- c("religious", "distance", "sports", 
