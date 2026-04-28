@@ -607,7 +607,7 @@ model_selection <- as.data.frame(lc_l1$model_selection)
 lc_l2 <- multiLCA(
   data = data_mlca,
   Y              = Y,
-  iT             = 8:12,
+  iT             = 6:12,
   Z              = Z,
   iM             = 2:5,
   id_high        = c("cbsa_id"),
