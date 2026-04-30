@@ -477,12 +477,65 @@ reg_data <- as.data.frame(optimal_model[["mPW_N"]]) %>%
       pred_class2 == "G3" ~ G3,
       pred_class2 == "G4" ~ G4,
     )) %>% 
+  select(cbsa_id, G1, G2, G3, G4, pred_class2, class_prob) %>% 
+  distinct() %>% 
   select(cbsa_id, pred_class2, class_prob) %>% 
-  right_join(data_mlca, by = "cbsa")
+  right_join(data_mlca, by = "cbsa_id")
 
-multinom(pred_class2 ~ region + metropolitan + inst_num + tot_pop + pop_density + perc_ba + med_income + perc_pov + perc_unemployed + perc_white + perc_black + perc_hisp + perc_asian + class_prob,
-              data = reg_data, 
-              weights = class_prob)
+reg_model <- vglm(pred_class2 ~ region + metropolitan + inst_num + tot_pop + pop_density + perc_ba + med_income + perc_pov + perc_unemployed + perc_white + perc_black + perc_hisp + perc_asian,
+              data = reg_data,
+              family = multinomial(refLevel = 1))
+
+summary(reg_model)
+
+coef_vec <- coef(reg_model)                 # vector of all coefficients
+vc       <- vcov(reg_model)                 # full covariance matrix
+se_vec   <- sqrt(diag(vc))              # standard errorscoef_vec <- coef(model)                 # vector of all coefficients
+vc       <- vcov(reg_model)                 # full covariance matrix
+se_vec   <- sqrt(diag(vc))              # standard errors
+
+
+apa_table <- data.frame(
+  term     = names(coef_vec),
+  estimate = coef_vec,
+  SE       = se_vec,
+  z        = coef_vec / se_vec,
+  p        = 2 * (1 - pnorm(abs(coef_vec / se_vec))),
+  OR       = exp(coef_vec),
+  CI_low   = exp(coef_vec - 1.96 * se_vec),
+  CI_high  = exp(coef_vec + 1.96 * se_vec)
+) %>%
+  mutate(
+    estimate = round(estimate, 3),
+    SE       = round(SE, 3),
+    z        = round(z, 2),
+    p        = round(p, 3),
+    OR       = round(OR, 3),
+    CI       = paste0("[", round(CI_low, 3), ", ", round(CI_high, 3), "]")
+  ) %>%
+  select(term, estimate, SE, z, p, OR, CI)
+
+apa_table
+
+apa_gt <- apa_table %>%
+  gt() %>%
+  cols_label(
+    term     = "Predictor",
+    estimate = "B",
+    SE       = "SE",
+    z        = "z",
+    p        = "p",
+    OR       = "OR",
+    CI       = "95% CI"
+  ) %>%
+  tab_options(
+    table.font.size = 12,
+    data_row.padding = px(2),
+    table.width = pct(80),
+    column_labels.font.weight = "bold"
+  )
+
+apa_gt
 
 ```
 
