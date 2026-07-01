@@ -1,0 +1,212 @@
+---
+title: "IPEDS Data"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r setup}
+
+rm(list = ls())
+
+knitr::opts_knit$set(root.dir = "C:/Users/zyras/Documents/GitHub/out_migration")
+
+# install.packages("haven")
+
+library(haven)
+library(tidyverse)
+
+
+
+
+
+```
+
+```{r Import data}
+
+ipeds_hd <- read_dta("data_paper2/hd2004.dta")
+ipeds_ic <- read_dta("data_paper2/ic2004.dta")
+cbsa2007 <- read_dta("data_paper2/hd2007.dta")
+
+```
+
+
+```{r Institution filter}
+
+y <- ipeds_hd %>% 
+  filter(
+    cyactive == 1,
+    deggrant == 1,
+    fips <= 56,
+    instcat != 1,
+    carnegie != -3
+  )
+
+ipeds_hd <- y
+
+```
+
+
+
+```{r Get CBSA from 2007 data}
+
+x <- ipeds_hd %>% 
+  select(unitid, instnm, addr, city, stabbr, zip) %>% 
+  left_join(cbsa2007 %>% 
+              select(unitid, instnm, addr, city, stabbr, zip, cbsa, cbsatype),
+            by = c("unitid")) %>% 
+  mutate(zip_2004 = str_remove(zip.x, "-.*"),
+         zip_2007 = str_remove(zip.y, "-.*"),
+         match_location = if_else(zip_2004 == zip_2007, 1, 0),
+         city.x = str_to_lower(city.x),
+         city.x = str_replace_all(city.x, "[^A-Za-z0-9 ]", ""),
+         city.x = str_trim(city.x),
+         city.y = str_to_lower(city.y),
+         city.y = str_replace_all(city.y, "[^A-Za-z0-9 ]", ""),
+         city.y = str_trim(city.y),
+         match_location = if_else(city.x == city.y, 1, match_location),
+         valid_cbsa = if_else(match_location == 1, cbsa, NA_real_),
+         valid_cbsatype = if_else(match_location == 1, cbsatype, NA_real_)) 
+
+#List of valid CBSAs in data
+valid_cbsas <- x %>% 
+  select(zip_2004, valid_cbsa, valid_cbsatype) %>% 
+  distinct() %>% 
+  group_by(zip_2004) %>% 
+  mutate(valid_cbsa = if_else(is.na(valid_cbsa), max(valid_cbsa), valid_cbsa),
+         valid_cbsatype = if_else(is.na(valid_cbsatype), max(valid_cbsatype), valid_cbsatype)) %>% 
+  ungroup() %>% 
+  
+  #Replace missing CBSAs using Missouri ZIP/CBSA Crosswalk (GET URL)
+    #Note: Some zipcodes are not listed in the crosswalk because they do not have a population. These zipcodes are assigned the CBSA of the zipcodes that are numerically adjacent. For example, zipcode 39580 was not listed in the crosswalk. It was assigned CBSA = 39580 because that is the CBSA for zipcodes 27587 and 27589.
+  mutate(
+    valid_cbsa = case_when(
+      zip_2004 == "02110" ~ 14460, zip_2004 == "02215" ~ 14460,
+      zip_2004 == "03246" ~ 29060, zip_2004 == "03885" ~ 14460,
+      zip_2004 == 10011 ~ 35620, zip_2004 == 10115 ~ 35620,
+      zip_2004 == 10601 ~ 35620, zip_2004 == 11230 ~ 35620,
+      zip_2004 == 15146 ~ 38300, zip_2004 == 16510 ~ 21500,
+      zip_2004 == 17057 ~ 25420, zip_2004 == 17948 ~ 39060,
+      zip_2004 == 18042 ~ 10900, zip_2004 == 18966 ~ 37980,
+      zip_2004 == 20902 ~ 47900, zip_2004 == 21228 ~ 12580,
+      zip_2004 == 23451 ~ 47260, zip_2004 == 23513 ~ 47260,
+      zip_2004 == 25818 ~ 13220, zip_2004 == 26301 ~ 17220,
+      zip_2004 == 27295 ~ 45640, zip_2004 == 27588 ~ 39580,
+      zip_2004 == 28025 ~ 16740, zip_2004 == 29403 ~ 16700,
+      zip_2004 == 29902 ~ 25940, zip_2004 == 30093 ~ 12060,
+      zip_2004 == 30309 ~ 12060, zip_2004 == 33169 ~ 33100,
+      zip_2004 == 33317 ~ 33100, zip_2004 == 33781 ~ 45300,
+      zip_2004 == 34698 ~ 45300, zip_2004 == 35022 ~ 13820,
+      zip_2004 == 35242 ~ 13820, zip_2004 == 36103 ~ 33860,
+      zip_2004 == 36304 ~ 20020, zip_2004 == 38119 ~ 32820,
+      zip_2004 == 40506 ~ 30460, zip_2004 == 43614 ~ 45780,
+      zip_2004 == 44720 ~ 10420, zip_2004 == 45211 ~ 17140,
+      zip_2004 == 48331 ~ 19820, zip_2004 == 55128 ~ 33460,
+      zip_2004 == 55305 ~ 33460, zip_2004 == 55344 ~ 33460,
+      zip_2004 == 57350 ~ 26700, zip_2004 == 57625 ~ -2,
+      zip_2004 == 60045 ~ 16980, zip_2004 == 60079 ~ 16980,
+      zip_2004 == 60443 ~ 16980, zip_2004 == 60603 ~ 16980,
+      zip_2004 == 60610 ~ 16980, zip_2004 == 60618 ~ 16980,
+      zip_2004 == 60659 ~ 16980, zip_2004 == 63074 ~ 41180,
+      zip_2004 == 63301 ~ 41180, zip_2004 == 64131 ~ 28140,
+      zip_2004 == 68701 ~ 35740, zip_2004 == 70005 ~ 35380,
+      zip_2004 == 70126 ~ 35380, zip_2004 == 70458 ~ 35380,
+      zip_2004 == 73108 ~ 36420, zip_2004 == 77058 ~ 26420,
+      zip_2004 == 80215 ~ 19740, zip_2004 == 80262 ~ 19740,
+      zip_2004 == 84606 ~ 39340, zip_2004 == 85008 ~ 38060,
+      zip_2004 == 85033 ~ 38060, zip_2004 == 87110 ~ 10740,
+      zip_2004 == 89030 ~ 29820, zip_2004 == 89103 ~ 29820,
+      zip_2004 == 91770 ~ 31100, zip_2004 == 91790 ~ 31100,
+      zip_2004 == 91942 ~ 41740, zip_2004 == 92081 ~ 41740,
+      zip_2004 == 92108 ~ 41740, zip_2004 == 92660 ~ 31100,
+      zip_2004 == 92805 ~ 31100, zip_2004 == 93012 ~ 37100,
+      zip_2004 == 94545 ~ 41860, zip_2004 == 95054 ~ 41940,
+      zip_2004 == 95617 ~ 40900, zip_2004 == 96817 ~ 26180,
+      zip_2004 == 98021 ~ 42660, zip_2004 == 98201 ~ 42660,
+      zip_2004 == 99212 ~ 44060,
+      TRUE ~ valid_cbsa),
+    
+    #Check for duplicates
+      # valid_cbsas %>% group_by(zip_2004) %>%
+      # mutate(n = n()) %>%
+      # ungroup() %>%
+      # filter(n > 1) %>%
+      # View()
+    
+    #Fix duplicate observations
+    valid_cbsa = case_when(
+      zip_2004 == 48710 ~ 13020,
+      zip_2004 == 19103 ~ 37980,
+      TRUE ~ valid_cbsa)
+    ) %>% 
+  group_by(valid_cbsa) %>% 
+  mutate(
+    valid_cbsatype = as.numeric(valid_cbsatype),
+    valid_cbsatype = replace_na(valid_cbsatype, max(valid_cbsatype, na.rm = TRUE)),
+    valid_cbsatype = case_when(
+      valid_cbsa == 20020 ~ 1,
+      valid_cbsa == 26700 ~ 2,
+      valid_cbsa == 29060 ~ 2,
+      valid_cbsa == 45640 ~ 2,
+      TRUE ~ valid_cbsatype
+    )) %>% 
+  ungroup() %>% 
+  distinct()
+         
+
+  
+
+#Fill in missing CBSA data in main dataset
+y <- x %>% 
+  select(unitid, zip_2004) %>% 
+  left_join(valid_cbsas,
+            by = "zip_2004") %>% 
+  select(-zip_2004) %>% 
+  right_join(ipeds_hd,
+             by = "unitid") %>% 
+  rename(cbsa = valid_cbsa,
+         cbsa_type = valid_cbsatype)
+
+ipeds_hd <- y
+
+rm(x, y)
+
+```
+
+
+
+```{r Select IPEDS variables} 
+
+y <- ipeds_hd %>% 
+  select(
+    unitid,
+    instnm,
+    cbsa,
+    cbsa_type,
+    city,
+    stabbr,
+    zip,
+    fips,
+    obereg,
+    sector,
+    iclevel,
+    control,
+    hbcu,
+    tribal,
+    carnegie
+  )
+
+ipeds_hd <- y
+
+rm(y)
+
+```
+
+```{r}
+
+write_csv(valid_cbsas, "data_paper2/cbsas")
+write_csv(ipeds_hd, "data_paper2/ipeds")
+```
+

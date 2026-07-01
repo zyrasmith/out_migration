@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Hyevin Shin">
+
+<title>MLCA</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="MLCA_update_files/libs/clipboard/clipboard.min.js"></script>
+<script src="MLCA_update_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="MLCA_update_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="MLCA_update_files/libs/quarto-html/popper.min.js"></script>
+<script src="MLCA_update_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="MLCA_update_files/libs/quarto-html/anchor.min.js"></script>
+<link href="MLCA_update_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="MLCA_update_files/libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="MLCA_update_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="MLCA_update_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="MLCA_update_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">MLCA</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Hyevin Shin </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [libraries]</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'tidyverse' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'purrr' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'lubridate' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.5.2     ✔ tibble    3.2.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+✔ purrr     1.0.4     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'readxl' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidycensus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'tidycensus' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(multilevLCA)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'multilevLCA' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>multilevLCA: Estimates and plots single- and multilevel latent class models.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(psych)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'psych' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'psych'
+
+The following objects are masked from 'package:ggplot2':
+
+    %+%, alpha</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tigris)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'tigris' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>To enable caching of data, set `options(tigris_use_cache = TRUE)`
+in your R script or .Rprofile.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'nnet' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(VGAM)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'VGAM' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: stats4
+Loading required package: splines
+
+Attaching package: 'VGAM'
+
+The following object is masked from 'package:psych':
+
+    logistic</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'gt' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [IPEDS/Carnegie Classification Data]</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># load IPEDS data and merge with the Carnegie Classification</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>ipeds24 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/hd2024.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 6072 Columns: 72
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (23): INSTNM, IALIAS, ADDR, CITY, STABBR, ZIP, CHFNM, CHFTITLE, EIN, UEI...
+dbl (49): UNITID, FIPS, OBEREG, GENTELE, OPEFLAG, SECTOR, ICLEVEL, CONTROL, ...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ipeds_cost <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/cost1_2024.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5867 Columns: 418
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (198): XROOMCAP, XMEALSWK, XAPPFEEU, XAPPFEEG, XAPPFEED, FAFQ2URL, XROOM...
+dbl (214): UNITID, ROOM, ROOMCAP, ALLONCAM, TUITVARY, BOARD, MEALSWK, APPLFE...
+lgl   (6): CHG10AY0, CHG10AY1, CHG10AY2, CHG10PY0, CHG10PY1, CHG10PY2
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co">#ipeds_schoolsize &lt;- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>carnegie <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"../data/sources/2025-Public-Data-File.xlsx"</span>, <span class="at">sheet =</span> <span class="dv">2</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>ic2024 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/ic2024.csv"</span>) <span class="co">#NM: new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5963 Columns: 111
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr   (1): XDISABPC
+dbl (110): UNITID, PEO1ISTR, PEO2ISTR, PEO3ISTR, PEO4ISTR, PEO5ISTR, PEO6IST...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sfa <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/sfa2324.csv"</span>) <span class="co">#NM: new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5575 Columns: 183
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (91): XSCUGRAD, XSCUGDGSK, XSCUGNDGS, XSCUGFFN, XSCUGFFP, XSCFA2, XSCFA2...
+dbl (92): UNITID, SCUGRAD, SCUGDGSK, SCUGNDGS, SCUGFFN, SCUGFFP, SCFA2, SCFA...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>adm <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/adm2024.csv"</span>) <span class="co">#NM: new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 1956 Columns: 101
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (44): XAPPLCN, XAPPLCNM, XAPPLCNW, XAPPLCNAN, XAPPLCNUN, XADMSSN, XADMSS...
+dbl (57): UNITID, ADMCON1, ADMCON2, ADMCON3, ADMCON4, ADMCON5, ADMCON6, ADMC...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>enroll <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/effy2024.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(EFFYALEV <span class="sc">==</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(UNITID, EFFYALEV, EFYTOTLT, EFYAIANT, EFYBKAAT, EFYNHPIT, EFYWHITT, EFYHISPT, EFYASIAT) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 115026 Columns: 72
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (34): XEYTOTLT, XEYTOTLM, XEYTOTLW, XEFYAIAT, XEFYAIAM, XEFYAIAW, XEFYAS...
+dbl (38): UNITID, EFFYALEV, EFFYLEV, LSTUDY, EFYTOTLT, EFYTOTLM, EFYTOTLW, E...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Let's replace this with the size variable in IPEDS (instsize)</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ipeds_schoolsize &lt;- ipeds_schoolsize |&gt; </span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="co">#     filter(EFALEVEL == 1) |&gt; #Level of student (1 == all students total)</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co">#     select(UNITID, EFTOTLT) |&gt; #Grand total</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="co">#     mutate(size = case_when(</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="co">#       EFTOTLT &lt;= 3000 ~ 0,  #small</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="co">#       EFTOTLT &lt;= 10000 ~ 1,  #medium</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="co">#       EFTOTLT &gt; 10000 ~ 2, #large</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co">#       TRUE ~ NA_real_))</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>carnegie <span class="ot">&lt;-</span> carnegie <span class="sc">|&gt;</span> </span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(unitid, hsi)</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="co">#NM: Merged new files</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> ipeds24 <span class="sc">%&gt;%</span> </span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(carnegie, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"UNITID"</span> <span class="ot">=</span> <span class="st">"unitid"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ipeds_cost, <span class="at">by =</span> <span class="st">"UNITID"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">#left_join(ipeds_schoolsize, by = "UNITID") %&gt;% #NM:New</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ic2024, <span class="at">by =</span> <span class="st">"UNITID"</span> ) <span class="sc">%&gt;%</span> <span class="co">#NM:New</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(sfa, <span class="at">by =</span> <span class="st">"UNITID"</span>) <span class="sc">%&gt;%</span> <span class="co">#NM:New</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(adm, <span class="at">by =</span> <span class="st">"UNITID"</span>) <span class="sc">%&gt;%</span>  <span class="co">#NM:New</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(enroll, <span class="at">by =</span> <span class="st">"UNITID"</span>)</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a><span class="co"># select variables and create a dataset for analysis</span></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> </span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_all</span>(tolower) <span class="sc">|&gt;</span> <span class="co">#converts all column names in a data frame to lowercase</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(unitid, instnm, city, stabbr, fips, countycd, countynm, cbsa, cbsatype, csa, obereg,</span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>           locale, zip, stabbr, longitud, latitude, </span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>           control, iclevel, instcat, deggrant, instsize,</span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>           carnegieic, carnegiesaec, carnegiealf, carnegieapm, carnegiersch,</span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>           hbcu, hsi, tribal,</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>           room, relaffil, distnced, athassoc,</span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>           admssn, applcn, openadmp, loan_a,</span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>           efytotlt, efyaiant, efybkaat, efynhpit, efywhitt, efyhispt, efyasiat)</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a><span class="co"># assign to "data"</span></span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> </span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(fips <span class="sc">&lt;=</span> <span class="dv">56</span>) <span class="sc">|&gt;</span>                                  <span class="co"># Keep only 50 states and DC</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cbsa <span class="sc">!=</span> <span class="sc">-</span><span class="dv">2</span>) <span class="sc">|&gt;</span>                                 <span class="co"># Remove colleges not located in CBSAs </span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(control), control <span class="sc">!=</span> <span class="dv">3</span>) <span class="sc">|&gt;</span>              <span class="co"># 3: private for-profit</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(iclevel), iclevel <span class="sc">!=</span> <span class="dv">3</span>) <span class="sc">|&gt;</span>              <span class="co"># 3: less than 2 years</span></span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(carnegiealf), carnegiealf <span class="sc">!=</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span>     <span class="co"># 6: graduate-focused</span></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(instcat <span class="sc">&gt;=</span> <span class="dv">2</span> <span class="sc">&amp;</span> instcat <span class="sc">&lt;=</span> <span class="dv">4</span>)                 <span class="co"># 1: degree-granting, graduate with no undergraduate degrees</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>                                                        <span class="co"># 5-6: non-degree-granting</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter(carnegieapm == 1)                              # Keep only colleges classified as "mixed" undergraduate programs</span></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [Data Cleaning]</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> </span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">public =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>            control <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: private</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>            control <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: public </span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),   </span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">twoyear =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>            iclevel <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: 4 or more</span></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>            iclevel <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: at least 2 &amp; less than 4</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),     </span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">msi =</span> <span class="fu">case_when</span>(                                 <span class="co"># 0: non of them</span></span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>            hbcu <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                                <span class="co"># 1: HBCU</span></span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>            hsi <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">2</span>,                                 <span class="co"># 2: HSI</span></span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>            tribal <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">3</span>,                              <span class="co"># 3: TCU</span></span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>            hbcu <span class="sc">==</span> <span class="dv">2</span> <span class="sc">&amp;</span> hsi <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> tribal <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>            <span class="fu">is.na</span>(hbcu) <span class="sc">|</span> <span class="fu">is.na</span>(hsi) <span class="sc">|</span> <span class="fu">is.na</span>(tribal) <span class="sc">~</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">rurality =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>            locale <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">31</span>,<span class="dv">32</span>,<span class="dv">33</span>,<span class="dv">41</span>,<span class="dv">42</span>,<span class="dv">43</span>) <span class="sc">~</span> <span class="dv">0</span>,         <span class="co"># 0: Town + Rural</span></span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>            locale <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">21</span>,<span class="dv">22</span>,<span class="dv">23</span>) <span class="sc">~</span> <span class="dv">1</span>,                  <span class="co"># 1: Suburb</span></span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>            locale <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11</span>,<span class="dv">12</span>,<span class="dv">13</span>) <span class="sc">~</span> <span class="dv">2</span>,                  <span class="co"># 2: City</span></span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),        </span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a>         <span class="at">size =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: &lt; 1,000</span></span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: 1,000 - 4,999</span></span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">2</span>,                             <span class="co"># 1: 5,000 - 9,999</span></span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="dv">3</span>,                             <span class="co"># 2: 10,000 - 19,999</span></span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="dv">4</span>,                             <span class="co"># 3: &gt;=20,000</span></span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>         <span class="at">housing =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a>           room <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                                 <span class="co"># 0: no housing</span></span>
+<span id="cb41-41"><a href="#cb41-41" aria-hidden="true" tabindex="-1"></a>           room <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                                 <span class="co"># 1: offer housing</span></span>
+<span id="cb41-42"><a href="#cb41-42" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span><span class="cn">NA_real_</span>),    </span>
+<span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>         <span class="at">religious =</span> <span class="fu">ifelse</span>(relaffil <span class="sc">==</span> <span class="sc">-</span><span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>),        <span class="co"># 0: no religious</span></span>
+<span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>                                                          <span class="co"># 1: any religious</span></span>
+<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>        <span class="co">#We need to remove colleges that offer completely distance education from our sample</span></span>
+<span id="cb41-48"><a href="#cb41-48" aria-hidden="true" tabindex="-1"></a>          <span class="at">distance =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-49"><a href="#cb41-49" aria-hidden="true" tabindex="-1"></a>           distnced <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: not completely distanced learning</span></span>
+<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a>           distnced <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: completely distanced learning</span></span>
+<span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span><span class="cn">NA_real_</span>),    </span>
+<span id="cb41-52"><a href="#cb41-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-53"><a href="#cb41-53" aria-hidden="true" tabindex="-1"></a>         <span class="at">sports =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-54"><a href="#cb41-54" aria-hidden="true" tabindex="-1"></a>           athassoc <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: not a member</span></span>
+<span id="cb41-55"><a href="#cb41-55" aria-hidden="true" tabindex="-1"></a>           athassoc <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: member of National Athletic Association</span></span>
+<span id="cb41-56"><a href="#cb41-56" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span><span class="cn">NA_real_</span>),    </span>
+<span id="cb41-57"><a href="#cb41-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-58"><a href="#cb41-58" aria-hidden="true" tabindex="-1"></a>         <span class="at">loan =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-59"><a href="#cb41-59" aria-hidden="true" tabindex="-1"></a>           <span class="fu">is.na</span>(loan_a) <span class="sc">~</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb41-60"><a href="#cb41-60" aria-hidden="true" tabindex="-1"></a>           loan_a <span class="sc">&lt;=</span> <span class="fu">quantile</span>(loan_a, <span class="fl">0.25</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="dv">0</span>,     <span class="co"># 0: lowest</span></span>
+<span id="cb41-61"><a href="#cb41-61" aria-hidden="true" tabindex="-1"></a>           loan_a <span class="sc">&lt;=</span> <span class="fu">quantile</span>(loan_a, <span class="fl">0.50</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="dv">1</span>,     <span class="co"># 1: low </span></span>
+<span id="cb41-62"><a href="#cb41-62" aria-hidden="true" tabindex="-1"></a>           loan_a <span class="sc">&lt;=</span> <span class="fu">quantile</span>(loan_a, <span class="fl">0.75</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="dv">2</span>,     <span class="co"># 2: high</span></span>
+<span id="cb41-63"><a href="#cb41-63" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">3</span>),                                              <span class="co"># 3: highest</span></span>
+<span id="cb41-64"><a href="#cb41-64" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb41-65"><a href="#cb41-65" aria-hidden="true" tabindex="-1"></a><span class="co"># Q. Since MLCA requires variables starting at 0, is it appropriate to divide loan amount into quartiles (0–3)?</span></span>
+<span id="cb41-66"><a href="#cb41-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-67"><a href="#cb41-67" aria-hidden="true" tabindex="-1"></a>         <span class="at">asc =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-68"><a href="#cb41-68" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                         <span class="co"># 0: Higher Access, Lower Earnings </span></span>
+<span id="cb41-69"><a href="#cb41-69" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="dv">1</span>,                         <span class="co"># 1: Higher Access, Medium Earnings</span></span>
+<span id="cb41-70"><a href="#cb41-70" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">6</span> <span class="sc">~</span> <span class="dv">2</span>,                         <span class="co"># 2: Higher Access, Higher Earnings</span></span>
+<span id="cb41-71"><a href="#cb41-71" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">3</span>,                         <span class="co"># 3: Lower Access, Lower Earnings</span></span>
+<span id="cb41-72"><a href="#cb41-72" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">4</span>,                         <span class="co"># 4: Lower Access, Medium Earnings</span></span>
+<span id="cb41-73"><a href="#cb41-73" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="dv">5</span>,                         <span class="co"># 5: Lower Access, Higher Earnings</span></span>
+<span id="cb41-74"><a href="#cb41-74" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb41-75"><a href="#cb41-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-76"><a href="#cb41-76" aria-hidden="true" tabindex="-1"></a>         <span class="at">awardlev =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-77"><a href="#cb41-77" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>) <span class="sc">~</span> <span class="dv">0</span>,                  <span class="co"># 0: associate - baccalaureate</span></span>
+<span id="cb41-78"><a href="#cb41-78" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="dv">1</span>,                           <span class="co"># 1: undergrad / grad-Master's</span></span>
+<span id="cb41-79"><a href="#cb41-79" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="dv">2</span>,                           <span class="co"># 2: undergrad / grad-Doctorate </span></span>
+<span id="cb41-80"><a href="#cb41-80" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb41-81"><a href="#cb41-81" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-82"><a href="#cb41-82" aria-hidden="true" tabindex="-1"></a>         <span class="at">focus =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-83"><a href="#cb41-83" aria-hidden="true" tabindex="-1"></a>            carnegieapm <span class="sc">==</span>  <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co">#NM- 0: Mixed</span></span>
+<span id="cb41-84"><a href="#cb41-84" aria-hidden="true" tabindex="-1"></a>            carnegieapm <span class="sc">==</span>  <span class="dv">2</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co">#NM- 1: Professions</span></span>
+<span id="cb41-85"><a href="#cb41-85" aria-hidden="true" tabindex="-1"></a>            carnegieapm <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">12</span>) <span class="sc">~</span> <span class="dv">2</span>,  <span class="co">#NM- 2: Special Focus</span></span>
+<span id="cb41-86"><a href="#cb41-86" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb41-87"><a href="#cb41-87" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb41-88"><a href="#cb41-88" aria-hidden="true" tabindex="-1"></a>        <span class="at">research =</span> <span class="fu">case_when</span>( </span>
+<span id="cb41-89"><a href="#cb41-89" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="sc">-</span><span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                   <span class="co">#NM- 0: No research designation</span></span>
+<span id="cb41-90"><a href="#cb41-90" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">1</span>,                    <span class="co">#NM- 1: Research Colleges and Universities </span></span>
+<span id="cb41-91"><a href="#cb41-91" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">2</span>,                    <span class="co">#NM- 2: High Spending</span></span>
+<span id="cb41-92"><a href="#cb41-92" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">3</span>,                    <span class="co">#NM- 3: Very High Spending  </span></span>
+<span id="cb41-93"><a href="#cb41-93" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),          </span>
+<span id="cb41-94"><a href="#cb41-94" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb41-95"><a href="#cb41-95" aria-hidden="true" tabindex="-1"></a>         <span class="at">cbsa =</span> <span class="fu">as.character</span>(cbsa),</span>
+<span id="cb41-96"><a href="#cb41-96" aria-hidden="true" tabindex="-1"></a>         <span class="at">metropolitan =</span> <span class="fu">if_else</span>(</span>
+<span id="cb41-97"><a href="#cb41-97" aria-hidden="true" tabindex="-1"></a>           cbsatype <span class="sc">==</span> <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb41-98"><a href="#cb41-98" aria-hidden="true" tabindex="-1"></a>       )</span>
+<span id="cb41-99"><a href="#cb41-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-100"><a href="#cb41-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-101"><a href="#cb41-101" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
+<span id="cb41-102"><a href="#cb41-102" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(distance <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span>                       <span class="co"># remove observations with only distance education</span></span>
+<span id="cb41-103"><a href="#cb41-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cbsa) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-104"><a href="#cb41-104" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">inst_num =</span> <span class="fu">n_distinct</span>(unitid),</span>
+<span id="cb41-105"><a href="#cb41-105" aria-hidden="true" tabindex="-1"></a>         <span class="at">inst_num =</span> <span class="fu">as.numeric</span>(inst_num)) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-106"><a href="#cb41-106" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb41-107"><a href="#cb41-107" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">admrate =</span> admssn<span class="sc">/</span>applcn) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-108"><a href="#cb41-108" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">admrate =</span> <span class="fu">if_else</span>(openadmp <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">1</span>, admrate)) <span class="sc">|&gt;</span> </span>
+<span id="cb41-109"><a href="#cb41-109" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">selectivity =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-110"><a href="#cb41-110" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                        <span class="co">#0: open </span></span>
+<span id="cb41-111"><a href="#cb41-111" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">&gt;=</span> <span class="fl">0.75</span> <span class="sc">&amp;</span> admrate <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,       <span class="co">#1: less selective</span></span>
+<span id="cb41-112"><a href="#cb41-112" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">&gt;=</span> <span class="fl">0.40</span> <span class="sc">&amp;</span> admrate <span class="sc">&lt;</span> <span class="fl">0.75</span> <span class="sc">~</span> <span class="dv">2</span>,    <span class="co">#2: selective</span></span>
+<span id="cb41-113"><a href="#cb41-113" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">&lt;</span> <span class="fl">0.40</span> <span class="sc">~</span> <span class="dv">3</span>,                      <span class="co">#3: more selective</span></span>
+<span id="cb41-114"><a href="#cb41-114" aria-hidden="true" tabindex="-1"></a>         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb41-115"><a href="#cb41-115" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_black =</span> efybkaat<span class="sc">/</span>efytotlt,              <span class="co">#Percent of degree-seeking undergrads by race/ethnicity</span></span>
+<span id="cb41-116"><a href="#cb41-116" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_white =</span> efywhitt<span class="sc">/</span>efytotlt,</span>
+<span id="cb41-117"><a href="#cb41-117" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_hisp =</span> efyhispt<span class="sc">/</span>efytotlt,</span>
+<span id="cb41-118"><a href="#cb41-118" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_nhpi =</span> (efyaiant <span class="sc">+</span> efynhpit)<span class="sc">/</span>efytotlt,</span>
+<span id="cb41-119"><a href="#cb41-119" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_asian =</span> efyasiat<span class="sc">/</span>efytotlt</span>
+<span id="cb41-120"><a href="#cb41-120" aria-hidden="true" tabindex="-1"></a>         ) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-121"><a href="#cb41-121" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">region =</span> obereg) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-122"><a href="#cb41-122" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cbsa =</span> <span class="fu">as.character</span>(cbsa))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [Census/ACS Data]</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>land_area <span class="ot">&lt;-</span> <span class="fu">core_based_statistical_areas</span>(</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cb =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2024</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GEOID, ALAND)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  |                                                                            
+  |                                                                      |   0%
+  |                                                                            
+  |                                                                      |   1%
+  |                                                                            
+  |=                                                                     |   1%
+  |                                                                            
+  |=                                                                     |   2%
+  |                                                                            
+  |==                                                                    |   2%
+  |                                                                            
+  |==                                                                    |   3%
+  |                                                                            
+  |===                                                                   |   4%
+  |                                                                            
+  |===                                                                   |   5%
+  |                                                                            
+  |====                                                                  |   5%
+  |                                                                            
+  |====                                                                  |   6%
+  |                                                                            
+  |=====                                                                 |   7%
+  |                                                                            
+  |======                                                                |   8%
+  |                                                                            
+  |======                                                                |   9%
+  |                                                                            
+  |=======                                                               |  10%
+  |                                                                            
+  |========                                                              |  11%
+  |                                                                            
+  |========                                                              |  12%
+  |                                                                            
+  |=========                                                             |  12%
+  |                                                                            
+  |=========                                                             |  13%
+  |                                                                            
+  |==========                                                            |  14%
+  |                                                                            
+  |===========                                                           |  16%
+  |                                                                            
+  |==============                                                        |  20%
+  |                                                                            
+  |===============                                                       |  21%
+  |                                                                            
+  |=================                                                     |  24%
+  |                                                                            
+  |=================                                                     |  25%
+  |                                                                            
+  |==================                                                    |  26%
+  |                                                                            
+  |===================                                                   |  27%
+  |                                                                            
+  |====================                                                  |  28%
+  |                                                                            
+  |====================                                                  |  29%
+  |                                                                            
+  |======================                                                |  32%
+  |                                                                            
+  |=======================                                               |  33%
+  |                                                                            
+  |=========================                                             |  36%
+  |                                                                            
+  |===========================                                           |  39%
+  |                                                                            
+  |=============================                                         |  41%
+  |                                                                            
+  |===============================                                       |  44%
+  |                                                                            
+  |================================                                      |  46%
+  |                                                                            
+  |=================================                                     |  47%
+  |                                                                            
+  |===================================                                   |  50%
+  |                                                                            
+  |======================================                                |  54%
+  |                                                                            
+  |=======================================                               |  55%
+  |                                                                            
+  |=========================================                             |  59%
+  |                                                                            
+  |===========================================                           |  61%
+  |                                                                            
+  |=============================================                         |  64%
+  |                                                                            
+  |===============================================                       |  67%
+  |                                                                            
+  |=================================================                     |  69%
+  |                                                                            
+  |==================================================                    |  72%
+  |                                                                            
+  |====================================================                  |  75%
+  |                                                                            
+  |======================================================                |  78%
+  |                                                                            
+  |========================================================              |  80%
+  |                                                                            
+  |===========================================================           |  84%
+  |                                                                            
+  |============================================================          |  85%
+  |                                                                            
+  |============================================================          |  86%
+  |                                                                            
+  |==============================================================        |  89%
+  |                                                                            
+  |================================================================      |  92%
+  |                                                                            
+  |==================================================================    |  94%
+  |                                                                            
+  |====================================================================  |  97%
+  |                                                                            
+  |===================================================================== |  98%
+  |                                                                            
+  |======================================================================| 100%</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>census <span class="ot">&lt;-</span> <span class="fu">get_acs</span>(<span class="at">geography =</span> <span class="st">"cbsa"</span>,</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">year =</span> <span class="dv">2024</span>,</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">variables =</span> <span class="fu">c</span>(<span class="st">"B01003_001E"</span>, <span class="co"># Total population</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B19013_001E"</span>, <span class="co"># Median Household Income in the Past 12 Months</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DP03_0119PE"</span>, <span class="co"># % families below poverty line</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DP03_0005PE"</span>, <span class="co"># % unemployed over 16 years old</span></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DP02_0068PE"</span>, <span class="co"># % bach or higher</span></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_003E"</span>, <span class="co"># total white (alone, not hispanic)</span></span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_004E"</span>, <span class="co"># total black (alone, not hispanic)</span></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_012E"</span>, <span class="co"># total hispanic</span></span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_006E"</span>, <span class="co"># total asian (alone, not hispanic)</span></span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_001E"</span>  <span class="co"># total by ethnicity</span></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>                  ),</span>
+<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>                  <span class="at">output =</span> <span class="st">"wide"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(land_area)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Getting data from the 2020-2024 5-year ACS</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Fetching data by table type ("B/C", "S", "DP") and combining the result.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(GEOID)`</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>census <span class="ot">&lt;-</span> census <span class="sc">|&gt;</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">perc_white =</span> B03002_003E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_black =</span> B03002_004E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_hisp =</span> B03002_012E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_asian =</span> B03002_006E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">tot_pop =</span> B01003_001E<span class="sc">/</span><span class="dv">100000</span>,</span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">pop_density =</span> B01003_001E<span class="sc">/</span>(ALAND<span class="sc">/</span><span class="fl">2589988.10</span>)) <span class="sc">|&gt;</span> <span class="co">#population per sq mile</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">perc_ba =</span> DP02_0068PE,</span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">med_income =</span> B19013_001E,</span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_pov =</span> DP03_0119PE,</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_unemployed =</span> DP03_0005PE) <span class="sc">|&gt;</span> </span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(tot_pop, pop_density, perc_ba,</span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>         med_income, perc_pov, perc_unemployed,</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>         perc_white, perc_black, perc_hisp, perc_asian,</span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>         GEOID) <span class="sc">|&gt;</span> </span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GEOID =</span> <span class="fu">as.character</span>(GEOID))</span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(census, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"cbsa"</span> <span class="ot">=</span> <span class="st">"GEOID"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>data_mlca <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> </span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(unitid, instnm, stabbr, cbsa, metropolitan, region,</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>         public, twoyear, size, msi, rurality, housing,</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>         awardlev, research, </span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>         religious, distance, sports, focus,</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>         inst_num, selectivity,</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>         tot_pop, pop_density, perc_ba, med_income, perc_pov, perc_unemployed,</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>         perc_white, perc_black, perc_hisp, perc_asian,</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>         i_perc_white, i_perc_black, i_perc_hisp, i_perc_asian) <span class="sc">%&gt;%</span> </span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a><span class="fu">describe</span>(data_mlca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                vars    n      mean       sd    median   trimmed      mad
+unitid             1 2665 208156.80 93675.73 190619.00 188848.29 51140.80
+instnm*            2 2665   1323.65   765.85   1322.00   1323.32   984.45
+stabbr*            3 2665     26.28    14.12     28.00     26.45    16.31
+cbsa*              4 2665    371.03   201.97    396.00    373.83   252.04
+metropolitan       5 2665      0.17     0.38      0.00      0.09     0.00
+region             6 2665      4.30     2.10      4.00      4.21     2.97
+public             7 2665      0.53     0.50      1.00      0.54     0.00
+twoyear            8 2665      0.28     0.45      0.00      0.22     0.00
+size               9 2665      1.41     1.17      1.00      1.30     1.48
+msi               10 2637      0.41     0.80      0.00      0.26     0.00
+rurality          11 2665      1.19     0.85      1.00      1.24     1.48
+housing           12 2663      0.66     0.47      1.00      0.70     0.00
+awardlev          13 2637      0.54     0.80      0.00      0.43     0.00
+research          14 2665      0.37     0.86      0.00      0.12     0.00
+religious         15 2665      0.26     0.44      0.00      0.20     0.00
+distance          16 2665      0.00     0.00      0.00      0.00     0.00
+sports            17 2665      0.67     0.47      1.00      0.72     0.00
+focus             18 2637      0.91     0.78      1.00      0.88     1.48
+inst_num          19 2665     26.99    47.97      8.00     14.17    10.38
+selectivity       20 2599      0.90     0.93      1.00      0.79     1.48
+tot_pop           21 2665     33.59    53.90      8.34     19.72    11.42
+pop_density       22 2665    708.28   893.95    343.34    498.89   372.83
+perc_ba           23 2665     35.07     9.47     36.00     35.07     9.64
+med_income        24 2665  80981.39 18360.68  78378.00  79947.68 18545.84
+perc_pov          25 2665      8.89     2.94      8.50      8.58     2.22
+perc_unemployed   26 2665      3.23     0.78      3.20      3.23     0.74
+perc_white        27 2665     61.56    18.85     63.64     62.28    21.40
+perc_black        28 2665     11.76    10.58      7.76     10.08     8.97
+perc_hisp         29 2665     15.93    14.30     10.94     13.42     9.70
+perc_asian        30 2665      5.20     5.83      2.98      4.16     3.00
+i_perc_white      31 2663      0.52     0.24      0.54      0.53     0.26
+i_perc_black      32 2663      0.15     0.18      0.09      0.11     0.08
+i_perc_hisp       33 2663      0.16     0.16      0.11      0.13     0.09
+i_perc_asian      34 2663      0.05     0.06      0.02      0.03     0.02
+                      min       max     range  skew kurtosis      se
+unitid          100654.00 500041.00 399387.00  1.88     2.95 1814.59
+instnm*              1.00   2650.00   2649.00  0.00    -1.20   14.84
+stabbr*              1.00     51.00     50.00 -0.14    -1.22    0.27
+cbsa*                1.00    723.00    722.00 -0.18    -1.18    3.91
+metropolitan         0.00      1.00      1.00  1.74     1.02    0.01
+region               0.00      8.00      8.00  0.28    -0.89    0.04
+public               0.00      1.00      1.00 -0.11    -1.99    0.01
+twoyear              0.00      1.00      1.00  0.99    -1.02    0.01
+size                 0.00      4.00      4.00  0.72    -0.30    0.02
+msi                  0.00      3.00      3.00  1.52     0.50    0.02
+rurality             0.00      2.00      2.00 -0.38    -1.51    0.02
+housing              0.00      1.00      1.00 -0.66    -1.56    0.01
+awardlev             0.00      2.00      2.00  1.02    -0.69    0.02
+research             0.00      3.00      3.00  2.26     3.69    0.02
+religious            0.00      1.00      1.00  1.12    -0.75    0.01
+distance             0.00      0.00      0.00   NaN      NaN    0.00
+sports               0.00      1.00      1.00 -0.73    -1.46    0.01
+focus                0.00      2.00      2.00  0.17    -1.34    0.02
+inst_num             1.00    188.00    187.00  2.65     6.04    0.93
+selectivity          0.00      3.00      3.00  0.66    -0.63    0.02
+tot_pop              0.13    197.99    197.86  2.11     3.51    1.04
+pop_density          2.61   3224.72   3222.11  1.81     2.27   17.32
+perc_ba             11.40     69.70     58.30 -0.05    -0.52    0.18
+med_income       31354.00 162111.00 130757.00  0.74     1.21  355.66
+perc_pov             2.80     30.50     27.70  1.72     6.12    0.06
+perc_unemployed      0.40      6.60      6.20  0.15     0.03    0.02
+perc_white           3.58     94.47     90.89 -0.29    -0.77    0.37
+perc_black           0.05     74.45     74.40  1.58     3.16    0.20
+perc_hisp            0.48     95.00     94.52  1.66     3.14    0.28
+perc_asian           0.01     41.61     41.60  2.80    11.24    0.11
+i_perc_white         0.00      1.00      1.00 -0.29    -0.63    0.00
+i_perc_black         0.00      1.00      1.00  2.47     6.45    0.00
+i_perc_hisp          0.00      1.00      1.00  1.87     3.80    0.00
+i_perc_asian         0.00      0.73      0.73  2.93    11.60    0.00</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data_mlca <span class="sc">%&gt;%</span> </span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cbsa) <span class="sc">%&gt;%</span> </span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">cbsa_id =</span> <span class="fu">cur_group_id</span>()</span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a><span class="co"># data_mlca %&gt;% anti_join(x, by = "unitid") %&gt;% View()</span></span>
+<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>data_mlca <span class="ot">&lt;-</span> x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables:</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="co">#   Y-        Columns with indicator variables for level 1 class membership (predictors of institution-level classes)</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>                <span class="co"># public, two_year, size, msi, award level, research, selectivity </span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>              </span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   iT-       Number of lower-level latent classes</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   id_high-  Name of column with higher-level id</span></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>                <span class="co"># CBSA</span></span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   iM-       Number of higher-level latent classes</span></span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   Z-        Columns with lower-level covariates (predictors of level 1 class membership)</span></span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>                <span class="co"># rurality, housing, religious, sports</span></span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   Zh-       Columns with higher-level covariates (predictors of level 2 class membership)</span></span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Variables- region, number of IHEs, total population, percent bachelors degree, median income, percent poverty, percent white, percent black, percent hispanic, percent asian</span></span>
+<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Level-1 indicators: Observed institution characteristics used to define the latent institution classes</span></span>
+<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Level-1 covariates: Institution-level predictors that explain class membership</span></span>
+<span id="cb52-21"><a href="#cb52-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Level-2 covariates: CBSA-level regional variables that explain differences in institution class probabilities across regions</span></span>
+<span id="cb52-22"><a href="#cb52-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-23"><a href="#cb52-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-24"><a href="#cb52-24" aria-hidden="true" tabindex="-1"></a><span class="co">#indicators</span></span>
+<span id="cb52-25"><a href="#cb52-25" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"public"</span>, <span class="st">"twoyear"</span>, <span class="st">"size"</span>, <span class="st">"msi"</span>, </span>
+<span id="cb52-26"><a href="#cb52-26" aria-hidden="true" tabindex="-1"></a>       <span class="st">"research"</span>, <span class="st">"selectivity"</span>, <span class="st">"focus"</span>,</span>
+<span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a>       <span class="st">"rurality"</span>, <span class="st">"housing"</span>, <span class="st">"religious"</span>)                </span>
+<span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove the "asc" and "loan" variables due to large number of missing observations</span></span>
+<span id="cb52-29"><a href="#cb52-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"awardlev"</span>, <span class="st">"sports"</span>, <span class="st">"i_perc_white"</span>, <span class="st">"i_perc_black"</span>, <span class="st">"i_perc_hisp"</span>, <span class="st">"i_perc_asian"</span>)       <span class="co">#level-1 covariates</span></span>
+<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove the "loan" variable due to large number of missing observations, include avg net price, avg student aid</span></span>
+<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a>Zh <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"region"</span>, <span class="st">"metropolitan"</span>, <span class="st">"inst_num"</span>, <span class="st">"tot_pop"</span>, <span class="st">"pop_density"</span>, <span class="st">"perc_ba"</span>, <span class="st">"med_income"</span>, <span class="st">"perc_pov"</span>, <span class="st">"perc_unemployed"</span>, <span class="st">"perc_white"</span>, <span class="st">"perc_black"</span>, <span class="st">"perc_hisp"</span>, <span class="st">"perc_asian"</span>)   <span class="co">#level-2 covariates</span></span>
+<span id="cb52-34"><a href="#cb52-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-35"><a href="#cb52-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-36"><a href="#cb52-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Q. Is this specification reasonable? </span></span>
+<span id="cb52-37"><a href="#cb52-37" aria-hidden="true" tabindex="-1"></a><span class="co"># A. We don't want to drop observations with missing values as it may bias our estimates.</span></span>
+<span id="cb52-38"><a href="#cb52-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-39"><a href="#cb52-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-40"><a href="#cb52-40" aria-hidden="true" tabindex="-1"></a><span class="co"># data_mlca &lt;- data |&gt;</span></span>
+<span id="cb52-41"><a href="#cb52-41" aria-hidden="true" tabindex="-1"></a><span class="co">#   tidyr::drop_na(cbsa, all_of(Y), all_of(Z), all_of(Zh)) |&gt;</span></span>
+<span id="cb52-42"><a href="#cb52-42" aria-hidden="true" tabindex="-1"></a><span class="co">#   mutate(across(all_of(Y), ~ {</span></span>
+<span id="cb52-43"><a href="#cb52-43" aria-hidden="true" tabindex="-1"></a><span class="co">#     vals &lt;- sort(unique(.[!is.na(.)]))</span></span>
+<span id="cb52-44"><a href="#cb52-44" aria-hidden="true" tabindex="-1"></a><span class="co">#     match(., vals) - 1</span></span>
+<span id="cb52-45"><a href="#cb52-45" aria-hidden="true" tabindex="-1"></a><span class="co">#   })) |&gt;</span></span>
+<span id="cb52-46"><a href="#cb52-46" aria-hidden="true" tabindex="-1"></a><span class="co">#   mutate(cbsa = as.character(cbsa)) |&gt;</span></span>
+<span id="cb52-47"><a href="#cb52-47" aria-hidden="true" tabindex="-1"></a><span class="co">#   as.data.frame()</span></span>
+<span id="cb52-48"><a href="#cb52-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-49"><a href="#cb52-49" aria-hidden="true" tabindex="-1"></a><span class="co">#keep complete cases for all indicators and covariates used in MLCA</span></span>
+<span id="cb52-50"><a href="#cb52-50" aria-hidden="true" tabindex="-1"></a><span class="co">#recode indicators to consecutive integers starting at 0 as required for MLCA</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [Find the best # of Classes for Level 1]</span></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a><span class="co">#Number of classes at Level 1</span></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>lc_l1 <span class="ot">&lt;-</span> <span class="fu">multiLCA</span>(</span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">data       =</span> data_mlca,</span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y          =</span> <span class="fu">c</span>(<span class="st">"public"</span>, <span class="st">"twoyear"</span>, <span class="st">"size"</span>, <span class="st">"msi"</span>, </span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>       <span class="st">"research"</span>, <span class="st">"selectivity"</span>, <span class="st">"focus"</span>,</span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>       <span class="st">"rurality"</span>, <span class="st">"housing"</span>, <span class="st">"religious"</span>), </span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">iT         =</span> <span class="dv">5</span><span class="sc">:</span><span class="dv">10</span>,               <span class="co"># lower-level classes</span></span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">Z          =</span> Z,                  <span class="co"># lower-level covariates</span></span>
+<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">incomplete =</span> <span class="cn">TRUE</span>,               <span class="co"># Use FIML estimation to handle missing values</span></span>
+<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">extout     =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose    =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataout    =</span> <span class="cn">TRUE</span></span>
+<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitting measurement model...
+Fitting measurement model...
+Fitting measurement model...
+Fitting measurement model...
+Fitting measurement model...
+Fitting measurement model...
+$model_selection
+      BIClow   BIChigh AIC      ICL_BIClow ICL_BIChigh
+iT=5  36346.71 -       35708.71 -          -          
+iT=6  35973.34 -       35206.56 -          -          
+iT=7  35836.9  -       34941.36 -          -          
+iT=8  35775.13 -       34750.82 -          -          
+iT=9  35836.06 -       34682.97 -          -          
+iT=10 35918.2  -       34636.35 -          -          
+
+$optimal
+     
+iT= 8</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>model_selection <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(lc_l1<span class="sc">$</span>model_selection)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">multiLCA</span>(</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">data       =</span> data_mlca,</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y          =</span> <span class="fu">c</span>(<span class="st">"public"</span>, <span class="st">"twoyear"</span>, <span class="st">"size"</span>, <span class="st">"msi"</span>, </span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>       <span class="st">"research"</span>, <span class="st">"selectivity"</span>, <span class="st">"focus"</span>,</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>       <span class="st">"rurality"</span>, <span class="st">"housing"</span>, <span class="st">"religious"</span>), </span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">iT         =</span> <span class="dv">9</span>,               <span class="co"># lower-level classes</span></span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Z          =</span> <span class="fu">c</span>(<span class="st">"awardlev"</span>, <span class="st">"sports"</span>, <span class="st">"i_perc_white"</span>, <span class="st">"i_perc_black"</span>, <span class="st">"i_perc_hisp"</span>, <span class="st">"i_perc_asian"</span>),                  <span class="co"># lower-level covariates</span></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">incomplete =</span> <span class="cn">FALSE</span>,               <span class="co"># Use FIML estimation to handle missing values</span></span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">extout     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose    =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataout    =</span> <span class="cn">TRUE</span></span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitting measurement model...
+Fitting structural model...</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>lc_l2 <span class="ot">&lt;-</span> <span class="fu">multiLCA</span>(</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data_mlca,</span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y              =</span> Y,</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">iT             =</span> <span class="dv">6</span><span class="sc">:</span><span class="dv">12</span>,</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Z              =</span> Z,</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">iM             =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_high        =</span> <span class="fu">c</span>(<span class="st">"cbsa_id"</span>),</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Zh             =</span> Zh,</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">incomplete     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">extout         =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose        =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">sequential     =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">reord          =</span> <span class="cn">FALSE</span></span>
+<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+$step1
+      BIClow   BIChigh  AIC      ICL_BIClow ICL_BIChigh
+iT=6  35973.34 35806.81 35206.56 -          -          
+iT=7  35836.9  35642.41 34941.36 -          -          
+iT=8  35775.13 35552.67 34750.82 -          -          
+iT=9  35784.99 35534.56 34631.9  -          -          
+iT=10 35936.1  35657.71 34654.25 -          -          
+iT=11 35998.65 35692.29 34588.02 -          -          
+iT=12 35958.07 35623.75 34418.68 -          -          
+
+$step2
+         BIClow   BIChigh  AIC      ICL_BIClow ICL_BIChigh
+iT*,iM=2 35661.92 35429.3  34590.78 37030.83   35949.41   
+iT*,iM=3 35453.7  35210.9  34335.74 36599.25   35917.68   
+iT*,iM=4 35457.07 35204.1  34292.28 36584.77   35975.43   
+iT*,iM=5 35471.79 35208.66 34260.18 36599.9    36067.5    
+
+$step3
+          BIClow   BIChigh  AIC      ICL_BIClow ICL_BIChigh
+iT=6,iM*  35672.37 35482.96 34800.24 36533.66   36324.36   
+iT=7,iM*  35561.82 35340.63 34543.36 36634.05   36166.1    
+iT=8,iM*  35457.07 35204.1  34292.28 36584.77   35975.43   
+iT=9,iM*  35332.18 35047.43 34021.06 36564.4    35659.72   
+iT=10,iM* 35442.56 35126.04 33985.11 36665.33   35898.73   
+iT=11,iM* 35846.74 35498.43 34242.96 37646.09   36081.77   
+iT=12,iM* 35575.68 35195.59 33825.57 37103.29   35975.49   
+
+$optimal
+     
+iT= 9
+iM= 4</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>lc_l2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+CALL:
+multiLCA(data = data_mlca, Y = Y, iT = 6:12, id_high = c("cbsa_id"), 
+    iM = 2:5, Z = Z, Zh = Zh, incomplete = FALSE, extout = TRUE, 
+    sequential = TRUE, reord = FALSE, verbose = TRUE)
+
+SPECIFICATION:
+                    
+ Multilevel LC model
+
+MISSING VALUES ON THE INDICATORS:
+     
+ None
+
+FINAL SAMPLE SIZE:
+     
+ 2574
+
+ESTIMATION DETAILS:
+
+ EMiter  LLfirst    LLlast
+    647 -17105.4 -16786.53
+
+---------------------------
+
+GROUP PROPORTIONS:
+            
+P(G1) 0.0344
+P(G2) 0.5033
+P(G3) 0.3775
+P(G4) 0.0848
+
+CLASS PROPORTIONS:
+            G1     G2     G3     G4
+P(C1|G) 0.0503 0.0131 0.0602 0.0000
+P(C2|G) 0.3255 0.0000 0.1554 0.0763
+P(C3|G) 0.2108 0.0000 0.2393 0.1135
+P(C4|G) 0.2326 0.0000 0.0042 0.5001
+P(C5|G) 0.1332 0.0000 0.1166 0.2054
+P(C6|G) 0.0448 0.2126 0.1104 0.0485
+P(C7|G) 0.0000 0.0000 0.2115 0.0000
+P(C8|G) 0.0028 0.5076 0.0475 0.0562
+P(C9|G) 0.0000 0.2667 0.0549 0.0000
+
+RESPONSE PROBABILITIES:
+
+                       C1     C2     C3     C4     C5     C6     C7     C8
+P(public|C)        0.1713 0.0272 0.0000 0.9925 0.7514 0.9891 0.9982 1.0000
+P(twoyear|C)       0.0000 0.1997 0.0000 0.6534 0.0000 0.0000 0.7583 0.8188
+P(size.0|C)        0.0772 0.8769 0.1262 0.0033 0.0000 0.0615 0.0000 0.0948
+P(size.1|C)        0.9108 0.0961 0.7055 0.0894 0.0000 0.3555 0.3766 0.7669
+P(size.2|C)        0.0000 0.0213 0.1480 0.3626 0.1191 0.3698 0.4057 0.1361
+P(size.3|C)        0.0121 0.0057 0.0155 0.3732 0.3599 0.2004 0.1820 0.0022
+P(size.4|C)        0.0000 0.0000 0.0048 0.1716 0.5210 0.0128 0.0357 0.0000
+P(msi.0|C)         0.9399 0.8507 0.7958 0.1654 0.7469 0.7770 0.9246 0.8343
+P(msi.1|C)         0.0601 0.0345 0.0423 0.0043 0.0204 0.1069 0.0268 0.0033
+P(msi.2|C)         0.0000 0.1093 0.1619 0.8303 0.2327 0.1057 0.0485 0.1370
+P(msi.3|C)         0.0000 0.0055 0.0000 0.0000 0.0000 0.0105 0.0000 0.0254
+P(research.0|C)    0.5203 1.0000 0.9185 1.0000 0.0000 0.6179 1.0000 1.0000
+P(research.1|C)    0.4551 0.0000 0.0412 0.0000 0.1046 0.2644 0.0000 0.0000
+P(research.2|C)    0.0148 0.0000 0.0404 0.0000 0.2498 0.1073 0.0000 0.0000
+P(research.3|C)    0.0099 0.0000 0.0000 0.0000 0.6456 0.0103 0.0000 0.0000
+P(selectivity.0|C) 0.0014 0.4940 0.0395 0.9820 0.0000 0.1023 0.9899 0.9774
+P(selectivity.1|C) 0.2045 0.2346 0.5645 0.0106 0.4557 0.7072 0.0055 0.0088
+P(selectivity.2|C) 0.2565 0.2009 0.3844 0.0074 0.3433 0.1885 0.0046 0.0094
+P(selectivity.3|C) 0.5377 0.0705 0.0116 0.0000 0.2010 0.0020 0.0000 0.0044
+P(focus.0|C)       0.1681 0.0552 0.1875 0.8407 0.7392 0.2870 0.4495 0.5010
+P(focus.1|C)       0.0247 0.1434 0.5842 0.1490 0.2208 0.6021 0.4585 0.4220
+P(focus.2|C)       0.8072 0.8014 0.2283 0.0103 0.0400 0.1109 0.0920 0.0770
+P(rurality.0|C)    0.1971 0.0751 0.0259 0.0708 0.0547 0.4670 0.0484 0.9168
+P(rurality.1|C)    0.2889 0.3052 0.3811 0.3634 0.1949 0.1851 0.3801 0.0098
+P(rurality.2|C)    0.5140 0.6197 0.5930 0.5658 0.7503 0.3479 0.5715 0.0734
+P(housing|C)       1.0000 0.5383 0.9977 0.0890 0.9867 0.9417 0.1540 0.4302
+P(religious|C)     0.0671 0.3650 0.7070 0.0000 0.0744 0.0000 0.0000 0.0000
+                       C9
+P(public|C)        0.0000
+P(twoyear|C)       0.0000
+P(size.0|C)        0.3469
+P(size.1|C)        0.6241
+P(size.2|C)        0.0061
+P(size.3|C)        0.0097
+P(size.4|C)        0.0133
+P(msi.0|C)         0.9373
+P(msi.1|C)         0.0329
+P(msi.2|C)         0.0298
+P(msi.3|C)         0.0000
+P(research.0|C)    0.9995
+P(research.1|C)    0.0000
+P(research.2|C)    0.0005
+P(research.3|C)    0.0000
+P(selectivity.0|C) 0.0847
+P(selectivity.1|C) 0.4141
+P(selectivity.2|C) 0.4456
+P(selectivity.3|C) 0.0557
+P(focus.0|C)       0.1342
+P(focus.1|C)       0.6312
+P(focus.2|C)       0.2346
+P(rurality.0|C)    0.8524
+P(rurality.1|C)    0.0270
+P(rurality.2|C)    0.1206
+P(housing|C)       0.9872
+P(religious|C)     0.8193
+
+---------------------------
+
+MODEL AND CLASSIFICATION STATISTICS:
+                     
+R2entrlow      0.8883
+R2entrhigh     0.5917
+BIClow     35332.1801
+BIChigh    35047.4333
+ICLBIClow  36564.3999
+ICLBIChigh 35659.7224
+AIC        34021.0596</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lc_l2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                Length Class  Mode     
+vOmega               4 -none- numeric  
+mPi                 36 -none- numeric  
+mPhi               243 -none- numeric  
+cPMX            380952 -none- numeric  
+cLogPMX         380952 -none- numeric  
+cPX             380952 -none- numeric  
+cLogPX          380952 -none- numeric  
+mSumPX           82368 -none- numeric  
+mPW               2888 -none- numeric  
+mlogPW            2888 -none- numeric  
+mPW_N            82368 -none- numeric  
+mPMsumX          95238 -none- numeric  
+R2entr_low           1 -none- numeric  
+R2entr_high          1 -none- numeric  
+BIClow               1 -none- numeric  
+BIChigh              1 -none- numeric  
+ICL_BIClow           1 -none- numeric  
+ICL_BIChigh          1 -none- numeric  
+AIC                  1 -none- numeric  
+vAlpha               3 -none- numeric  
+mGamma              32 -none- numeric  
+mBeta              189 -none- numeric  
+parvec             224 -none- numeric  
+SEs                224 -none- numeric  
+Varmat           50176 -none- numeric  
+Infomat          50176 -none- numeric  
+iter                 1 -none- numeric  
+eps                  1 -none- numeric  
+LLKSeries          647 -none- numeric  
+vLLK               722 -none- numeric  
+mScore          576576 -none- numeric  
+spec                 1 -none- character
+model_selection      4 -none- list     
+missing_values       1 -none- character
+sample_size          1 -none- numeric  
+call                13 -none- call     </code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(lc_l2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="MLCA_update_files/figure-html/Estimate%20multilevel%20lca-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a> <span class="co">#Predicted lower-level class conditional on institutional characteristics</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="co"># predicted_class &lt;- multinom( "awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian",data = lc_l2)</span></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>data_mlca<span class="sc">$</span>.row_id <span class="ot">&lt;-</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(data_mlca))</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>optimal_model <span class="ot">&lt;-</span> <span class="fu">multiLCA</span>(</span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data_mlca,</span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y              =</span> <span class="fu">c</span>(<span class="st">"public"</span>, <span class="st">"twoyear"</span>, <span class="st">"size"</span>, <span class="st">"msi"</span>,</span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>       <span class="st">"research"</span>, <span class="st">"selectivity"</span>, <span class="st">"focus"</span>,</span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>       <span class="st">"rurality"</span>, <span class="st">"housing"</span>, <span class="st">"religious"</span>),</span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">iT             =</span> <span class="dv">9</span>,</span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Z              = c("awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian"),</span></span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">iM             =</span> <span class="dv">4</span>,</span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_high        =</span> <span class="fu">c</span>(<span class="st">"cbsa_id"</span>),</span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Zh             = c("region", "metropolitan", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian"),</span></span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">incomplete     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">extout         =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose        =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">sequential     =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">reord          =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataout        =</span> <span class="cn">TRUE</span></span>
+<span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitting measurement model...</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>reg_data <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(optimal_model[[<span class="st">"mPW_N"</span>]]) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pred_class2 =</span> <span class="fu">case_when</span>(</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>    G1 <span class="sc">==</span> <span class="fu">pmax</span>(G1, G2, G3, G4) <span class="sc">~</span> <span class="st">"G1"</span>,</span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>    G2 <span class="sc">==</span> <span class="fu">pmax</span>(G1, G2, G3, G4) <span class="sc">~</span> <span class="st">"G2"</span>,</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>    G3 <span class="sc">==</span> <span class="fu">pmax</span>(G1, G2, G3, G4) <span class="sc">~</span> <span class="st">"G3"</span>,</span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>    G4 <span class="sc">==</span> <span class="fu">pmax</span>(G1, G2, G3, G4) <span class="sc">~</span> <span class="st">"G4"</span>),</span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">class_prob =</span> <span class="fu">case_when</span>(</span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>      pred_class2 <span class="sc">==</span> <span class="st">"G1"</span> <span class="sc">~</span> G1,</span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>      pred_class2 <span class="sc">==</span> <span class="st">"G2"</span> <span class="sc">~</span> G2,</span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>      pred_class2 <span class="sc">==</span> <span class="st">"G3"</span> <span class="sc">~</span> G3,</span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>      pred_class2 <span class="sc">==</span> <span class="st">"G4"</span> <span class="sc">~</span> G4,</span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>    )) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cbsa_id, G1, G2, G3, G4, pred_class2, class_prob) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cbsa_id, pred_class2, class_prob) <span class="sc">%&gt;%</span> </span>
+<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(data_mlca, <span class="at">by =</span> <span class="st">"cbsa_id"</span>)</span>
+<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>reg_model <span class="ot">&lt;-</span> <span class="fu">vglm</span>(pred_class2 <span class="sc">~</span> region <span class="sc">+</span> metropolitan <span class="sc">+</span> inst_num <span class="sc">+</span> tot_pop <span class="sc">+</span> pop_density <span class="sc">+</span> perc_ba <span class="sc">+</span> med_income <span class="sc">+</span> perc_pov <span class="sc">+</span> perc_unemployed <span class="sc">+</span> perc_white <span class="sc">+</span> perc_black <span class="sc">+</span> perc_hisp <span class="sc">+</span> perc_asian,</span>
+<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> reg_data,</span>
+<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">multinomial</span>(<span class="at">refLevel =</span> <span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+424 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+488 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+686 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+740 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12
+Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+740 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12
+Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+740 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+741 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+742 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+750 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12
+Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+750 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+751 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+752 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+775 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+811 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkwz(wz, M = M, trace = trace, wzepsilon = control$wzepsilon):
+866 diagonal elements of the working weights variable 'wz' have been replaced
+by 1.819e-12</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(reg_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+vglm(formula = pred_class2 ~ region + metropolitan + inst_num + 
+    tot_pop + pop_density + perc_ba + med_income + perc_pov + 
+    perc_unemployed + perc_white + perc_black + perc_hisp + perc_asian, 
+    family = multinomial(refLevel = 1), data = reg_data)
+
+Coefficients: 
+                    Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept):1      2.307e+01  1.739e+01   1.327 0.184591    
+(Intercept):2      1.849e+01  1.706e+01   1.084 0.278381    
+(Intercept):3     -1.768e+01  1.661e+01  -1.065 0.286946    
+region:1          -1.500e-01  1.710e-01  -0.877 0.380539    
+region:2           1.140e-01  1.568e-01   0.727 0.466930    
+region:3           1.192e+00  2.853e-01   4.179 2.93e-05 ***
+metropolitan:1     1.962e+01  8.285e+02   0.024 0.981103    
+metropolitan:2     1.662e+01  8.285e+02   0.020 0.983995    
+metropolitan:3    -4.775e-01  2.013e+03   0.000 0.999811    
+inst_num:1        -7.180e-02  8.490e-02  -0.846 0.397737    
+inst_num:2         6.906e-02  2.645e-02   2.611 0.009028 ** 
+inst_num:3        -2.517e-01  5.384e-02  -4.675 2.94e-06 ***
+tot_pop:1         -5.074e-01  1.104e-01  -4.598 4.27e-06 ***
+tot_pop:2         -9.614e-02  1.992e-02  -4.826 1.40e-06 ***
+tot_pop:3          5.662e-02  1.933e-02   2.930 0.003393 ** 
+pop_density:1     -8.978e-03  1.376e-03  -6.524 6.86e-11 ***
+pop_density:2     -2.449e-03  6.327e-04  -3.870 0.000109 ***
+pop_density:3     -3.340e-03  9.292e-04  -3.595 0.000325 ***
+perc_ba:1         -4.289e-02  4.599e-02  -0.933 0.351045    
+perc_ba:2          6.929e-02  4.452e-02   1.556 0.119604    
+perc_ba:3          1.508e-02  4.116e-02   0.366 0.714031    
+med_income:1       1.888e-04  3.744e-05   5.042 4.60e-07 ***
+med_income:2       1.245e-04  3.435e-05   3.625 0.000289 ***
+med_income:3       1.550e-04  3.762e-05   4.120 3.78e-05 ***
+perc_pov:1         1.491e+00  2.750e-01   5.420 5.96e-08 ***
+perc_pov:2         1.461e+00  2.706e-01   5.397 6.77e-08 ***
+perc_pov:3         1.547e+00  2.705e-01   5.720 1.07e-08 ***
+perc_unemployed:1 -4.602e-01  4.773e-01  -0.964 0.334961    
+perc_unemployed:2 -6.626e-01  4.585e-01  -1.445 0.148424    
+perc_unemployed:3 -9.083e-01  5.507e-01  -1.649 0.099109 .  
+perc_white:1      -3.659e-01  1.655e-01  -2.211 0.027039 *  
+perc_white:2      -3.148e-01  1.628e-01  -1.933 0.053217 .  
+perc_white:3      -6.473e-02  1.662e-01  -0.389 0.696997    
+perc_black:1      -3.464e-01  1.584e-01  -2.187 0.028744 *  
+perc_black:2      -3.245e-01  1.559e-01  -2.082 0.037333 *  
+perc_black:3      -3.743e-02  1.585e-01  -0.236 0.813297    
+perc_hisp:1       -5.891e-01  1.592e-01  -3.700 0.000216 ***
+perc_hisp:2       -6.108e-01  1.568e-01  -3.894 9.85e-05 ***
+perc_hisp:3       -2.068e-01  1.596e-01  -1.296 0.194996    
+perc_asian:1      -5.524e-01  2.044e-01  -2.703 0.006881 ** 
+perc_asian:2      -3.218e-01  1.900e-01  -1.694 0.090344 .  
+perc_asian:3       1.281e-01  2.118e-01   0.605 0.545202    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Names of linear predictors: log(mu[,2]/mu[,1]), log(mu[,3]/mu[,1]), 
+log(mu[,4]/mu[,1])
+
+Residual deviance: 1279.164 on 7680 degrees of freedom
+
+Log-likelihood: -639.5821 on 7680 degrees of freedom
+
+Number of Fisher scoring iterations: 20 
+
+
+Reference group is level  1  of the response</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>coef_vec <span class="ot">&lt;-</span> <span class="fu">coef</span>(reg_model)                 <span class="co"># vector of all coefficients</span></span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>vc       <span class="ot">&lt;-</span> <span class="fu">vcov</span>(reg_model)                 <span class="co"># full covariance matrix</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>se_vec   <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(vc))              <span class="co"># standard errorscoef_vec &lt;- coef(model)                 # vector of all coefficients</span></span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>vc       <span class="ot">&lt;-</span> <span class="fu">vcov</span>(reg_model)                 <span class="co"># full covariance matrix</span></span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>se_vec   <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">diag</span>(vc))              <span class="co"># standard errors</span></span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>apa_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">term     =</span> <span class="fu">names</span>(coef_vec),</span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">estimate =</span> coef_vec,</span>
+<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">SE       =</span> se_vec,</span>
+<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">z        =</span> coef_vec <span class="sc">/</span> se_vec,</span>
+<span id="cb81-13"><a href="#cb81-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">p        =</span> <span class="dv">2</span> <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pnorm</span>(<span class="fu">abs</span>(coef_vec <span class="sc">/</span> se_vec))),</span>
+<span id="cb81-14"><a href="#cb81-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">OR       =</span> <span class="fu">exp</span>(coef_vec),</span>
+<span id="cb81-15"><a href="#cb81-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">CI_low   =</span> <span class="fu">exp</span>(coef_vec <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se_vec),</span>
+<span id="cb81-16"><a href="#cb81-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">CI_high  =</span> <span class="fu">exp</span>(coef_vec <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se_vec)</span>
+<span id="cb81-17"><a href="#cb81-17" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb81-18"><a href="#cb81-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb81-19"><a href="#cb81-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="fu">round</span>(estimate, <span class="dv">3</span>),</span>
+<span id="cb81-20"><a href="#cb81-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">SE       =</span> <span class="fu">round</span>(SE, <span class="dv">3</span>),</span>
+<span id="cb81-21"><a href="#cb81-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">z        =</span> <span class="fu">round</span>(z, <span class="dv">2</span>),</span>
+<span id="cb81-22"><a href="#cb81-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">p        =</span> <span class="fu">round</span>(p, <span class="dv">3</span>),</span>
+<span id="cb81-23"><a href="#cb81-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">OR       =</span> <span class="fu">round</span>(OR, <span class="dv">3</span>),</span>
+<span id="cb81-24"><a href="#cb81-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">CI       =</span> <span class="fu">paste0</span>(<span class="st">"["</span>, <span class="fu">round</span>(CI_low, <span class="dv">3</span>), <span class="st">", "</span>, <span class="fu">round</span>(CI_high, <span class="dv">3</span>), <span class="st">"]"</span>)</span>
+<span id="cb81-25"><a href="#cb81-25" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb81-26"><a href="#cb81-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term, estimate, SE, z, p, OR, CI)</span>
+<span id="cb81-27"><a href="#cb81-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-28"><a href="#cb81-28" aria-hidden="true" tabindex="-1"></a>apa_table</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                               term estimate       SE     z     p           OR
+(Intercept):1         (Intercept):1   23.074   17.391  1.33 0.185 1.049173e+10
+(Intercept):2         (Intercept):2   18.495   17.062  1.08 0.278 1.076780e+08
+(Intercept):3         (Intercept):3  -17.683   16.607 -1.06 0.287 0.000000e+00
+region:1                   region:1   -0.150    0.171 -0.88 0.381 8.610000e-01
+region:2                   region:2    0.114    0.157  0.73 0.467 1.121000e+00
+region:3                   region:3    1.192    0.285  4.18 0.000 3.294000e+00
+metropolitan:1       metropolitan:1   19.623  828.477  0.02 0.981 3.329440e+08
+metropolitan:2       metropolitan:2   16.620  828.477  0.02 0.984 1.652309e+07
+metropolitan:3       metropolitan:3   -0.477 2012.564  0.00 1.000 6.200000e-01
+inst_num:1               inst_num:1   -0.072    0.085 -0.85 0.398 9.310000e-01
+inst_num:2               inst_num:2    0.069    0.026  2.61 0.009 1.072000e+00
+inst_num:3               inst_num:3   -0.252    0.054 -4.67 0.000 7.770000e-01
+tot_pop:1                 tot_pop:1   -0.507    0.110 -4.60 0.000 6.020000e-01
+tot_pop:2                 tot_pop:2   -0.096    0.020 -4.83 0.000 9.080000e-01
+tot_pop:3                 tot_pop:3    0.057    0.019  2.93 0.003 1.058000e+00
+pop_density:1         pop_density:1   -0.009    0.001 -6.52 0.000 9.910000e-01
+pop_density:2         pop_density:2   -0.002    0.001 -3.87 0.000 9.980000e-01
+pop_density:3         pop_density:3   -0.003    0.001 -3.59 0.000 9.970000e-01
+perc_ba:1                 perc_ba:1   -0.043    0.046 -0.93 0.351 9.580000e-01
+perc_ba:2                 perc_ba:2    0.069    0.045  1.56 0.120 1.072000e+00
+perc_ba:3                 perc_ba:3    0.015    0.041  0.37 0.714 1.015000e+00
+med_income:1           med_income:1    0.000    0.000  5.04 0.000 1.000000e+00
+med_income:2           med_income:2    0.000    0.000  3.63 0.000 1.000000e+00
+med_income:3           med_income:3    0.000    0.000  4.12 0.000 1.000000e+00
+perc_pov:1               perc_pov:1    1.491    0.275  5.42 0.000 4.440000e+00
+perc_pov:2               perc_pov:2    1.461    0.271  5.40 0.000 4.309000e+00
+perc_pov:3               perc_pov:3    1.547    0.270  5.72 0.000 4.698000e+00
+perc_unemployed:1 perc_unemployed:1   -0.460    0.477 -0.96 0.335 6.310000e-01
+perc_unemployed:2 perc_unemployed:2   -0.663    0.459 -1.45 0.148 5.150000e-01
+perc_unemployed:3 perc_unemployed:3   -0.908    0.551 -1.65 0.099 4.030000e-01
+perc_white:1           perc_white:1   -0.366    0.166 -2.21 0.027 6.940000e-01
+perc_white:2           perc_white:2   -0.315    0.163 -1.93 0.053 7.300000e-01
+perc_white:3           perc_white:3   -0.065    0.166 -0.39 0.697 9.370000e-01
+perc_black:1           perc_black:1   -0.346    0.158 -2.19 0.029 7.070000e-01
+perc_black:2           perc_black:2   -0.325    0.156 -2.08 0.037 7.230000e-01
+perc_black:3           perc_black:3   -0.037    0.158 -0.24 0.813 9.630000e-01
+perc_hisp:1             perc_hisp:1   -0.589    0.159 -3.70 0.000 5.550000e-01
+perc_hisp:2             perc_hisp:2   -0.611    0.157 -3.89 0.000 5.430000e-01
+perc_hisp:3             perc_hisp:3   -0.207    0.160 -1.30 0.195 8.130000e-01
+perc_asian:1           perc_asian:1   -0.552    0.204 -2.70 0.007 5.760000e-01
+perc_asian:2           perc_asian:2   -0.322    0.190 -1.69 0.090 7.250000e-01
+perc_asian:3           perc_asian:3    0.128    0.212  0.60 0.545 1.137000e+00
+                                         CI
+(Intercept):1     [0, 6.67661401887336e+24]
+(Intercept):2      [0, 3.5945087049174e+22]
+(Intercept):3              [0, 2857351.157]
+region:1                     [0.616, 1.203]
+region:2                     [0.824, 1.524]
+region:3                     [1.883, 5.763]
+metropolitan:1                     [0, Inf]
+metropolitan:2                     [0, Inf]
+metropolitan:3                     [0, Inf]
+inst_num:1                   [0.788, 1.099]
+inst_num:2                   [1.017, 1.129]
+inst_num:3                     [0.7, 0.864]
+tot_pop:1                    [0.485, 0.747]
+tot_pop:2                    [0.874, 0.945]
+tot_pop:3                    [1.019, 1.099]
+pop_density:1                [0.988, 0.994]
+pop_density:2                [0.996, 0.999]
+pop_density:3                [0.995, 0.998]
+perc_ba:1                    [0.875, 1.048]
+perc_ba:2                    [0.982, 1.169]
+perc_ba:3                      [0.937, 1.1]
+med_income:1                         [1, 1]
+med_income:2                         [1, 1]
+med_income:3                         [1, 1]
+perc_pov:1                    [2.59, 7.612]
+perc_pov:2                   [2.535, 7.324]
+perc_pov:3                   [2.765, 7.983]
+perc_unemployed:1            [0.248, 1.609]
+perc_unemployed:2             [0.21, 1.266]
+perc_unemployed:3            [0.137, 1.187]
+perc_white:1                 [0.501, 0.959]
+perc_white:2                  [0.53, 1.004]
+perc_white:3                 [0.677, 1.298]
+perc_black:1                 [0.518, 0.965]
+perc_black:2                 [0.533, 0.981]
+perc_black:3                 [0.706, 1.314]
+perc_hisp:1                  [0.406, 0.758]
+perc_hisp:2                  [0.399, 0.738]
+perc_hisp:3                  [0.595, 1.112]
+perc_asian:1                 [0.386, 0.859]
+perc_asian:2                 [0.499, 1.052]
+perc_asian:3                 [0.751, 1.722]</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a>apa_gt <span class="ot">&lt;-</span> apa_table <span class="sc">%&gt;%</span></span>
+<span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb83-3"><a href="#cb83-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cols_label</span>(</span>
+<span id="cb83-4"><a href="#cb83-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">term     =</span> <span class="st">"Predictor"</span>,</span>
+<span id="cb83-5"><a href="#cb83-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="st">"B"</span>,</span>
+<span id="cb83-6"><a href="#cb83-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">SE       =</span> <span class="st">"SE"</span>,</span>
+<span id="cb83-7"><a href="#cb83-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">z        =</span> <span class="st">"z"</span>,</span>
+<span id="cb83-8"><a href="#cb83-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">p        =</span> <span class="st">"p"</span>,</span>
+<span id="cb83-9"><a href="#cb83-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">OR       =</span> <span class="st">"OR"</span>,</span>
+<span id="cb83-10"><a href="#cb83-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">CI       =</span> <span class="st">"95% CI"</span></span>
+<span id="cb83-11"><a href="#cb83-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb83-12"><a href="#cb83-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tab_options</span>(</span>
+<span id="cb83-13"><a href="#cb83-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">table.font.size =</span> <span class="dv">12</span>,</span>
+<span id="cb83-14"><a href="#cb83-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">data_row.padding =</span> <span class="fu">px</span>(<span class="dv">2</span>),</span>
+<span id="cb83-15"><a href="#cb83-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">table.width =</span> <span class="fu">pct</span>(<span class="dv">80</span>),</span>
+<span id="cb83-16"><a href="#cb83-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">column_labels.font.weight =</span> <span class="st">"bold"</span></span>
+<span id="cb83-17"><a href="#cb83-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb83-18"><a href="#cb83-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb83-19"><a href="#cb83-19" aria-hidden="true" tabindex="-1"></a>apa_gt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div id="hfjbyfshyo" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#hfjbyfshyo table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#hfjbyfshyo thead, #hfjbyfshyo tbody, #hfjbyfshyo tfoot, #hfjbyfshyo tr, #hfjbyfshyo td, #hfjbyfshyo th {
+  border-style: none;
+}
+
+#hfjbyfshyo p {
+  margin: 0;
+  padding: 0;
+}
+
+#hfjbyfshyo .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 12px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: 80%;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#hfjbyfshyo .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#hfjbyfshyo .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#hfjbyfshyo .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: bold;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#hfjbyfshyo .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: bold;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#hfjbyfshyo .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#hfjbyfshyo .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#hfjbyfshyo .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#hfjbyfshyo .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#hfjbyfshyo .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#hfjbyfshyo .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#hfjbyfshyo .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#hfjbyfshyo .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#hfjbyfshyo .gt_row {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#hfjbyfshyo .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hfjbyfshyo .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#hfjbyfshyo .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#hfjbyfshyo .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#hfjbyfshyo .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hfjbyfshyo .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#hfjbyfshyo .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hfjbyfshyo .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#hfjbyfshyo .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hfjbyfshyo .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#hfjbyfshyo .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hfjbyfshyo .gt_left {
+  text-align: left;
+}
+
+#hfjbyfshyo .gt_center {
+  text-align: center;
+}
+
+#hfjbyfshyo .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#hfjbyfshyo .gt_font_normal {
+  font-weight: normal;
+}
+
+#hfjbyfshyo .gt_font_bold {
+  font-weight: bold;
+}
+
+#hfjbyfshyo .gt_font_italic {
+  font-style: italic;
+}
+
+#hfjbyfshyo .gt_super {
+  font-size: 65%;
+}
+
+#hfjbyfshyo .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#hfjbyfshyo .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#hfjbyfshyo .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#hfjbyfshyo .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#hfjbyfshyo .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#hfjbyfshyo .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#hfjbyfshyo .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#hfjbyfshyo .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#hfjbyfshyo div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+
+<table class="gt_table caption-top table table-sm table-striped small" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_col_headings header">
+<th id="term" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">Predictor</th>
+<th id="estimate" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">B</th>
+<th id="SE" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">SE</th>
+<th id="z" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">z</th>
+<th id="p" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">p</th>
+<th id="OR" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" scope="col">OR</th>
+<th id="CI" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" scope="col">95% CI</th>
+</tr>
+</thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">(Intercept):1</td>
+<td class="gt_row gt_right" headers="estimate">23.074</td>
+<td class="gt_row gt_right" headers="SE">17.391</td>
+<td class="gt_row gt_right" headers="z">1.33</td>
+<td class="gt_row gt_right" headers="p">0.185</td>
+<td class="gt_row gt_right" headers="OR">1.049173e+10</td>
+<td class="gt_row gt_left" headers="CI">[0, 6.67661401887336e+24]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">(Intercept):2</td>
+<td class="gt_row gt_right" headers="estimate">18.495</td>
+<td class="gt_row gt_right" headers="SE">17.062</td>
+<td class="gt_row gt_right" headers="z">1.08</td>
+<td class="gt_row gt_right" headers="p">0.278</td>
+<td class="gt_row gt_right" headers="OR">1.076780e+08</td>
+<td class="gt_row gt_left" headers="CI">[0, 3.5945087049174e+22]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">(Intercept):3</td>
+<td class="gt_row gt_right" headers="estimate">-17.683</td>
+<td class="gt_row gt_right" headers="SE">16.607</td>
+<td class="gt_row gt_right" headers="z">-1.06</td>
+<td class="gt_row gt_right" headers="p">0.287</td>
+<td class="gt_row gt_right" headers="OR">0.000000e+00</td>
+<td class="gt_row gt_left" headers="CI">[0, 2857351.157]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">region:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.150</td>
+<td class="gt_row gt_right" headers="SE">0.171</td>
+<td class="gt_row gt_right" headers="z">-0.88</td>
+<td class="gt_row gt_right" headers="p">0.381</td>
+<td class="gt_row gt_right" headers="OR">8.610000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.616, 1.203]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">region:2</td>
+<td class="gt_row gt_right" headers="estimate">0.114</td>
+<td class="gt_row gt_right" headers="SE">0.157</td>
+<td class="gt_row gt_right" headers="z">0.73</td>
+<td class="gt_row gt_right" headers="p">0.467</td>
+<td class="gt_row gt_right" headers="OR">1.121000e+00</td>
+<td class="gt_row gt_left" headers="CI">[0.824, 1.524]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">region:3</td>
+<td class="gt_row gt_right" headers="estimate">1.192</td>
+<td class="gt_row gt_right" headers="SE">0.285</td>
+<td class="gt_row gt_right" headers="z">4.18</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">3.294000e+00</td>
+<td class="gt_row gt_left" headers="CI">[1.883, 5.763]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">metropolitan:1</td>
+<td class="gt_row gt_right" headers="estimate">19.623</td>
+<td class="gt_row gt_right" headers="SE">828.477</td>
+<td class="gt_row gt_right" headers="z">0.02</td>
+<td class="gt_row gt_right" headers="p">0.981</td>
+<td class="gt_row gt_right" headers="OR">3.329440e+08</td>
+<td class="gt_row gt_left" headers="CI">[0, Inf]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">metropolitan:2</td>
+<td class="gt_row gt_right" headers="estimate">16.620</td>
+<td class="gt_row gt_right" headers="SE">828.477</td>
+<td class="gt_row gt_right" headers="z">0.02</td>
+<td class="gt_row gt_right" headers="p">0.984</td>
+<td class="gt_row gt_right" headers="OR">1.652309e+07</td>
+<td class="gt_row gt_left" headers="CI">[0, Inf]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">metropolitan:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.477</td>
+<td class="gt_row gt_right" headers="SE">2012.564</td>
+<td class="gt_row gt_right" headers="z">0.00</td>
+<td class="gt_row gt_right" headers="p">1.000</td>
+<td class="gt_row gt_right" headers="OR">6.200000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0, Inf]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">inst_num:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.072</td>
+<td class="gt_row gt_right" headers="SE">0.085</td>
+<td class="gt_row gt_right" headers="z">-0.85</td>
+<td class="gt_row gt_right" headers="p">0.398</td>
+<td class="gt_row gt_right" headers="OR">9.310000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.788, 1.099]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">inst_num:2</td>
+<td class="gt_row gt_right" headers="estimate">0.069</td>
+<td class="gt_row gt_right" headers="SE">0.026</td>
+<td class="gt_row gt_right" headers="z">2.61</td>
+<td class="gt_row gt_right" headers="p">0.009</td>
+<td class="gt_row gt_right" headers="OR">1.072000e+00</td>
+<td class="gt_row gt_left" headers="CI">[1.017, 1.129]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">inst_num:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.252</td>
+<td class="gt_row gt_right" headers="SE">0.054</td>
+<td class="gt_row gt_right" headers="z">-4.67</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">7.770000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.7, 0.864]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">tot_pop:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.507</td>
+<td class="gt_row gt_right" headers="SE">0.110</td>
+<td class="gt_row gt_right" headers="z">-4.60</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">6.020000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.485, 0.747]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">tot_pop:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.096</td>
+<td class="gt_row gt_right" headers="SE">0.020</td>
+<td class="gt_row gt_right" headers="z">-4.83</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">9.080000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.874, 0.945]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">tot_pop:3</td>
+<td class="gt_row gt_right" headers="estimate">0.057</td>
+<td class="gt_row gt_right" headers="SE">0.019</td>
+<td class="gt_row gt_right" headers="z">2.93</td>
+<td class="gt_row gt_right" headers="p">0.003</td>
+<td class="gt_row gt_right" headers="OR">1.058000e+00</td>
+<td class="gt_row gt_left" headers="CI">[1.019, 1.099]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">pop_density:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.009</td>
+<td class="gt_row gt_right" headers="SE">0.001</td>
+<td class="gt_row gt_right" headers="z">-6.52</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">9.910000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.988, 0.994]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">pop_density:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.002</td>
+<td class="gt_row gt_right" headers="SE">0.001</td>
+<td class="gt_row gt_right" headers="z">-3.87</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">9.980000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.996, 0.999]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">pop_density:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.003</td>
+<td class="gt_row gt_right" headers="SE">0.001</td>
+<td class="gt_row gt_right" headers="z">-3.59</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">9.970000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.995, 0.998]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_ba:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.043</td>
+<td class="gt_row gt_right" headers="SE">0.046</td>
+<td class="gt_row gt_right" headers="z">-0.93</td>
+<td class="gt_row gt_right" headers="p">0.351</td>
+<td class="gt_row gt_right" headers="OR">9.580000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.875, 1.048]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_ba:2</td>
+<td class="gt_row gt_right" headers="estimate">0.069</td>
+<td class="gt_row gt_right" headers="SE">0.045</td>
+<td class="gt_row gt_right" headers="z">1.56</td>
+<td class="gt_row gt_right" headers="p">0.120</td>
+<td class="gt_row gt_right" headers="OR">1.072000e+00</td>
+<td class="gt_row gt_left" headers="CI">[0.982, 1.169]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_ba:3</td>
+<td class="gt_row gt_right" headers="estimate">0.015</td>
+<td class="gt_row gt_right" headers="SE">0.041</td>
+<td class="gt_row gt_right" headers="z">0.37</td>
+<td class="gt_row gt_right" headers="p">0.714</td>
+<td class="gt_row gt_right" headers="OR">1.015000e+00</td>
+<td class="gt_row gt_left" headers="CI">[0.937, 1.1]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">med_income:1</td>
+<td class="gt_row gt_right" headers="estimate">0.000</td>
+<td class="gt_row gt_right" headers="SE">0.000</td>
+<td class="gt_row gt_right" headers="z">5.04</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">1.000000e+00</td>
+<td class="gt_row gt_left" headers="CI">[1, 1]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">med_income:2</td>
+<td class="gt_row gt_right" headers="estimate">0.000</td>
+<td class="gt_row gt_right" headers="SE">0.000</td>
+<td class="gt_row gt_right" headers="z">3.63</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">1.000000e+00</td>
+<td class="gt_row gt_left" headers="CI">[1, 1]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">med_income:3</td>
+<td class="gt_row gt_right" headers="estimate">0.000</td>
+<td class="gt_row gt_right" headers="SE">0.000</td>
+<td class="gt_row gt_right" headers="z">4.12</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">1.000000e+00</td>
+<td class="gt_row gt_left" headers="CI">[1, 1]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_pov:1</td>
+<td class="gt_row gt_right" headers="estimate">1.491</td>
+<td class="gt_row gt_right" headers="SE">0.275</td>
+<td class="gt_row gt_right" headers="z">5.42</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">4.440000e+00</td>
+<td class="gt_row gt_left" headers="CI">[2.59, 7.612]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_pov:2</td>
+<td class="gt_row gt_right" headers="estimate">1.461</td>
+<td class="gt_row gt_right" headers="SE">0.271</td>
+<td class="gt_row gt_right" headers="z">5.40</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">4.309000e+00</td>
+<td class="gt_row gt_left" headers="CI">[2.535, 7.324]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_pov:3</td>
+<td class="gt_row gt_right" headers="estimate">1.547</td>
+<td class="gt_row gt_right" headers="SE">0.270</td>
+<td class="gt_row gt_right" headers="z">5.72</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">4.698000e+00</td>
+<td class="gt_row gt_left" headers="CI">[2.765, 7.983]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_unemployed:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.460</td>
+<td class="gt_row gt_right" headers="SE">0.477</td>
+<td class="gt_row gt_right" headers="z">-0.96</td>
+<td class="gt_row gt_right" headers="p">0.335</td>
+<td class="gt_row gt_right" headers="OR">6.310000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.248, 1.609]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_unemployed:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.663</td>
+<td class="gt_row gt_right" headers="SE">0.459</td>
+<td class="gt_row gt_right" headers="z">-1.45</td>
+<td class="gt_row gt_right" headers="p">0.148</td>
+<td class="gt_row gt_right" headers="OR">5.150000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.21, 1.266]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_unemployed:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.908</td>
+<td class="gt_row gt_right" headers="SE">0.551</td>
+<td class="gt_row gt_right" headers="z">-1.65</td>
+<td class="gt_row gt_right" headers="p">0.099</td>
+<td class="gt_row gt_right" headers="OR">4.030000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.137, 1.187]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_white:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.366</td>
+<td class="gt_row gt_right" headers="SE">0.166</td>
+<td class="gt_row gt_right" headers="z">-2.21</td>
+<td class="gt_row gt_right" headers="p">0.027</td>
+<td class="gt_row gt_right" headers="OR">6.940000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.501, 0.959]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_white:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.315</td>
+<td class="gt_row gt_right" headers="SE">0.163</td>
+<td class="gt_row gt_right" headers="z">-1.93</td>
+<td class="gt_row gt_right" headers="p">0.053</td>
+<td class="gt_row gt_right" headers="OR">7.300000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.53, 1.004]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_white:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.065</td>
+<td class="gt_row gt_right" headers="SE">0.166</td>
+<td class="gt_row gt_right" headers="z">-0.39</td>
+<td class="gt_row gt_right" headers="p">0.697</td>
+<td class="gt_row gt_right" headers="OR">9.370000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.677, 1.298]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_black:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.346</td>
+<td class="gt_row gt_right" headers="SE">0.158</td>
+<td class="gt_row gt_right" headers="z">-2.19</td>
+<td class="gt_row gt_right" headers="p">0.029</td>
+<td class="gt_row gt_right" headers="OR">7.070000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.518, 0.965]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_black:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.325</td>
+<td class="gt_row gt_right" headers="SE">0.156</td>
+<td class="gt_row gt_right" headers="z">-2.08</td>
+<td class="gt_row gt_right" headers="p">0.037</td>
+<td class="gt_row gt_right" headers="OR">7.230000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.533, 0.981]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_black:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.037</td>
+<td class="gt_row gt_right" headers="SE">0.158</td>
+<td class="gt_row gt_right" headers="z">-0.24</td>
+<td class="gt_row gt_right" headers="p">0.813</td>
+<td class="gt_row gt_right" headers="OR">9.630000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.706, 1.314]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_hisp:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.589</td>
+<td class="gt_row gt_right" headers="SE">0.159</td>
+<td class="gt_row gt_right" headers="z">-3.70</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">5.550000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.406, 0.758]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_hisp:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.611</td>
+<td class="gt_row gt_right" headers="SE">0.157</td>
+<td class="gt_row gt_right" headers="z">-3.89</td>
+<td class="gt_row gt_right" headers="p">0.000</td>
+<td class="gt_row gt_right" headers="OR">5.430000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.399, 0.738]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_hisp:3</td>
+<td class="gt_row gt_right" headers="estimate">-0.207</td>
+<td class="gt_row gt_right" headers="SE">0.160</td>
+<td class="gt_row gt_right" headers="z">-1.30</td>
+<td class="gt_row gt_right" headers="p">0.195</td>
+<td class="gt_row gt_right" headers="OR">8.130000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.595, 1.112]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_asian:1</td>
+<td class="gt_row gt_right" headers="estimate">-0.552</td>
+<td class="gt_row gt_right" headers="SE">0.204</td>
+<td class="gt_row gt_right" headers="z">-2.70</td>
+<td class="gt_row gt_right" headers="p">0.007</td>
+<td class="gt_row gt_right" headers="OR">5.760000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.386, 0.859]</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="term">perc_asian:2</td>
+<td class="gt_row gt_right" headers="estimate">-0.322</td>
+<td class="gt_row gt_right" headers="SE">0.190</td>
+<td class="gt_row gt_right" headers="z">-1.69</td>
+<td class="gt_row gt_right" headers="p">0.090</td>
+<td class="gt_row gt_right" headers="OR">7.250000e-01</td>
+<td class="gt_row gt_left" headers="CI">[0.499, 1.052]</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="term">perc_asian:3</td>
+<td class="gt_row gt_right" headers="estimate">0.128</td>
+<td class="gt_row gt_right" headers="SE">0.212</td>
+<td class="gt_row gt_right" headers="z">0.60</td>
+<td class="gt_row gt_right" headers="p">0.545</td>
+<td class="gt_row gt_right" headers="OR">1.137000e+00</td>
+<td class="gt_row gt_left" headers="CI">[0.751, 1.722]</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

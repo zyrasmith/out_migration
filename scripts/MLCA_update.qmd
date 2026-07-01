@@ -16,6 +16,8 @@ library(multilevLCA)
 library(psych)
 library(tigris)
 library(nnet)
+library(VGAM)
+library(gt)
 
 rm(list = ls())
 ```

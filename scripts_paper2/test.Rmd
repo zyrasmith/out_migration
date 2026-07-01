@@ -1,0 +1,60 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r setup}
+
+rm(list = ls())
+knitr::opts_knit$set(root.dir = "C:/Users/zyras/Documents/GitHub/out_migration")
+
+library(tidyverse)
+
+```
+
+
+```{r load data}
+
+ipeds <- read_csv("data_paper2/ipeds")
+cbsas <- read_csv("data_paper2/cbsas")
+
+
+```
+
+```{r create mock student dataset}
+
+n_students <- 500
+
+students <- tibble(
+  stu_id = 1:n_students,
+  
+  #Randomize student home CBSA
+  stu_cbsa = sample(ipeds$cbsa, n_students, replace = TRUE),
+  
+  #Randomize college attended
+  unitid = sample(ipeds$unitid, n_students, replace = TRUE)) %>% 
+  as.data.frame() %>% 
+  
+    mutate(unitid = as.character(unitid)) %>% 
+    left_join(ipeds %>% 
+                mutate(unitid = as.character(unitid),
+               by = "unitid")) %>% 
+  # Assign student CBSA with 40% probability of matching college CBSA
+  rowwise() %>%
+  mutate(
+    stu_cbsa = ifelse(
+      runif(1) < 0.40,
+      cbsa,  # same CBSA as college
+      sample(ipeds$cbsa[ipeds$cbsa != cbsa], 1)  # different CBSA
+    )
+  ) %>%
+  ungroup()
+
+students %>% 
+  mutate(match = if_else(stu_cbsa == cbsa, 1,0)) %>%
+  group_by(match) %>% 
+  tally()
+```
+
+
