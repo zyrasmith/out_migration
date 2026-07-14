@@ -206,7 +206,7 @@ rm(y)
 
 ```{r}
 
-write_csv(valid_cbsas, "data_paper2/cbsas")
-write_csv(ipeds_hd, "data_paper2/ipeds")
+write_csv(valid_cbsas, "data_paper2/cbsas.csv")
+write_csv(ipeds_hd, "data_paper2/ipeds.csv")
 ```
 

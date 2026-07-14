@@ -1,0 +1,379 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r setup}
+
+rm(list = ls())
+
+knitr::opts_knit$set(root.dir = "C:/Users/zyras/Documents/GitHub/out_migration")
+
+# install.packages("haven")
+
+library(tidyverse)
+library(haven)
+
+```
+
+
+```{r load data}
+
+cbsas <- read_csv("data_paper2/cbsas.csv")
+sch_zips <- read_csv("data_paper2/sch_zips.csv")
+
+
+```
+
+```{r}
+
+nonmissing_sch_zips <- sch_zips %>% 
+  left_join(cbsas, by = c("sch_zip" = "zip_2004")) %>% 
+  filter(!is.na(valid_cbsa))
+ 
+
+# write_csv(x, "data_paper2/nonmissing_sch_zips.csv")
+
+
+missing_sch_zips <- sch_zips %>% 
+  left_join(cbsas, by = c("sch_zip" = "zip_2004")) %>% 
+  filter(is.na(valid_cbsa)) 
+
+# write_csv(y, "data_paper2/missing_sch_zips.csv")
+
+   #Replace missing CBSAs using Missouri ZIP/CBSA Crosswalk (GET URL)
+    #Note: Some zipcodes are not listed in the crosswalk because they do not have a population. These zipcodes are assigned the CBSA of the zipcodes that are numerically adjacent. For example, zipcode 39580 was not listed in the crosswalk. It was assigned CBSA = 39580 because that is the CBSA for zipcodes 27587 and 27589.
+z <- missing_sch_zips %>% 
+  mutate(
+    valid_cbsa = case_when(
+      sch_zip == "01001" ~ 44140, sch_zip == "01069" ~ 44140,
+      sch_zip == "01518" ~ 49340, sch_zip == "01605" ~ 49340,
+      sch_zip == "01803" ~ 14460, sch_zip == "02351" ~ 14460,
+      sch_zip == "02382" ~ 14460, sch_zip == "02571" ~ 14460,
+      sch_zip == "02780" ~ 39300, sch_zip == "02893" ~ 39300,
+      sch_zip == "03079" ~ 14460, sch_zip == "03894" ~ -2,
+      sch_zip == "04096" ~ 38860, sch_zip == "04217" ~ -2,
+      sch_zip == "04252" ~ 30340, sch_zip == "04468" ~ 12620,
+      sch_zip == "05832" ~ -2, sch_zip == "05855" ~ -2,
+      sch_zip == "06001" ~ 25540, sch_zip == "06040" ~ 25540,
+      sch_zip == "06770" ~ 35300, sch_zip == "06787" ~ 45860,
+      sch_zip == "06804" ~ 14860, sch_zip == "06851" ~ 14860,
+      sch_zip == "07018" ~ 35620, sch_zip == "07036" ~ 35620,
+      sch_zip == "07040" ~ 35620, sch_zip == "07103" ~ 35620,
+      sch_zip == "07109" ~ 35620, sch_zip == "07302" ~ 35620,
+      sch_zip == "07442" ~ 35620, sch_zip == "07747" ~ 35620,
+      sch_zip == "07879" ~ 35620, sch_zip == "08002" ~ 37980,
+      sch_zip == "08034" ~ 37980, sch_zip == "08109" ~ 37980,
+      sch_zip == "08110" ~ 37980, sch_zip == "08234" ~ 12100,
+      sch_zip == "08344" ~ 12100, sch_zip == "08360" ~ 12100,
+      sch_zip == "10029" ~ 35620, sch_zip == "10306" ~ 35620,
+      sch_zip == "10463" ~ 35620, sch_zip == "10469" ~ 35620,
+      sch_zip == "10706" ~ 35620, sch_zip == "10710" ~ 35620,
+      sch_zip == "11207" ~ 35620, sch_zip == "11356" ~ 35620,
+      sch_zip == "11361" ~ 35620, sch_zip == "11373" ~ 35620,
+      sch_zip == "11432" ~ 35620, sch_zip == "11553" ~ 35620,
+      sch_zip == "11756" ~ 35620, sch_zip == "11771" ~ 35620,
+      sch_zip == "11901" ~ 35620, sch_zip == "11953" ~ 35620,
+      sch_zip == "12077" ~ 10580, sch_zip == "12520" ~ 39100,
+      sch_zip == "12533" ~ 35620, sch_zip == "12564" ~ 39100,
+      sch_zip == "12603" ~ 39100, sch_zip == "12771" ~ 39100,
+      sch_zip == "12974" ~ -2, sch_zip == "12986" ~ 31660,
+      sch_zip == "13080" ~ 12180, sch_zip == "13421" ~ 45060,
+      sch_zip == "13619" ~ -2, sch_zip == "13905" ~ 13780,
+      sch_zip == "14057" ~ 15380, sch_zip == "14209" ~ 15380,
+      sch_zip == "14221" ~ 15380, sch_zip == "14468" ~ 40380,
+      sch_zip == "14564" ~ 40380, sch_zip == "14870" ~ -2,
+      sch_zip == "15009" ~ 38300, sch_zip == "15214" ~ 38300,
+      sch_zip == "15317" ~ 38300, sch_zip == "15666" ~ 38300,
+      sch_zip == "15729" ~ 26860, sch_zip == "15905" ~ 27780,
+      sch_zip == "16117" ~ 35260, sch_zip == "16371" ~ 47620,
+      sch_zip == "16506" ~ 21500, sch_zip == "17061" ~ 25420,
+      sch_zip == "17062" ~ -2, sch_zip == "17109" ~ 25420,
+      sch_zip == "17402" ~ 49620, sch_zip == "17538" ~ 29540,
+      sch_zip == "18102" ~ 10900, sch_zip == "18301" ~ 20700,
+      sch_zip == "18707" ~ 42540, sch_zip == "18853" ~ 42380,
+      sch_zip == "19030" ~ 37980, sch_zip == "19047" ~ 37980,
+      sch_zip == "19073" ~ 37980, sch_zip == "19085" ~ 37980,
+      sch_zip == "19087" ~ 37980, sch_zip == "19107" ~ 37980,
+      sch_zip == "19130" ~ 37980, sch_zip == "19136" ~ 37980,
+      sch_zip == "19145" ~ 37980, sch_zip == "19464" ~ 37980,
+      sch_zip == "19508" ~ 39740, sch_zip == "19606" ~ 39740,
+      sch_zip == "19947" ~ 42580, sch_zip == "19958" ~ 42580,
+      sch_zip == "20011" ~ 47900, sch_zip == "20017" ~ 47900,
+      sch_zip == "20147" ~ 47900, sch_zip == "20678" ~ 47900,
+      sch_zip == "20705" ~ 47900, sch_zip == "20707" ~ 47900,
+      sch_zip == "20745" ~ 47900, sch_zip == "20814" ~ 47900,
+      sch_zip == "20855" ~ 47900, sch_zip == "20860" ~ 47900,
+      sch_zip == "21014" ~ 12580, sch_zip == "21202" ~ 12580,
+      sch_zip == "21209" ~ 12580, sch_zip == "21224" ~ 12580,
+      sch_zip == "21286" ~ 12580, sch_zip == "21502" ~ 19060,
+      sch_zip == "22003" ~ 47900, sch_zip == "22030" ~ 47900,
+      sch_zip == "22309" ~ 47900, sch_zip == "22846" ~ 25500,
+      sch_zip == "22960" ~ -2, sch_zip == "23005" ~ 40060,
+      sch_zip == "23112" ~ 40060, sch_zip == "23188" ~ 47260,
+      sch_zip == "23322" ~ 47260, sch_zip == "23456" ~ 47260,
+      sch_zip == "23487" ~ 47260, sch_zip == "23517" ~ 47260,
+      sch_zip == "24477" ~ 44420, sch_zip == "25045" ~ -2,
+      sch_zip == "25661" ~ -2, sch_zip == "25958" ~ -2,
+      sch_zip == "26062" ~ 48260, sch_zip == "27203" ~ 24660,
+      sch_zip == "27408" ~ 24660, sch_zip == "27513" ~ 39580,
+      sch_zip == "27701" ~ 20500, sch_zip == "28054" ~ 16740,
+      sch_zip == "28078" ~ 16740, sch_zip == "28090" ~ 30740,
+      sch_zip == "28112" ~ 16740, sch_zip == "28210" ~ 16740,
+      sch_zip == "28226" ~ 16740, sch_zip == "28339" ~ 20380,
+      sch_zip == "28443" ~ 48900, sch_zip == "28518" ~ -2,
+      sch_zip == "28713" ~ -2, sch_zip == "28732" ~ 11700,
+      sch_zip == "29003" ~ -2, sch_zip == "29033" ~ 17900,
+      sch_zip == "29063" ~ 17900, sch_zip == "29072" ~ 17900,
+      sch_zip == "29445" ~ 16700, sch_zip == "29575" ~ 34820,
+      sch_zip == "29673" ~ 11340, sch_zip == "29706" ~ 16740,
+      sch_zip == "29832" ~ 12260, sch_zip == "30024" ~ 12060,
+      sch_zip == "30032" ~ 12060, sch_zip == "30047" ~ 12060,
+      sch_zip == "30066" ~ 12060, sch_zip == "30075" ~ 12060,
+      sch_zip == "30076" ~ 12060, sch_zip == "30078" ~ 12060,
+      sch_zip == "30083" ~ 12060, sch_zip == "30088" ~ 12060,
+      sch_zip == "30189" ~ 12060, sch_zip == "30253" ~ 12060,
+      sch_zip == "30281" ~ 12060, sch_zip == "30290" ~ 12060,
+      sch_zip == "30311" ~ 12060, sch_zip == "30345" ~ 12060,
+      sch_zip == "30349" ~ 12060, sch_zip == "30909" ~ 12260,
+      sch_zip == "31078" ~ 31420, sch_zip == "31088" ~ 47580,
+      sch_zip == "31305" ~ 15260, sch_zip == "31324" ~ 42340,
+      sch_zip == "31401" ~ 31401, sch_zip == "31717" ~ 12460,
+      sch_zip == "31730" ~ -2, sch_zip == "31906" ~ 17980,
+      sch_zip == "32095" ~ 27260, sch_zip == "27260" ~ 27260,
+      sch_zip == "32246" ~ 27260, sch_zip == "32312" ~ 45220,
+      sch_zip == "32444" ~ 37460, sch_zip == "32462" ~ -2,
+      sch_zip == "32503" ~ 37860, sch_zip == "32526" ~ 37860,
+      sch_zip == "32570" ~ 37860, sch_zip == "32804" ~ 36740,
+      sch_zip == "32963" ~ 46940, sch_zip == "33015" ~ 33100,
+      sch_zip == "33018" ~ 33100, sch_zip == "33146" ~ 33100,
+      sch_zip == "33166" ~ 33100, sch_zip == "33312" ~ 33100,
+      sch_zip == "33325" ~ 33100, sch_zip == "33332" ~ 33100,
+      sch_zip == "33334" ~ 33100, sch_zip == "33409" ~ 33100,
+      sch_zip == "33460" ~ 33100, sch_zip == "33496" ~ 33100,
+      sch_zip == "33513" ~ 45540, sch_zip == "33709" ~ 45300,
+      sch_zip == "33761" ~ 45300, sch_zip == "33777" ~ 45300,
+      sch_zip == "33809" ~ 29460, sch_zip == "33844" ~ 29460,
+      sch_zip == "33948" ~ 39460, sch_zip == "34142" ~ 17500,
+      sch_zip == "34232" ~ 42260, sch_zip == "35020" ~ 13820,
+      sch_zip == "35045" ~ 13820, sch_zip == "35083" ~ 18980,
+      sch_zip == "35401" ~ 46220, sch_zip == "35406" ~ 46220,
+      sch_zip == "35453" ~ 46220, sch_zip == "35674" ~ 22520,
+      sch_zip == "35801" ~ 26620, sch_zip == "35816" ~ 26620,
+      sch_zip == "36040" ~ 33860, sch_zip == "36107" ~ 33860,
+      sch_zip == "36544" ~ 33660, sch_zip == "36866" ~ 10760,
+      sch_zip == "37110" ~ -2, sch_zip == "37185" ~ -2,
+      sch_zip == "37332" ~ -2, sch_zip == "37341" ~ 16860,
+      sch_zip == "37401" ~ 16860, sch_zip == "37421" ~ 16860,
+      sch_zip == "37721" ~ 28940, sch_zip == "37818" ~ 24620,
+      sch_zip == "38127" ~ 32820, sch_zip == "38801" ~ 46180,
+      sch_zip == "38901" ~ -2, sch_zip == "39341" ~ -2,
+      sch_zip == "39367" ~ -2, sch_zip == "39452" ~ -2,
+      sch_zip == "39482" ~ -2, sch_zip == "39501" ~ 25060,
+      sch_zip == "39503" ~ 25060, sch_zip == "39567" ~ 37700,
+      sch_zip == "39577" ~ 25060, sch_zip == "39759" ~ 18060,
+      sch_zip == "40204" ~ 31140, sch_zip == "40212" ~ 31140,
+      sch_zip == "40241" ~ 31140, sch_zip == "40299" ~ 31140,
+      sch_zip == "40484" ~ -2, sch_zip == "41001" ~ 17140,
+      sch_zip == "41015" ~ 17140, sch_zip == "42633" ~ -2,
+      sch_zip == "43085" ~ 18140, sch_zip == "43229" ~ 18140,
+      sch_zip == "43605" ~ 45780, sch_zip == "44041" ~ 11780,
+      sch_zip == "44052" ~ 17460, sch_zip == "44105" ~ 17460,
+      sch_zip == "44113" ~ 17460, sch_zip == "44147" ~ 17460,
+      sch_zip == "44224" ~ 10420, sch_zip == "44260" ~ 10420,
+      sch_zip == "44408" ~ 20620, sch_zip == "44641" ~ 15940,
+      sch_zip == "44646" ~ 15940, sch_zip == "44890" ~ 35940,
+      sch_zip == "44902" ~ 31900, sch_zip == "45013" ~ 17140,
+      sch_zip == "45122" ~ 17140, sch_zip == "45205" ~ 17140,
+      sch_zip == "45219" ~ 17140, sch_zip == "45245" ~ 17140,
+      sch_zip == "45255" ~ 17140, sch_zip == "45333" ~ 43380,
+      sch_zip == "45365" ~ 43380, sch_zip == "45420" ~ 19380,
+      sch_zip == "45503" ~ 44220, sch_zip == "45784" ~ 37620,
+      sch_zip == "45833" ~ -2, sch_zip == "46112" ~ 26900,
+      sch_zip == "46327" ~ 16980, sch_zip == "46373" ~ 16980,
+      sch_zip == "46382" ~ 33140, sch_zip == "46514" ~ 21140,
+      sch_zip == "46614" ~ 43780, sch_zip == "46733" ~ 19540,
+      sch_zip == "46761" ~ -2, sch_zip == "46774" ~ 23060,
+      sch_zip == "47025" ~ 17140, sch_zip == "47265" ~ 35860,
+      sch_zip == "47720" ~ 21780, sch_zip == "48071" ~ 19820,
+      sch_zip == "48074" ~ 19820, sch_zip == "48098" ~ 19820,
+      sch_zip == "48180" ~ 19820, sch_zip == "48192" ~ 19820,
+      sch_zip == "48224" ~ 19820, sch_zip == "48234" ~ 19820,
+      sch_zip == "48239" ~ 19820, sch_zip == "48313" ~ 19820,
+      sch_zip == "48340" ~ 19820, sch_zip == "48505" ~ 22420,
+      sch_zip == "48637" ~ 10940, sch_zip == "48770" ~ -2,
+      sch_zip == "49031" ~ 43780, sch_zip == "49038" ~ 28020,
+      sch_zip == "49072" ~ 44780, sch_zip == "49085" ~ 35660,
+      sch_zip == "49319" ~ 24340, sch_zip == "49504" ~ 24340,
+      sch_zip == "49659" ~ -2, sch_zip == "50255" ~ -2,
+      sch_zip == "50313" ~ 19780, sch_zip == "50315" ~ 19780,
+      sch_zip == "51445" ~ -2, sch_zip == "53074" ~ 33340,
+      sch_zip == "53105" ~ 16980, sch_zip == "53204" ~ 33340,
+      sch_zip == "53206" ~ 33340, sch_zip == "53209" ~ 33340,
+      sch_zip == "53570" ~ 33820, sch_zip == "53807" ~ -2,
+      sch_zip == "54452" ~ -2, sch_zip == "54984" ~ -2,
+      sch_zip == "55044" ~ 33460, sch_zip == "55056" ~ 33460,
+      sch_zip == "55060" ~ 36940, sch_zip == "55109" ~ 33460,
+      sch_zip == "55117" ~ 33460, sch_zip == "55386" ~ 33460,
+      sch_zip == "55411" ~ 33460, sch_zip == "55439" ~ 33460,
+      sch_zip == "55443" ~ 33460, sch_zip == "55768" ~ 20260,
+      sch_zip == "55951" ~ -2, sch_zip == "56071" ~ -2,
+      sch_zip == "56159" ~ -2, sch_zip == "56470" ~ -2,
+      sch_zip == "56671" ~ -2, sch_zip == "57039" ~ 43620,
+      sch_zip == "57235" ~ -2, sch_zip == "59015" ~ -2,
+      sch_zip == "59034" ~ -2, sch_zip == "59752" ~ -2,
+      sch_zip == "60008" ~ 16980, sch_zip == "60010" ~ 16980,
+      sch_zip == "60068" ~ 16980, sch_zip == "60103" ~ 16980,
+      sch_zip == "60136" ~ 16980, sch_zip == "60416" ~ 16980,
+      sch_zip == "60438" ~ 16980, sch_zip == "60451" ~ 16980,
+      sch_zip == "60505" ~ 16980, sch_zip == "60539" ~ 16980,
+      sch_zip == "60615" ~ 16980, sch_zip == "60617" ~ 16980,
+      sch_zip == "60620" ~ 16980, sch_zip == "60641" ~ 16980,
+      sch_zip == "60643" ~ 16980, sch_zip == "61244" ~ 19340,
+      sch_zip == "61752" ~ -2, sch_zip == "61760" ~ 37900,
+      sch_zip == "62080" ~ -2, sch_zip == "62095" ~ 41180,
+      sch_zip == "62226" ~ 41180, sch_zip == "62230" ~ 41180,
+      sch_zip == "62311" ~ -2, sch_zip == "62549" ~ 19500,
+      sch_zip == "63077" ~ 41180, sch_zip == "63090" ~ 41180,
+      sch_zip == "63630" ~ 41180, sch_zip == "63775" ~ -2,
+      sch_zip == "64014" ~ 28140, sch_zip == "64050" ~ 28140,
+      sch_zip == "64128" ~ 28140, sch_zip == "64831" ~ 22220,
+      sch_zip == "64865" ~ 22220, sch_zip == "65101" ~ 27620,
+      sch_zip == "65637" ~ -2, sch_zip == "65809" ~ 44180,
+      sch_zip == "66025" ~ 28140, sch_zip == "66205" ~ 28140,
+      sch_zip == "66436" ~ 11860, sch_zip == "68047" ~ -2,
+      sch_zip == "70121" ~ 35380, sch_zip == "70130" ~ 35380,
+      sch_zip == "70343" ~ 26380, sch_zip == "70392" ~ 34020,
+      sch_zip == "70555" ~ 10020, sch_zip == "70774" ~ 12940,
+      sch_zip == "71073" ~ 33380, sch_zip == "71129" ~ 43340,
+      sch_zip == "71303" ~ 10780, sch_zip == "71765" ~ 20980,
+      sch_zip == "71923" ~ -2, sch_zip == "72331" ~ -2,
+      sch_zip == "72401" ~ 27860, sch_zip == "72756" ~ 22220,
+      sch_zip == "72941" ~ 22900, sch_zip == "73049" ~ 36420,
+      sch_zip == "73065" ~ 36420, sch_zip == "73084" ~ 36420,
+      sch_zip == "73129" ~ 36420, sch_zip == "74037" ~ 46140,
+      sch_zip == "74429" ~ 46140, sch_zip == "74569" ~ -2,
+      sch_zip == "75007" ~ 19100, sch_zip == "75069" ~ 19100,
+      sch_zip == "75572" ~ -2, sch_zip == "75606" ~ 30980,
+      sch_zip == "75647" ~ 30980, sch_zip == "75755" ~ -2,
+      sch_zip == "75901" ~ 31260, sch_zip == "75951" ~ -2,
+      sch_zip == "75961" ~ 34860, sch_zip == "76103" ~ 19100,
+      sch_zip == "76111" ~ 19100, sch_zip == "76116" ~ 19100,
+      sch_zip == "77015" ~ 26420, sch_zip == "77024" ~ 26420,
+      sch_zip == "77033" ~ 26420, sch_zip == "77039" ~ 26420,
+      sch_zip == "77051" ~ 26420, sch_zip == "77304" ~ 26420,
+      sch_zip == "77353" ~ 26420, sch_zip == "77575" ~ 26420,
+      sch_zip == "77659" ~ 13140, sch_zip == "78154" ~ 41700,
+      sch_zip == "78213" ~ 41700, sch_zip == "78238" ~ 41700,
+      sch_zip == "78253" ~ 41700, sch_zip == "78381" ~ 18580,
+      sch_zip == "78521" ~ 15180, sch_zip == "78539" ~ 32580,
+      sch_zip == "78572" ~ 32580, sch_zip == "78596" ~ 32580,
+      sch_zip == "78606" ~ -2, sch_zip == "78644" ~ 12420,
+      sch_zip == "79059" ~ 37420, sch_zip == "79095" ~ -2,
+      sch_zip == "79760" ~ 36220, sch_zip == "79902" ~ 21340,
+      sch_zip == "80022" ~ 19740, sch_zip == "80209" ~ 19740,
+      sch_zip == "80210" ~ 19740, sch_zip == "80917" ~ 17820,
+      sch_zip == "80920" ~ 17820, sch_zip == "81521" ~ 24300,
+      sch_zip == "81650" ~ -2, sch_zip == "82935" ~ 40540,
+      sch_zip == "83204" ~ 38540, sch_zip == "83274" ~ 13940,
+      sch_zip == "84003" ~ 39340, sch_zip == "84021" ~ -2,
+      sch_zip == "84078" ~ 46860, sch_zip == "84103" ~ 41620,
+      sch_zip == "84302" ~ 14940, sch_zip == "85012" ~ 38060,
+      sch_zip == "85259" ~ 38060, sch_zip == "85327" ~ 38060,
+      sch_zip == "85353" ~ 38060, sch_zip == "85364" ~ 49740,
+      sch_zip == "85533" ~ 40940, sch_zip == "85710" ~ 46060,
+      sch_zip == "85719" ~ 46060, sch_zip == "86333" ~ 39140,
+      sch_zip == "87124" ~ 10740, sch_zip == "87417" ~ 22140,
+      sch_zip == "87501" ~ 42140, sch_zip == "89049" ~ 37220,
+      sch_zip == "89101" ~ 29820, sch_zip == "89445" ~ -2,
+      sch_zip == "90011" ~ 31100, sch_zip == "90037" ~ 31100,
+      sch_zip == "90255" ~ 31100, sch_zip == "90706" ~ 31100,
+      sch_zip == "91007" ~ 31100, sch_zip == "91011" ~ 31100,
+      sch_zip == "91202" ~ 31100, sch_zip == "91364" ~ 31100,
+      sch_zip == "91710" ~ 40140, sch_zip == "91764" ~ 40140,
+      sch_zip == "91801" ~ 31100, sch_zip == "91932" ~ 41740,
+      sch_zip == "91941" ~ 41740, sch_zip == "92154" ~ 41740,
+      sch_zip == "92201" ~ 40140, sch_zip == "92243" ~ 20940,
+      sch_zip == "92250" ~ 20940, sch_zip == "92335" ~ 40140,
+      sch_zip == "92345" ~ 40140, sch_zip == "92374" ~ 40140,
+      sch_zip == "92503" ~ 40140, sch_zip == "92505" ~ 40140,
+      sch_zip == "92544" ~ 40140, sch_zip == "92545" ~ 40140,
+      sch_zip == "92553" ~ 40140, sch_zip == "92557" ~ 40140,
+      sch_zip == "92562" ~ 40140, sch_zip == "92584" ~ 40140,
+      sch_zip == "92592" ~ 40140, sch_zip == "92629" ~ 31100,
+      sch_zip == "92688" ~ 31100, sch_zip == "93306" ~ 12540,
+      sch_zip == "93436" ~ 42060, sch_zip == "93640" ~ 23420,
+      sch_zip == "93706" ~ 23420, sch_zip == "93710" ~ 23420,
+      sch_zip == "94044" ~ 41860, sch_zip == "94124" ~ 41860,
+      sch_zip == "94403" ~ 41860, sch_zip == "94561" ~ 41860,
+      sch_zip == "94587" ~ 41860, sch_zip == "94591" ~ 46700,
+      sch_zip == "94605" ~ 41860, sch_zip == "94611" ~ 41860,
+      sch_zip == "95121" ~ 41940, sch_zip == "95206" ~ 44700,
+      sch_zip == "95209" ~ 44700, sch_zip == "95367" ~ 33700,
+      sch_zip == "95470" ~ 46380, sch_zip == "95492" ~ 42220,
+      sch_zip == "95531" ~ 18860, sch_zip == "95608" ~ 40900,
+      sch_zip == "95628" ~ 40900, sch_zip == "95926" ~ 17020,
+      sch_zip == "96007" ~ 39820, sch_zip == "96022" ~ 39780,
+      sch_zip == "96025" ~ -2, sch_zip == "96706" ~ 26180,
+      sch_zip == "96791" ~ 26180, sch_zip == "97005" ~ 38900,
+      sch_zip == "97206" ~ 38900, sch_zip == "97223" ~ 38900,
+      sch_zip == "97330" ~ 18700, sch_zip == "97415" ~ 15060,
+      sch_zip == "97444" ~ 15060, sch_zip == "97526" ~ 24420,
+      sch_zip == "98004" ~ 42660, sch_zip == "98040" ~ 42660,
+      sch_zip == "98148" ~ 42660, sch_zip == "98261" ~ -2,
+      sch_zip == "98371" ~ 42660, sch_zip == "98516" ~ 36500,
+      sch_zip == "99022" ~ 44060, sch_zip == "99037" ~ 44060,
+      sch_zip == "99207" ~ 44060, sch_zip == "99577" ~ 11260,
+      sch_zip == "32205" ~ 27260, sch_zip == "33183" ~ 33100,
+      TRUE ~ valid_cbsa)) %>% 
+  select(-valid_cbsatype) %>% 
+  left_join(cbsas %>% 
+               select(-zip_2004) %>% 
+               distinct(),
+             by = "valid_cbsa") 
+
+replaced_cbsa <- z
+rm(z)
+
+z <- replaced_cbsa %>% 
+  mutate(
+    valid_cbsatype = case_when(
+      valid_cbsa == 47620 ~ 1,
+      valid_cbsa == 42380 ~ 1,
+      valid_cbsa == 30740 ~ 2,
+      valid_cbsa == 47580 ~ 1,
+      valid_cbsa == 31401 ~ 1,
+      valid_cbsa == 46940 ~ 1,
+      valid_cbsa == 45540 ~ 2,
+      valid_cbsa == 39460 ~ 1,
+      valid_cbsa == 17500 ~ 2,
+      valid_cbsa == 37700 ~ 1,
+      valid_cbsa == 35940 ~ 2,
+      valid_cbsa == 43380 ~ 2,
+      valid_cbsa == 19540 ~ 2,
+      valid_cbsa == 35860 ~ 2,
+      valid_cbsa == 33820 ~ 2,
+      valid_cbsa == 36940 ~ 2,
+      valid_cbsa == 37420 ~ 2,
+      valid_cbsa == 13940 ~ 2,
+      valid_cbsa == 46860 ~ 2,
+      valid_cbsa == 14940 ~ 2,
+      valid_cbsa == 37220 ~ 2,
+      valid_cbsa == 18860 ~ 2,
+      valid_cbsa == 39780 ~ 2,
+      valid_cbsa == 15060 ~ 2,
+      TRUE ~ valid_cbsatype)
+  )
+      
+x <- nonmissing_sch_zips %>% 
+  bind_rows(z)
+  
+valid_sch_zips <- x
+
+write_csv(valid_sch_zips, "data_paper2/valid_sch_zips.csv")
+      
+```
+
+
+
