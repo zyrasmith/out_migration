@@ -5,7 +5,7 @@ output: html_notebook
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
 
 ```{r setup}
 
@@ -34,17 +34,17 @@ cbsa2007 <- read_dta("data_paper2/hd2007.dta")
 
 
 ```{r Institution filter}
-
-y <- ipeds_hd %>% 
-  filter(
-    cyactive == 1,
-    deggrant == 1,
-    fips <= 56,
-    instcat != 1,
-    carnegie != -3
-  )
-
-ipeds_hd <- y
+# 
+# y <- ipeds_hd %>% 
+#   filter(
+#     cyactive == 1,
+#     deggrant == 1,
+#     fips <= 56,
+#     instcat != 1,
+#     carnegie != -3
+#   )
+# 
+# ipeds_hd <- y
 
 ```
 

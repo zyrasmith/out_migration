@@ -33,14 +33,12 @@ nonmissing_sch_zips <- sch_zips %>%
   filter(!is.na(valid_cbsa))
  
 
-# write_csv(x, "data_paper2/nonmissing_sch_zips.csv")
 
 
 missing_sch_zips <- sch_zips %>% 
   left_join(cbsas, by = c("sch_zip" = "zip_2004")) %>% 
   filter(is.na(valid_cbsa)) 
 
-# write_csv(y, "data_paper2/missing_sch_zips.csv")
 
    #Replace missing CBSAs using Missouri ZIP/CBSA Crosswalk (GET URL)
     #Note: Some zipcodes are not listed in the crosswalk because they do not have a population. These zipcodes are assigned the CBSA of the zipcodes that are numerically adjacent. For example, zipcode 39580 was not listed in the crosswalk. It was assigned CBSA = 39580 because that is the CBSA for zipcodes 27587 and 27589.

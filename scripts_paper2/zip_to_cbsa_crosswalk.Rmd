@@ -1,0 +1,598 @@
+---
+title: "zip_to_cbsa_crosswalk"
+author: "Zyrashae Smith-Onyewu"
+date: "2026-07-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+rm(list = ls())
+
+knitr::opts_knit$set(root.dir = "C:/Users/zyras/Documents/GitHub/out_migration")
+
+# install.packages("haven")
+
+library(tidyverse)
+library(haven)
+```
+
+
+CBSAs is a datafile that contains list of colleges by zipcodes matched between 2004 and 2007 IPEDS
+SCH_ZIPS is a datafile that contains the unique zipcodes for all high schools in ELS dataset
+
+```{r load data}
+
+
+ipeds_hd <- read_dta("data_paper2/hd2004.dta")
+cbsa2007 <- read_dta("data_paper2/hd2007.dta")
+sch_zips <- read_csv("data_paper2/sch_zips.csv")
+college_destinations <- read_dta("data_paper2/college_destinations.dta")
+cbsas <- read_csv("data_paper2/cbsas.csv")
+
+ 
+```
+
+
+```{r Institution filter}
+
+y <- ipeds_hd %>%
+  filter(
+    cyactive == 1,
+    deggrant == 1,
+    fips <= 56,
+    instcat != 1,
+    carnegie != -3
+  )
+
+eligible_ipeds_colleges <- y
+
+rm(y)
+
+```
+
+
+Keep only students who can be matched to a college in the dataset 
+-2- and 4-year colleges
+-public and private, not-for-profit college
+-in 50 states and U.S.
+```{r sample filter}
+
+y <- college_destinations %>% 
+  left_join(eligible_ipeds_colleges, by = "unitid") %>% 
+  filter(!is.na(instnm))
+
+college_destinations <- y
+
+rm(y)
+
+```
+
+
+```{r Identify valid 2004 college zip/cbsa data}
+
+
+x <- eligible_ipeds_colleges %>% 
+  select(unitid, instnm, addr, city, stabbr, zip) %>% 
+  left_join(cbsa2007 %>% 
+              select(unitid, instnm, addr, city, stabbr, zip, cbsa, cbsatype),
+            by = c("unitid")) %>% 
+  mutate(zip_2004 = str_remove(zip.x, "-.*"),
+         zip_2007 = str_remove(zip.y, "-.*"),
+         match_location = if_else(zip_2004 == zip_2007, 1, 0),
+         city.x = str_to_lower(city.x),
+         city.x = str_replace_all(city.x, "[^A-Za-z0-9 ]", ""),
+         city.x = str_trim(city.x),
+         city.y = str_to_lower(city.y),
+         city.y = str_replace_all(city.y, "[^A-Za-z0-9 ]", ""),
+         city.y = str_trim(city.y),
+         match_location = if_else(city.x == city.y, 1, match_location),
+         valid_cbsa = if_else(match_location == 1, cbsa, NA_real_),
+         valid_cbsatype = if_else(match_location == 1, cbsatype, NA_real_)) 
+
+
+#List of all valid CBSAs in college data
+zip_cbsa_crosswalk_1 <- x %>% 
+  select(zip_2004, valid_cbsa, valid_cbsatype) %>% 
+  distinct() %>% 
+  group_by(zip_2004) %>% 
+  mutate(valid_cbsa = if_else(is.na(valid_cbsa), max(valid_cbsa), valid_cbsa),
+         valid_cbsatype = if_else(is.na(valid_cbsatype), max(valid_cbsatype), valid_cbsatype)) %>% 
+  ungroup() %>% 
+  rename(zips = zip_2004) %>% 
+  filter(!is.na(valid_cbsa))
+
+
+# zip_cbsa_crosswalk_1 <- valid_cbsas %>% 
+#   filter(!is.na(valid_cbsa)) %>% 
+#   mutate(valid_cbsa = case_when(
+#       zips == "43614" ~ 45780,
+#       zips == "19103" ~ 37980,
+#       TRUE ~ valid_cbsa),
+#     valid_cbsatype = case_when(
+#       valid_cbsa == 45780 ~ 2,
+#       valid_cbsa == 37980 ~ 2,
+#       TRUE ~valid_cbsatype
+#     )
+#   ) %>% 
+#   distinct()
+
+
+#List of college cbsas
+y <- x %>% 
+  select(unitid, zip_2004, zip_2007, cbsa, cbsatype) %>% 
+  right_join(college_destinations,
+             by = "unitid")
+
+#List colleges not missing cbsa data
+nonmissing_college_cbsas <- y %>% 
+  filter(!is.na(cbsa))
+
+#List colleges not missing cbsa data
+missing_college_cbsas <- y %>% 
+  filter(is.na(cbsa))
+
+
+ 
+
+rm(x, y)
+
+```
+
+
+
+```{r Append list of high school zipcodes to missing college zipcodes}
+
+x <- missing_college_cbsas %>% 
+  select(zip_2004) %>% 
+  rename(zips = zip_2004)
+
+y <- sch_zips %>% 
+  rename(zips = sch_zip) %>% 
+  bind_rows(x) %>% 
+  distinct()
+
+#Identify zipcodes for which we don't have CBSA data
+all_missing_zips <- y %>% 
+  select(zips) %>% 
+  left_join(zip_cbsa_crosswalk_1, by = "zips") %>% 
+  filter(is.na(valid_cbsa))
+
+rm(x, y)
+
+```
+
+
+
+```{r Create crosswalk list}
+
+
+     #Replace missing CBSAs using Missouri ZIP/CBSA Crosswalk (GET URL)
+    #Note: Some zipcodes are not listed in the crosswalk because they do not have a population. These zipcodes are assigned the CBSA of the zipcodes that are numerically adjacent. For example, zipcode 39580 was not listed in the crosswalk. It was assigned CBSA = 39580 because that is the CBSA for zipcodes 27587 and 27589.
+x <- all_missing_zips %>% 
+  mutate(
+    valid_cbsa = case_when(
+      zips == "01001" ~ 44140, zips == "01069" ~ 44140,
+      zips == "01518" ~ 49340, zips == "01605" ~ 49340,
+      zips == "01803" ~ 14460, zips == "02351" ~ 14460,
+      zips == "02382" ~ 14460, zips == "02571" ~ 14460,
+      zips == "02780" ~ 39300, zips == "02893" ~ 39300,
+      zips == "03079" ~ 14460, zips == "03894" ~ -2,
+      zips == "04096" ~ 38860, zips == "04217" ~ -2,
+      zips == "04252" ~ 30340, zips == "04468" ~ 12620,
+      zips == "05832" ~ -2, zips == "05855" ~ -2,
+      zips == "06001" ~ 25540, zips == "06040" ~ 25540,
+      zips == "06770" ~ 35300, zips == "06787" ~ 45860,
+      zips == "06804" ~ 14860, zips == "06851" ~ 14860,
+      zips == "07018" ~ 35620, zips == "07036" ~ 35620,
+      zips == "07040" ~ 35620, zips == "07103" ~ 35620,
+      zips == "07109" ~ 35620, zips == "07302" ~ 35620,
+      zips == "07442" ~ 35620, zips == "07747" ~ 35620,
+      zips == "07879" ~ 35620, zips == "08002" ~ 37980,
+      zips == "08034" ~ 37980, zips == "08109" ~ 37980,
+      zips == "08110" ~ 37980, zips == "08234" ~ 12100,
+      zips == "08344" ~ 12100, zips == "08360" ~ 12100,
+      zips == "10029" ~ 35620, zips == "10306" ~ 35620,
+      zips == "10463" ~ 35620, zips == "10469" ~ 35620,
+      zips == "10706" ~ 35620, zips == "10710" ~ 35620,
+      zips == "11207" ~ 35620, zips == "11356" ~ 35620,
+      zips == "11361" ~ 35620, zips == "11373" ~ 35620,
+      zips == "11432" ~ 35620, zips == "11553" ~ 35620,
+      zips == "11756" ~ 35620, zips == "11771" ~ 35620,
+      zips == "11901" ~ 35620, zips == "11953" ~ 35620,
+      zips == "12077" ~ 10580, zips == "12520" ~ 39100,
+      zips == "12533" ~ 35620, zips == "12564" ~ 39100,
+      zips == "12603" ~ 39100, zips == "12771" ~ 39100,
+      zips == "12974" ~ -2, zips == "12986" ~ 31660,
+      zips == "13080" ~ 12180, zips == "13421" ~ 45060,
+      zips == "13619" ~ -2, zips == "13905" ~ 13780,
+      zips == "14057" ~ 15380, zips == "14209" ~ 15380,
+      zips == "14221" ~ 15380, zips == "14468" ~ 40380,
+      zips == "14564" ~ 40380, zips == "14870" ~ -2,
+      zips == "15009" ~ 38300, zips == "15214" ~ 38300,
+      zips == "15317" ~ 38300, zips == "15666" ~ 38300,
+      zips == "15729" ~ 26860, zips == "15905" ~ 27780,
+      zips == "16117" ~ 35260, zips == "16371" ~ 47620,
+      zips == "16506" ~ 21500, zips == "17061" ~ 25420,
+      zips == "17062" ~ -2, zips == "17109" ~ 25420,
+      zips == "17402" ~ 49620, zips == "17538" ~ 29540,
+      zips == "18102" ~ 10900, zips == "18301" ~ 20700,
+      zips == "18707" ~ 42540, zips == "18853" ~ 42380,
+      zips == "19030" ~ 37980, zips == "19047" ~ 37980,
+      zips == "19073" ~ 37980, zips == "19085" ~ 37980,
+      zips == "19087" ~ 37980, zips == "19107" ~ 37980,
+      zips == "19130" ~ 37980, zips == "19136" ~ 37980,
+      zips == "19145" ~ 37980, zips == "19464" ~ 37980,
+      zips == "19508" ~ 39740, zips == "19606" ~ 39740,
+      zips == "19947" ~ 42580, zips == "19958" ~ 42580,
+      zips == "20011" ~ 47900, zips == "20017" ~ 47900,
+      zips == "20147" ~ 47900, zips == "20678" ~ 47900,
+      zips == "20705" ~ 47900, zips == "20707" ~ 47900,
+      zips == "20745" ~ 47900, zips == "20814" ~ 47900,
+      zips == "20855" ~ 47900, zips == "20860" ~ 47900,
+      zips == "21014" ~ 12580, zips == "21202" ~ 12580,
+      zips == "21209" ~ 12580, zips == "21224" ~ 12580,
+      zips == "21286" ~ 12580, zips == "21502" ~ 19060,
+      zips == "22003" ~ 47900, zips == "22030" ~ 47900,
+      zips == "22309" ~ 47900, zips == "22846" ~ 25500,
+      zips == "22960" ~ -2, zips == "23005" ~ 40060,
+      zips == "23112" ~ 40060, zips == "23188" ~ 47260,
+      zips == "23322" ~ 47260, zips == "23456" ~ 47260,
+      zips == "23487" ~ 47260, zips == "23517" ~ 47260,
+      zips == "24477" ~ 44420, zips == "25045" ~ -2,
+      zips == "25661" ~ -2, zips == "25958" ~ -2,
+      zips == "26062" ~ 48260, zips == "27203" ~ 24660,
+      zips == "27408" ~ 24660, zips == "27513" ~ 39580,
+      zips == "27701" ~ 20500, zips == "28054" ~ 16740,
+      zips == "28078" ~ 16740, zips == "28090" ~ 30740,
+      zips == "28112" ~ 16740, zips == "28210" ~ 16740,
+      zips == "28226" ~ 16740, zips == "28339" ~ 20380,
+      zips == "28443" ~ 48900, zips == "28518" ~ -2,
+      zips == "28713" ~ -2, zips == "28732" ~ 11700,
+      zips == "29003" ~ -2, zips == "29033" ~ 17900,
+      zips == "29063" ~ 17900, zips == "29072" ~ 17900,
+      zips == "29445" ~ 16700, zips == "29575" ~ 34820,
+      zips == "29673" ~ 11340, zips == "29706" ~ 16740,
+      zips == "29832" ~ 12260, zips == "30024" ~ 12060,
+      zips == "30032" ~ 12060, zips == "30047" ~ 12060,
+      zips == "30066" ~ 12060, zips == "30075" ~ 12060,
+      zips == "30076" ~ 12060, zips == "30078" ~ 12060,
+      zips == "30083" ~ 12060, zips == "30088" ~ 12060,
+      zips == "30189" ~ 12060, zips == "30253" ~ 12060,
+      zips == "30281" ~ 12060, zips == "30290" ~ 12060,
+      zips == "30311" ~ 12060, zips == "30345" ~ 12060,
+      zips == "30349" ~ 12060, zips == "30909" ~ 12260,
+      zips == "31078" ~ 31420, zips == "31088" ~ 47580,
+      zips == "31305" ~ 15260, zips == "31324" ~ 42340,
+      zips == "31401" ~ 31401, zips == "31717" ~ 12460,
+      zips == "31730" ~ -2, zips == "31906" ~ 17980,
+      zips == "32095" ~ 27260, zips == "27260" ~ 27260,
+      zips == "32246" ~ 27260, zips == "32312" ~ 45220,
+      zips == "32444" ~ 37460, zips == "32462" ~ -2,
+      zips == "32503" ~ 37860, zips == "32526" ~ 37860,
+      zips == "32570" ~ 37860, zips == "32804" ~ 36740,
+      zips == "32963" ~ 46940, zips == "33015" ~ 33100,
+      zips == "33018" ~ 33100, zips == "33146" ~ 33100,
+      zips == "33166" ~ 33100, zips == "33312" ~ 33100,
+      zips == "33325" ~ 33100, zips == "33332" ~ 33100,
+      zips == "33334" ~ 33100, zips == "33409" ~ 33100,
+      zips == "33460" ~ 33100, zips == "33496" ~ 33100,
+      zips == "33513" ~ 45540, zips == "33709" ~ 45300,
+      zips == "33761" ~ 45300, zips == "33777" ~ 45300,
+      zips == "33809" ~ 29460, zips == "33844" ~ 29460,
+      zips == "33948" ~ 39460, zips == "34142" ~ 17500,
+      zips == "34232" ~ 42260, zips == "35020" ~ 13820,
+      zips == "35045" ~ 13820, zips == "35083" ~ 18980,
+      zips == "35401" ~ 46220, zips == "35406" ~ 46220,
+      zips == "35453" ~ 46220, zips == "35674" ~ 22520,
+      zips == "35801" ~ 26620, zips == "35816" ~ 26620,
+      zips == "36040" ~ 33860, zips == "36107" ~ 33860,
+      zips == "36544" ~ 33660, zips == "36866" ~ 10760,
+      zips == "37110" ~ -2, zips == "37185" ~ -2,
+      zips == "37332" ~ -2, zips == "37341" ~ 16860,
+      zips == "37401" ~ 16860, zips == "37421" ~ 16860,
+      zips == "37721" ~ 28940, zips == "37818" ~ 24620,
+      zips == "38127" ~ 32820, zips == "38801" ~ 46180,
+      zips == "38901" ~ -2, zips == "39341" ~ -2,
+      zips == "39367" ~ -2, zips == "39452" ~ -2,
+      zips == "39482" ~ -2, zips == "39501" ~ 25060,
+      zips == "39503" ~ 25060, zips == "39567" ~ 37700,
+      zips == "39577" ~ 25060, zips == "39759" ~ 18060,
+      zips == "40204" ~ 31140, zips == "40212" ~ 31140,
+      zips == "40241" ~ 31140, zips == "40299" ~ 31140,
+      zips == "40484" ~ -2, zips == "41001" ~ 17140,
+      zips == "41015" ~ 17140, zips == "42633" ~ -2,
+      zips == "43085" ~ 18140, zips == "43229" ~ 18140,
+      zips == "43605" ~ 45780, zips == "44041" ~ 11780,
+      zips == "44052" ~ 17460, zips == "44105" ~ 17460,
+      zips == "44113" ~ 17460, zips == "44147" ~ 17460,
+      zips == "44224" ~ 10420, zips == "44260" ~ 10420,
+      zips == "44408" ~ 20620, zips == "44641" ~ 15940,
+      zips == "44646" ~ 15940, zips == "44890" ~ 35940,
+      zips == "44902" ~ 31900, zips == "45013" ~ 17140,
+      zips == "45122" ~ 17140, zips == "45205" ~ 17140,
+      zips == "45219" ~ 17140, zips == "45245" ~ 17140,
+      zips == "45255" ~ 17140, zips == "45333" ~ 43380,
+      zips == "45365" ~ 43380, zips == "45420" ~ 19380,
+      zips == "45503" ~ 44220, zips == "45784" ~ 37620,
+      zips == "45833" ~ -2, zips == "46112" ~ 26900,
+      zips == "46327" ~ 16980, zips == "46373" ~ 16980,
+      zips == "46382" ~ 33140, zips == "46514" ~ 21140,
+      zips == "46614" ~ 43780, zips == "46733" ~ 19540,
+      zips == "46761" ~ -2, zips == "46774" ~ 23060,
+      zips == "47025" ~ 17140, zips == "47265" ~ 35860,
+      zips == "47720" ~ 21780, zips == "48071" ~ 19820,
+      zips == "48074" ~ 19820, zips == "48098" ~ 19820,
+      zips == "48180" ~ 19820, zips == "48192" ~ 19820,
+      zips == "48224" ~ 19820, zips == "48234" ~ 19820,
+      zips == "48239" ~ 19820, zips == "48313" ~ 19820,
+      zips == "48340" ~ 19820, zips == "48505" ~ 22420,
+      zips == "48637" ~ 10940, zips == "48770" ~ -2,
+      zips == "49031" ~ 43780, zips == "49038" ~ 28020,
+      zips == "49072" ~ 44780, zips == "49085" ~ 35660,
+      zips == "49319" ~ 24340, zips == "49504" ~ 24340,
+      zips == "49659" ~ -2, zips == "50255" ~ -2,
+      zips == "50313" ~ 19780, zips == "50315" ~ 19780,
+      zips == "51445" ~ -2, zips == "53074" ~ 33340,
+      zips == "53105" ~ 16980, zips == "53204" ~ 33340,
+      zips == "53206" ~ 33340, zips == "53209" ~ 33340,
+      zips == "53570" ~ 33820, zips == "53807" ~ -2,
+      zips == "54452" ~ -2, zips == "54984" ~ -2,
+      zips == "55044" ~ 33460, zips == "55056" ~ 33460,
+      zips == "55060" ~ 36940, zips == "55109" ~ 33460,
+      zips == "55117" ~ 33460, zips == "55386" ~ 33460,
+      zips == "55411" ~ 33460, zips == "55439" ~ 33460,
+      zips == "55443" ~ 33460, zips == "55768" ~ 20260,
+      zips == "55951" ~ -2, zips == "56071" ~ -2,
+      zips == "56159" ~ -2, zips == "56470" ~ -2,
+      zips == "56671" ~ -2, zips == "57039" ~ 43620,
+      zips == "57235" ~ -2, zips == "59015" ~ -2,
+      zips == "59034" ~ -2, zips == "59752" ~ -2,
+      zips == "60008" ~ 16980, zips == "60010" ~ 16980,
+      zips == "60068" ~ 16980, zips == "60103" ~ 16980,
+      zips == "60136" ~ 16980, zips == "60416" ~ 16980,
+      zips == "60438" ~ 16980, zips == "60451" ~ 16980,
+      zips == "60505" ~ 16980, zips == "60539" ~ 16980,
+      zips == "60615" ~ 16980, zips == "60617" ~ 16980,
+      zips == "60620" ~ 16980, zips == "60641" ~ 16980,
+      zips == "60643" ~ 16980, zips == "61244" ~ 19340,
+      zips == "61752" ~ -2, zips == "61760" ~ 37900,
+      zips == "62080" ~ -2, zips == "62095" ~ 41180,
+      zips == "62226" ~ 41180, zips == "62230" ~ 41180,
+      zips == "62311" ~ -2, zips == "62549" ~ 19500,
+      zips == "63077" ~ 41180, zips == "63090" ~ 41180,
+      zips == "63630" ~ 41180, zips == "63775" ~ -2,
+      zips == "64014" ~ 28140, zips == "64050" ~ 28140,
+      zips == "64128" ~ 28140, zips == "64831" ~ 22220,
+      zips == "64865" ~ 22220, zips == "65101" ~ 27620,
+      zips == "65637" ~ -2, zips == "65809" ~ 44180,
+      zips == "66025" ~ 28140, zips == "66205" ~ 28140,
+      zips == "66436" ~ 11860, zips == "68047" ~ -2,
+      zips == "70121" ~ 35380, zips == "70130" ~ 35380,
+      zips == "70343" ~ 26380, zips == "70392" ~ 34020,
+      zips == "70555" ~ 10020, zips == "70774" ~ 12940,
+      zips == "71073" ~ 33380, zips == "71129" ~ 43340,
+      zips == "71303" ~ 10780, zips == "71765" ~ 20980,
+      zips == "71923" ~ -2, zips == "72331" ~ -2,
+      zips == "72401" ~ 27860, zips == "72756" ~ 22220,
+      zips == "72941" ~ 22900, zips == "73049" ~ 36420,
+      zips == "73065" ~ 36420, zips == "73084" ~ 36420,
+      zips == "73129" ~ 36420, zips == "74037" ~ 46140,
+      zips == "74429" ~ 46140, zips == "74569" ~ -2,
+      zips == "75007" ~ 19100, zips == "75069" ~ 19100,
+      zips == "75572" ~ -2, zips == "75606" ~ 30980,
+      zips == "75647" ~ 30980, zips == "75755" ~ -2,
+      zips == "75901" ~ 31260, zips == "75951" ~ -2,
+      zips == "75961" ~ 34860, zips == "76103" ~ 19100,
+      zips == "76111" ~ 19100, zips == "76116" ~ 19100,
+      zips == "77015" ~ 26420, zips == "77024" ~ 26420,
+      zips == "77033" ~ 26420, zips == "77039" ~ 26420,
+      zips == "77051" ~ 26420, zips == "77304" ~ 26420,
+      zips == "77353" ~ 26420, zips == "77575" ~ 26420,
+      zips == "77659" ~ 13140, zips == "78154" ~ 41700,
+      zips == "78213" ~ 41700, zips == "78238" ~ 41700,
+      zips == "78253" ~ 41700, zips == "78381" ~ 18580,
+      zips == "78521" ~ 15180, zips == "78539" ~ 32580,
+      zips == "78572" ~ 32580, zips == "78596" ~ 32580,
+      zips == "78606" ~ -2, zips == "78644" ~ 12420,
+      zips == "79059" ~ 37420, zips == "79095" ~ -2,
+      zips == "79760" ~ 36220, zips == "79902" ~ 21340,
+      zips == "80022" ~ 19740, zips == "80209" ~ 19740,
+      zips == "80210" ~ 19740, zips == "80917" ~ 17820,
+      zips == "80920" ~ 17820, zips == "81521" ~ 24300,
+      zips == "81650" ~ -2, zips == "82935" ~ 40540,
+      zips == "83204" ~ 38540, zips == "83274" ~ 13940,
+      zips == "84003" ~ 39340, zips == "84021" ~ -2,
+      zips == "84078" ~ 46860, zips == "84103" ~ 41620,
+      zips == "84302" ~ 14940, zips == "85012" ~ 38060,
+      zips == "85259" ~ 38060, zips == "85327" ~ 38060,
+      zips == "85353" ~ 38060, zips == "85364" ~ 49740,
+      zips == "85533" ~ 40940, zips == "85710" ~ 46060,
+      zips == "85719" ~ 46060, zips == "86333" ~ 39140,
+      zips == "87124" ~ 10740, zips == "87417" ~ 22140,
+      zips == "87501" ~ 42140, zips == "89049" ~ 37220,
+      zips == "89101" ~ 29820, zips == "89445" ~ -2,
+      zips == "90011" ~ 31100, zips == "90037" ~ 31100,
+      zips == "90255" ~ 31100, zips == "90706" ~ 31100,
+      zips == "91007" ~ 31100, zips == "91011" ~ 31100,
+      zips == "91202" ~ 31100, zips == "91364" ~ 31100,
+      zips == "91710" ~ 40140, zips == "91764" ~ 40140,
+      zips == "91801" ~ 31100, zips == "91932" ~ 41740,
+      zips == "91941" ~ 41740, zips == "92154" ~ 41740,
+      zips == "92201" ~ 40140, zips == "92243" ~ 20940,
+      zips == "92250" ~ 20940, zips == "92335" ~ 40140,
+      zips == "92345" ~ 40140, zips == "92374" ~ 40140,
+      zips == "92503" ~ 40140, zips == "92505" ~ 40140,
+      zips == "92544" ~ 40140, zips == "92545" ~ 40140,
+      zips == "92553" ~ 40140, zips == "92557" ~ 40140,
+      zips == "92562" ~ 40140, zips == "92584" ~ 40140,
+      zips == "92592" ~ 40140, zips == "92629" ~ 31100,
+      zips == "92688" ~ 31100, zips == "93306" ~ 12540,
+      zips == "93436" ~ 42060, zips == "93640" ~ 23420,
+      zips == "93706" ~ 23420, zips == "93710" ~ 23420,
+      zips == "94044" ~ 41860, zips == "94124" ~ 41860,
+      zips == "94403" ~ 41860, zips == "94561" ~ 41860,
+      zips == "94587" ~ 41860, zips == "94591" ~ 46700,
+      zips == "94605" ~ 41860, zips == "94611" ~ 41860,
+      zips == "95121" ~ 41940, zips == "95206" ~ 44700,
+      zips == "95209" ~ 44700, zips == "95367" ~ 33700,
+      zips == "95470" ~ 46380, zips == "95492" ~ 42220,
+      zips == "95531" ~ 18860, zips == "95608" ~ 40900,
+      zips == "95628" ~ 40900, zips == "95926" ~ 17020,
+      zips == "96007" ~ 39820, zips == "96022" ~ 39780,
+      zips == "96025" ~ -2, zips == "96706" ~ 26180,
+      zips == "96791" ~ 26180, zips == "97005" ~ 38900,
+      zips == "97206" ~ 38900, zips == "97223" ~ 38900,
+      zips == "97330" ~ 18700, zips == "97415" ~ 15060,
+      zips == "97444" ~ 15060, zips == "97526" ~ 24420,
+      zips == "98004" ~ 42660, zips == "98040" ~ 42660,
+      zips == "98148" ~ 42660, zips == "98261" ~ -2,
+      zips == "98371" ~ 42660, zips == "98516" ~ 36500,
+      zips == "99022" ~ 44060, zips == "99037" ~ 44060,
+      zips == "99207" ~ 44060, zips == "99577" ~ 11260,
+      zips == "32205" ~ 27260, zips == "33183" ~ 33100,
+      zips == "02110" ~ 14460, zips == "02215" ~ 14460,
+      zips == "03246" ~ 29060, zips == "03885" ~ 14460,
+      zips == "10011" ~ 35620, zips == "10115" ~ 35620,
+      zips == "10601" ~ 35620, zips == "11230" ~ 35620,
+      zips == "15146" ~ 38300, zips == "16510" ~ 21500,
+      zips == "17057" ~ 25420, zips == "17948" ~ 39060,
+      zips == "18042" ~ 10900, zips == "18966" ~ 37980,
+      zips == "20902" ~ 47900, zips == "21228" ~ 12580,
+      zips == "23451" ~ 47260, zips == "23513" ~ 47260,
+      zips == "25818" ~ 13220, zips == "26301" ~ 17220,
+      zips == "27295" ~ 45640, zips == "27588" ~ 39580,
+      zips == "28025" ~ 16740, zips == "29403" ~ 16700,
+      zips == "29902" ~ 25940, zips == "30093" ~ 12060,
+      zips == "30309" ~ 12060, zips == "33169" ~ 33100,
+      zips == "33317" ~ 33100, zips == "33781" ~ 45300,
+      zips == "34698" ~ 45300, zips == "35022" ~ 13820,
+      zips == "35242" ~ 13820, zips == "36103" ~ 33860,
+      zips == "36304" ~ 20020, zips == "38119" ~ 32820,
+      zips == "40506" ~ 30460, zips == "43614" ~ 45780,
+      zips == "44720" ~ 10420, zips == "45211" ~ 17140,
+      zips == "48331" ~ 19820, zips == "55128" ~ 33460,
+      zips == "55305" ~ 33460, zips == "55344" ~ 33460,
+      zips == "57350" ~ 26700, zips == "57625" ~ -2,
+      zips == "60045" ~ 16980, zips == "60079" ~ 16980,
+      zips == "60443" ~ 16980, zips == "60603" ~ 16980,
+      zips == "60610" ~ 16980, zips == "60618" ~ 16980,
+      zips == "60659" ~ 16980, zips == "63074" ~ 41180,
+      zips == "63301" ~ 41180, zips == "64131" ~ 28140,
+      zips == "68701" ~ 35740, zips == "70005" ~ 35380,
+      zips == "70126" ~ 35380, zips == "70458" ~ 35380,
+      zips == "73108" ~ 36420, zips == "77058" ~ 26420,
+      zips == "80215" ~ 19740, zips == "80262" ~ 19740,
+      zips == "84606" ~ 39340, zips == "85008" ~ 38060,
+      zips == "85033" ~ 38060, zips == "87110" ~ 10740,
+      zips == "89030" ~ 29820, zips == "89103" ~ 29820,
+      zips == "91770" ~ 31100, zips == "91790" ~ 31100,
+      zips == "91942" ~ 41740, zips == "92081" ~ 41740,
+      zips == "92108" ~ 41740, zips == "92660" ~ 31100,
+      zips == "92805" ~ 31100, zips == "93012" ~ 37100,
+      zips == "94545" ~ 41860, zips == "95054" ~ 41940,
+      zips == "95617" ~ 40900, zips == "96817" ~ 26180,
+      zips == "98021" ~ 42660, zips == "98201" ~ 42660,
+      zips == "99212" ~ 44060,
+      TRUE ~ valid_cbsa)) %>% 
+  select(-valid_cbsatype) %>% 
+  left_join(cbsas %>% 
+               distinct(),
+             by = c("valid_cbsa", "zips" = "zip_2004")) 
+
+
+
+y <- x %>% 
+  select(-valid_cbsatype) %>% 
+  left_join(zip_cbsa_crosswalk_1 %>% 
+              select(-zips) %>% 
+              distinct, 
+            by = "valid_cbsa") %>% 
+  mutate(
+    valid_cbsatype = case_when(
+      valid_cbsa == 47620 ~ 1,
+      valid_cbsa == 42380 ~ 1,
+      valid_cbsa == 30740 ~ 2,
+      valid_cbsa == 47580 ~ 1,
+      valid_cbsa == 31401 ~ 1,
+      valid_cbsa == 46940 ~ 1,
+      valid_cbsa == 45540 ~ 2,
+      valid_cbsa == 39460 ~ 1,
+      valid_cbsa == 17500 ~ 2,
+      valid_cbsa == 37700 ~ 1,
+      valid_cbsa == 35940 ~ 2,
+      valid_cbsa == 43380 ~ 2,
+      valid_cbsa == 19540 ~ 2,
+      valid_cbsa == 35860 ~ 2,
+      valid_cbsa == 33820 ~ 2,
+      valid_cbsa == 36940 ~ 2,
+      valid_cbsa == 37420 ~ 2,
+      valid_cbsa == 13940 ~ 2,
+      valid_cbsa == 46860 ~ 2,
+      valid_cbsa == 14940 ~ 2,
+      valid_cbsa == 37220 ~ 2,
+      valid_cbsa == 18860 ~ 2,
+      valid_cbsa == 39780 ~ 2,
+      valid_cbsa == 15060 ~ 2,
+       valid_cbsa == 47620 ~ 1,
+      valid_cbsa == 42380 ~ 1,
+      valid_cbsa == 30740 ~ 2,
+      valid_cbsa == 47580 ~ 1,
+      valid_cbsa == 31401 ~ 1,
+      valid_cbsa == 46940 ~ 1,
+      valid_cbsa == 45540 ~ 2,
+      valid_cbsa == 39460 ~ 1,
+      valid_cbsa == 17500 ~ 2,
+      valid_cbsa == 37700 ~ 1,
+      valid_cbsa == 35940 ~ 2,
+      valid_cbsa == 43380 ~ 2,
+      valid_cbsa == 19540 ~ 2,
+      valid_cbsa == 35860 ~ 2,
+      valid_cbsa == 33820 ~ 2,
+      valid_cbsa == 36940 ~ 2,
+      valid_cbsa == 37420 ~ 2,
+      valid_cbsa == 13940 ~ 2,
+      valid_cbsa == 46860 ~ 2,
+      valid_cbsa == 14940 ~ 2,
+      valid_cbsa == 37220 ~ 2,
+      valid_cbsa == 18860 ~ 2,
+      valid_cbsa == 39780 ~ 2,
+      valid_cbsa == 15060 ~ 2,
+      TRUE ~ valid_cbsatype)
+  )
+
+
+z <- zip_cbsa_crosswalk_1 %>% 
+  bind_rows(y) %>% 
+  distinct()
+
+#Check: z %>% group_by(zips) %>% mutate(n = n()) %>% filter(n > 1) %>% View()
+
+zip_cbsa_crosswalk_final <- z %>% 
+  mutate(
+    valid_cbsa = case_when(
+      zips == 48710 ~ 24100,
+      zips == 19103 ~ 37980,
+      TRUE ~ valid_cbsa),
+    valid_cbsatype = case_when(
+      zips == 48710 ~ 1,
+      zips == 19103 ~ 1,
+      TRUE ~ valid_cbsatype
+    )) %>% 
+  distinct() %>% 
+  rename(
+    cbsa = valid_cbsa,
+    cbsa_type = valid_cbsatype
+  )
+
+rm(x,y,z)
+
+```
+
+
+```{r save dataset}
+
+write_csv(zip_cbsa_crosswalk_final, "data_paper2/zip_cbsa_crosswalk.csv")
+
+```
+
