@@ -19,6 +19,7 @@ library(nnet)
 library(VGAM)
 library(gt)
 
+
 rm(list = ls())
 ```
 
@@ -40,6 +41,9 @@ adm <- read_csv("../data/sources/adm2024.csv") #NM: new
 enroll <- read_csv("../data/sources/effy2024.csv") %>%
   filter(EFFYALEV == 3) %>% 
   select(UNITID, EFFYALEV, EFYTOTLT, EFYAIANT, EFYBKAAT, EFYNHPIT, EFYWHITT, EFYHISPT, EFYASIAT) 
+ipeds_distance <- read_csv("../data/sources/effy2024_dist.csv") %>% 
+  filter(EFFYDLEV == 2) %>% 
+  select(UNITID, EFFYDLEV, EFYDETOT, EFYDEEXC)
 
 #Let's replace this with the size variable in IPEDS (instsize)
 # ipeds_schoolsize <- ipeds_schoolsize |> 
@@ -72,6 +76,7 @@ x <- data |>
     select(unitid, instnm, city, stabbr, fips, countycd, countynm, cbsa, cbsatype, csa, obereg,
            locale, zip, stabbr, longitud, latitude, 
            control, iclevel, instcat, deggrant, instsize,
+           hloffer,
            carnegieic, carnegiesaec, carnegiealf, carnegieapm, carnegiersch,
            hbcu, hsi, tribal,
            room, relaffil, distnced, athassoc,
@@ -87,14 +92,14 @@ data <- x
 
 ```{r Create Sample}
 x <- data %>% 
-  filter(fips <= 56) |>                                  # Keep only 50 states and DC
-  filter(cbsa != -2) |>                                 # Remove colleges not located in CBSAs 
-  filter(!is.na(control), control != 3) |>              # 3: private for-profit
+  filter(fips <= 56) |>                                 # Keep only 50 states and DC
+ # filter(cbsa != -2) |>                                 # Remove colleges not located in CBSAs 
+  # filter(!is.na(control), control != 3) |>              # 3: private for-profit
   filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
   filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
-  filter(instcat >= 2 & instcat <= 4)                 # 1: degree-granting, graduate with no undergraduate degrees
+  filter(instcat >= 2 & instcat <= 4)                   # 1: degree-granting, graduate with no undergraduate degrees
                                                         # 5-6: non-degree-granting
-  #filter(carnegieapm == 1)                              # Keep only colleges classified as "mixed" undergraduate programs
+  #filter(carnegieapm == 1)                             # Keep only colleges classified as "mixed" undergraduate programs
   
 
 data <- x
@@ -112,6 +117,7 @@ x <- data |>
          public = case_when(
             control == 2 ~ 0,                             # 0: private
             control == 1 ~ 1,                             # 1: public 
+            control == 3 ~ 2,                             # 2: for-profit
             TRUE ~ NA_real_),   
          
          twoyear = case_when(
@@ -119,13 +125,17 @@ x <- data |>
             iclevel == 2 ~ 1,                             # 1: at least 2 & less than 4
             TRUE ~ NA_real_),     
          
-         msi = case_when(                                 # 0: non of them
-            hbcu == 1 ~ 1,                                # 1: HBCU
-            hsi == 1 ~ 2,                                 # 2: HSI
-            tribal == 1 ~ 3,                              # 3: TCU
-            hbcu == 2 & hsi == 0 & tribal == 2 ~ 0,
-            is.na(hbcu) | is.na(hsi) | is.na(tribal) ~ NA_real_,
-            TRUE ~ NA_real_),
+         # msi = case_when(                                 # 0: non of them
+         #    hbcu == 1 ~ 1,                                # 1: HBCU
+         #    hsi == 1 ~ 2,                                 # 2: HSI
+         #    tribal == 1 ~ 3,                              # 3: TCU
+         #    hbcu == 2 & hsi == 0 & tribal == 2 ~ 0,
+         #    is.na(hbcu) | is.na(hsi) | is.na(tribal) ~ NA_real_,
+         #    TRUE ~ NA_real_),
+         
+         msi = case_when(
+           hbcu == 1 | hsi == 1 | tribal == 1 ~ 1, 
+           TRUE ~ 0),
          
          rurality = case_when(
             locale %in% c(31,32,33,41,42,43) ~ 0,         # 0: Town + Rural
@@ -142,10 +152,16 @@ x <- data |>
            TRUE ~ NA_real_),
          
          tuition = case_when(
-           tuition1 < 10000 ~ 0,                          # 0: < $10,000
+           tuition1 == 0 & obereg != 0 ~ NA_real_,
+           tuition1 == 0 & obereg == 0 ~ 0,
+           tuition1 < 10000 ~ 0,                           # 0: < $10,000
            tuition1 >= 10000 & tuition1 < 20000 ~ 1,       # 1: $10,000 - $19,999
-           tuition1 >= 20000 ~ 2,                         # 2: >= $20,000
+          # tuition1 >= 20000 & tuition1 < 30000 ~ 2,       # 2: $20,000 - $29,999
+           tuition1 >= 20000 & tuition1 < 40000 ~ 2,       # 3: $30,000 - $39,999
+          # tuition1 >= 40000 & tuition1 < 50000 ~ 4,       # 4: $40,000 - $49,999
+           tuition1 >= 40000                    ~ 3,       # 5: > $50,000
            TRUE ~ NA_real_),
+         
 
          housing = case_when(
            room == 2 ~ 0,                                 # 0: no housing
@@ -185,16 +201,27 @@ x <- data |>
            TRUE ~ NA_real_),
 
          awardlev = case_when(
-           carnegiealf %in% c(1,2,3) ~ 0,                  # 0: associate - baccalaureate
-           carnegiealf == 4 ~ 1,                           # 1: undergrad / grad-Master's
-           carnegiealf == 5 ~ 2,                           # 2: undergrad / grad-Doctorate 
+           carnegiealf %in% c(1,2) ~ 0,                    # 0: associates 
+           carnegiealf == 3 ~ 1,                            # 1: baccalaureate
+           carnegiealf == 4 ~ 2,                           # 2: undergrad / grad-Master's
+           carnegiealf == 5 ~ 3,                           # 3: undergrad / grad-Doctorate 
+           
+           is.na(carnegiealf) & (hloffer == 3 | hloffer == 4) ~ 0,
+           carnegiealf == -2 & (hloffer == 3 | hloffer == 4) ~ 0,
+           hloffer == 5 & instcat == 2 ~ 1,
+           
            TRUE ~ NA_real_),
-         
+         #Check: x %>% filter(is.na(awardlev)) %>% View()
+
          focus = case_when(
-            carnegieapm ==  1 ~ 0,                             #NM- 0: Mixed
-            carnegieapm ==  2 ~ 1,                             #NM- 1: Professions
-            carnegieapm %in% c(3,4,5,6,7,8,9,10,11,12) ~ 2,  #NM- 2: Special Focus
-            TRUE ~ NA_real_),
+            carnegieapm <= 2                           ~ 0,  # 0: Not special focus
+            carnegieapm == 3                           ~ 1,  # 1: Applied and career studies
+            carnegieapm %in% c(4,5)                    ~ 2,  # 2: Arts and sciences
+            carnegieapm == 6                           ~ 3,  # 3: Business
+            carnegieapm %in% c(8,9,10)                 ~ 4,  # 4: Medical sciences/health
+            carnegieapm == 11                          ~ 5,  # 5: STEM
+            carnegieapm == 12                          ~ NA_real_,  # 6: Theology
+            TRUE ~ 0),                                       # 0: 
         
         research = case_when( 
             carnegiersch == -2 ~ 0,                   #NM- 0: No research designation
@@ -204,8 +231,18 @@ x <- data |>
             TRUE ~ NA_real_),          
          
          cbsa = as.character(cbsa),
-         metropolitan = if_else(
-           cbsatype == 2, 1, 0)
+         cbsatype = as.character(cbsatype),
+
+
+        pell = case_when(
+          upgrntp < 10                   ~ 0,
+          upgrntp >= 10 & upgrntp < 30   ~ 1,
+          #upgrntp >= 20 & upgrntp < 30   ~ 2,
+          upgrntp >= 30 & upgrntp < 50   ~ 2,
+         # upgrntp >= 40 & upgrntp < 50   ~ 4,
+          upgrntp >= 50                  ~ 3,
+          TRUE ~ NA_real_)
+          
        )
 
 
@@ -216,22 +253,22 @@ data <- x |>
          inst_num = as.numeric(inst_num)) %>% 
   ungroup() %>% 
   mutate(admrate = admssn/applcn) %>% 
-  mutate(admrate = if_else(openadmp == 1, 1, admrate)) |> 
+  # mutate(admrate = if_else(openadmp == 1, 1, admrate)) |> 
   mutate(selectivity = case_when(
+         openadmp == 1 ~ 0,
          admrate == 1 ~ 0,                        #0: open 
          admrate >= 0.75 & admrate < 1 ~ 1,       #1: less selective
          admrate >= 0.40 & admrate < 0.75 ~ 2,    #2: selective
          admrate < 0.40 ~ 3,                      #3: more selective
          TRUE ~ NA_real_),
-         pell = ntile(upgrntp, 5),
-         pell = pell - 1,
+         
          i_perc_black = efybkaat/efytotlt,              #Percent of degree-seeking undergrads by race/ethnicity
          i_perc_white = efywhitt/efytotlt,
          i_perc_hisp = efyhispt/efytotlt,
          i_perc_nhpi = (efyaiant + efynhpit)/efytotlt,
          i_perc_asian = efyasiat/efytotlt,
-         i_perc_nonwhite = efytotlt - i_perc_white,
-         nonwhite = ntile(i_perc_nonwhite, 5),
+         i_perc_nonwhite = 1 - i_perc_white,
+         nonwhite = ntile(i_perc_nonwhite, 4),
          nonwhite = nonwhite - 1
          ) %>% 
   rename(region = obereg) %>% 
@@ -240,9 +277,25 @@ data <- x |>
 ```
 
 
+```{r}
+z <- read_csv("../data/sources/effy2024.csv") %>% 
+  filter(EFFYLEV == 2 | EFFYLEV == 4) %>% 
+  select(UNITID, EFFYALEV, EFYTOTLT) %>% 
+  mutate(EFFYALEV = if_else(EFFYALEV == 2, "undergrad", "grad")) %>% 
+  pivot_wider(id_cols = "UNITID",
+              names_from = EFFYALEV, 
+              values_from = EFYTOTLT) %>% 
+  mutate(total_pop = undergrad + grad,
+         per_undergrad = undergrad/total_pop,
+         per_grad = grad/total_pop)
+```
+
+
+
+
 ```{r census/ACS data}
 ## ---------------------------
-##' [Census/ACS Data]
+## [Census/ACS Data]
 ## ---------------------------
 
 land_area <- core_based_statistical_areas(
@@ -294,15 +347,17 @@ data <- data |>
 ```{r Explore dataset}
 
 data_mlca <- data %>% 
-  select(unitid, instnm, stabbr, cbsa, metropolitan, region,
-         public, twoyear, size, msi, rurality, housing,
-         awardlev, research, tuition,
-         religious, distance, sports, focus,
+  select(unitid, instnm, stabbr, cbsa, cbsatype, region,  
+         public, twoyear, size, rurality, 
+         awardlev, 
+         religious, focus, housing, research, msi,
          inst_num, selectivity, pell,
          tot_pop, pop_density, perc_ba, med_income, perc_pov, perc_unemployed,
          perc_white, perc_black, perc_hisp, perc_asian,
          i_perc_white, i_perc_black, i_perc_hisp, i_perc_asian, nonwhite) %>% 
   as.data.frame()
+
+#metropolitan, tuition,msi, distance,sports,research, 
 
 describe(data_mlca)
 
@@ -356,20 +411,20 @@ write_rds(data_mlca, "../data/analytic_v2")
 #indicators
 Y <- c(
   #systemic- structural and governance characteristics
-  "public", "size", "twoyear",
+  "public", "size", #"twoyear",
   
   #programmatic- degree level and academic disciplinary offerings
   "awardlev", "focus", "research",
   
-  #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, but we do not include that in this analysis )
-  "tuition",
+  #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, but we do not include that in this analysis)
+  #"tuition",
   
-  #constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.)
-  "selectivity", "msi", "pell") #, "nonwhite"
+  #constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)
+  "selectivity", "pell", "msi", "nonwhite") # 
 
 Z <- c("i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian", "housing", "rurality", "religious")       #level-1 covariates   "sports", 
 
-Zh <- c("region", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian")   #level-2 covariates  "metropolitan",
+Zh <- c("cbsatype", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian")   #level-2 covariates  "metropolitan", "region", 
 
 
 
@@ -377,6 +432,331 @@ Zh <- c("region", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income",
 
 
 ```{r}
+
+set.seed(1234)
+
+model_selection <- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 6:12,
+  Z              = Z,
+  iM             = 2:6,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+analytic_model <- model_selection
+
+analytic_model
+```
+
+
+# ```{r}
+set.seed(1234)
+
+# testing 8 lower-level classes, 2 higher-level clusters
+test_l8_h2<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 8,
+  Z              = Z,
+  iM             = 2,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+# testing 9 lower-level classes, 2 higher-level clusters
+test_l9_h2<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 9,
+  Z              = Z,
+  iM             = 2,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+# testing 10 lower-level classes, 2 higher-level clusters
+test_l10_h2<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 10,
+  Z              = Z,
+  iM             = 2,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+# testing 11 lower-level classes, 2 higher-level clusters
+test_l11_h2<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 11,
+  Z              = Z,
+  iM             = 2,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+# testing 8 lower-level classes, 3 higher-level clusters
+test_l8_h3<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 8,
+  Z              = Z,
+  iM             = 3,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+# testing 9 lower-level classes, 3 higher-level clusters
+test_l9_h3<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 9,
+  Z              = Z,
+  iM             = 3,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+# NO SOLUTION FOUND
+# # testing 10 lower-level classes, 3 higher-level clusters
+# test_l10_h3<- multiLCA(
+#   data = data_mlca,
+#   Y              = Y,
+#   iT             = 10,
+#   Z              = Z,
+#   iM             = 3,
+#   id_high        = c("cbsa_id"),
+#   Zh             = Zh,
+#   incomplete     = FALSE,
+#   extout         = TRUE,
+#   verbose        = TRUE,
+#   sequential     = TRUE,
+#   reord          = FALSE
+# )
+
+
+# testing 11 lower-level classes, 3 higher-level clusters
+test_l11_h3 <- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 11,
+  Z              = Z,
+  iM             = 3,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+# testing 8 lower-level classes, 4 higher-level clusters
+test_l8_h4 <- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 8,
+  Z              = Z,
+  iM             = 4,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+# NO SOLUTION FOUND
+# # testing 9 lower-level classes, 4 higher-level clusters
+# test_l9_h4<- multiLCA(
+#   data = data_mlca,
+#   Y              = Y,
+#   iT             = 9,
+#   Z              = Z,
+#   iM             = 4,
+#   id_high        = c("cbsa_id"),
+#   Zh             = Zh,
+#   incomplete     = FALSE,
+#   extout         = TRUE,
+#   verbose        = TRUE,
+#   sequential     = TRUE,
+#   reord          = FALSE
+# )
+
+
+# testing 10 lower-level classes, 4 higher-level clusters
+test_l10_h4<- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 10,
+  Z              = Z,
+  iM             = 4,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+# NO SOLUTION FOUND
+# # testing 11 lower-level classes, 4 higher-level clusters
+# test_l11_h4<- multiLCA(
+#   data = data_mlca,
+#   Y              = Y,
+#   iT             = 11,
+#   Z              = Z,
+#   iM             = 4,
+#   id_high        = c("cbsa_id"),
+#   Zh             = Zh,
+#   incomplete     = FALSE,
+#   extout         = TRUE,
+#   verbose        = TRUE,
+#   sequential     = TRUE,
+#   reord          = FALSE
+# )
+
+
+# NO SOLUTION FOUND
+# # testing 8 lower-level classes, 5 higher-level clusters
+# test_l8_h5 <- multiLCA(
+#   data = data_mlca,
+#   Y              = Y,
+#   iT             = 8,
+#   Z              = Z,
+#   iM             = 5,
+#   id_high        = c("cbsa_id"),
+#   Zh             = Zh,
+#   incomplete     = FALSE,
+#   extout         = TRUE,
+#   verbose        = TRUE,
+#   sequential     = TRUE,
+#   reord          = FALSE
+# )
+
+# NO SOLUTION FOUND
+# # testing 9 lower-level classes, 5 higher-level clusters
+# test_l9_h5 <- multiLCA(
+#   data = data_mlca,
+#   Y              = Y,
+#   iT             = 9,
+#   Z              = Z,
+#   iM             = 5,
+#   id_high        = c("cbsa_id"),
+#   Zh             = Zh,
+#   incomplete     = FALSE,
+#   extout         = TRUE,
+#   verbose        = TRUE,
+#   sequential     = TRUE,
+#   reord          = FALSE
+# )
+
+# NO SOLUTION FOUND
+# # testing 10 lower-level classes, 5 higher-level clusters
+# test_l10_h5 <- multiLCA(
+#   data = data_mlca,
+#   Y              = Y,
+#   iT             = 10,
+#   Z              = Z,
+#   iM             = 5,
+#   id_high        = c("cbsa_id"),
+#   Zh             = Zh,
+#   incomplete     = FALSE,
+#   extout         = TRUE,
+#   verbose        = TRUE,
+#   sequential     = TRUE,
+#   reord          = FALSE
+# )
+
+
+# testing 11 lower-level classes, 5 higher-level clusters
+test_l11_h5 <- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 11,
+  Z              = Z,
+  iM             = 5,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+test_l8_h2
+test_l9_h2
+test_l10_h2
+test_l11_h2
+
+test_l8_h3
+test_l9_h3
+#test_l10_h3
+test_l11_h3
+
+test_l8_h4
+#test_l9_h4
+test_l10_h4
+#test_l11_h4
+
+#test_l8_h5
+#test_l9_h5
+#test_l10_h5
+test_l11_h5
+
+
+```
+
+
+# ```{r}
 
 set.seed(1234)
 
@@ -451,10 +831,11 @@ plot(final_model)
 
 ```{r level 1 post-estimation}
 
-l1_proportions <- as.data.frame(final_model$mPi)  #	Lower-level class proportions given the higher-level latent classes and the covariates
+l1_proportions <- as.data.frame(analytic_model$mPi)  #	Lower-level class proportions given the higher-level latent classes and the covariates
 
+l1_proportions
 
-l1_probabilities <- as.data.frame(final_model$mPhi)
+l1_probabilities <- as.data.frame(analytic_model$mPhi)
 
 
 
@@ -464,16 +845,15 @@ l1_probabilities <- as.data.frame(final_model$mPhi)
 
 ```{r level 2 predicted classes}
 
-l2_posterior <- as.data.frame(lc_l2$mPW)
+l2_posterior <- as.data.frame(analytic_model$mPW)
 
 
 l2_classes <- data.frame(
-  group_id = row.names(lc_l2$mPW),
+  group_id = row.names(analytic_model$mPW),
   L2_Predicted_Class = apply(l2_posterior, 1, which.max),
   L2_Prob_Class1 = l2_posterior[, 1],
   L2_Prob_Class2 = l2_posterior[, 2],
-  L2_Prob_Class1 = l2_posterior[, 3],
-  L2_Prob_Class2 = l2_posterior[, 4]
+  L2_Prob_Class3 = l2_posterior[, 3]
 )
 
 
@@ -486,114 +866,124 @@ l2_class_summary <- l2_class_data %>%
   select(cbsa, L2_Predicted_Class ) %>% 
   distinct()
 
-
-```
-
-
-
-```{r}
-
- #Predicted lower-level class conditional on institutional characteristics
-# predicted_class <- multinom( "awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian",data = lc_l2)
-
-data_mlca$.row_id <- seq_len(nrow(data_mlca))
-
-optimal_model <- multiLCA(
-  data = data_mlca,
-  Y              = c("public", "twoyear", "size", "msi",
-       "research", "selectivity", "focus",
-       "rurality", "housing", "religious"),
-  iT             = 9,
-  Z              = c("awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian"),
-  iM             = 4,
-  id_high        = c("cbsa_id"),
-  Zh             = c("region", "metropolitan", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian"),
-  incomplete     = FALSE,
-  extout         = TRUE,
-  verbose        = TRUE,
-  sequential     = TRUE,
-  reord          = FALSE,
-  dataout        = TRUE
-)
+inst_cbsa_classification <- l2_class_data
 
 
 ```
 
 
 
-```{r Multinomial logistic regression}
+```{r Save data}
 
-reg_data <- as.data.frame(optimal_model[["mPW_N"]]) %>% 
-  mutate(pred_class2 = case_when(
-    G1 == pmax(G1, G2, G3, G4) ~ "G1",
-    G2 == pmax(G1, G2, G3, G4) ~ "G2",
-    G3 == pmax(G1, G2, G3, G4) ~ "G3",
-    G4 == pmax(G1, G2, G3, G4) ~ "G4"),
-    class_prob = case_when(
-      pred_class2 == "G1" ~ G1,
-      pred_class2 == "G2" ~ G2,
-      pred_class2 == "G3" ~ G3,
-      pred_class2 == "G4" ~ G4,
-    )) %>% 
-  select(cbsa_id, G1, G2, G3, G4, pred_class2, class_prob) %>% 
-  distinct() %>% 
-  select(cbsa_id, pred_class2, class_prob) %>% 
-  right_join(data_mlca, by = "cbsa_id")
-
-reg_model <- vglm(pred_class2 ~ region + metropolitan + inst_num + tot_pop + pop_density + perc_ba + med_income + perc_pov + perc_unemployed + perc_white + perc_black + perc_hisp + perc_asian,
-              data = reg_data,
-              family = multinomial(refLevel = 1))
-
-summary(reg_model)
-
-coef_vec <- coef(reg_model)                 # vector of all coefficients
-vc       <- vcov(reg_model)                 # full covariance matrix
-se_vec   <- sqrt(diag(vc))              # standard errorscoef_vec <- coef(model)                 # vector of all coefficients
-vc       <- vcov(reg_model)                 # full covariance matrix
-se_vec   <- sqrt(diag(vc))              # standard errors
-
-
-apa_table <- data.frame(
-  term     = names(coef_vec),
-  estimate = coef_vec,
-  SE       = se_vec,
-  z        = coef_vec / se_vec,
-  p        = 2 * (1 - pnorm(abs(coef_vec / se_vec))),
-  OR       = exp(coef_vec),
-  CI_low   = exp(coef_vec - 1.96 * se_vec),
-  CI_high  = exp(coef_vec + 1.96 * se_vec)
-) %>%
-  mutate(
-    estimate = round(estimate, 3),
-    SE       = round(SE, 3),
-    z        = round(z, 2),
-    p        = round(p, 3),
-    OR       = round(OR, 3),
-    CI       = paste0("[", round(CI_low, 3), ", ", round(CI_high, 3), "]")
-  ) %>%
-  select(term, estimate, SE, z, p, OR, CI)
-
-apa_table
-
-apa_gt <- apa_table %>%
-  gt() %>%
-  cols_label(
-    term     = "Predictor",
-    estimate = "B",
-    SE       = "SE",
-    z        = "z",
-    p        = "p",
-    OR       = "OR",
-    CI       = "95% CI"
-  ) %>%
-  tab_options(
-    table.font.size = 12,
-    data_row.padding = px(2),
-    table.width = pct(80),
-    column_labels.font.weight = "bold"
-  )
-
-apa_gt
+write_csv(inst_cbsa_classification, "../data_paper2/inst_cbsa_classification.csv")
 
 ```
+
+
+
+<!-- ```{r} -->
+
+<!--  #Predicted lower-level class conditional on institutional characteristics -->
+<!-- # predicted_class <- multinom( "awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian",data = lc_l2) -->
+
+<!-- data_mlca$.row_id <- seq_len(nrow(data_mlca)) -->
+
+<!-- optimal_model <- multiLCA( -->
+<!--   data = data_mlca, -->
+<!--   Y              = c("public", "twoyear", "size", "msi", -->
+<!--        "research", "selectivity", "focus", -->
+<!--        "rurality", "housing", "religious"), -->
+<!--   iT             = 9, -->
+<!--   Z              = c("awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian"), -->
+<!--   iM             = 4, -->
+<!--   id_high        = c("cbsa_id"), -->
+<!--   Zh             = c("region", "metropolitan", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian"), -->
+<!--   incomplete     = FALSE, -->
+<!--   extout         = TRUE, -->
+<!--   verbose        = TRUE, -->
+<!--   sequential     = TRUE, -->
+<!--   reord          = FALSE, -->
+<!--   dataout        = TRUE -->
+<!-- ) -->
+
+
+<!-- ``` -->
+
+
+
+<!-- ```{r Multinomial logistic regression} -->
+
+<!-- reg_data <- as.data.frame(optimal_model[["mPW_N"]]) %>%  -->
+<!--   mutate(pred_class2 = case_when( -->
+<!--     G1 == pmax(G1, G2, G3, G4) ~ "G1", -->
+<!--     G2 == pmax(G1, G2, G3, G4) ~ "G2", -->
+<!--     G3 == pmax(G1, G2, G3, G4) ~ "G3", -->
+<!--     G4 == pmax(G1, G2, G3, G4) ~ "G4"), -->
+<!--     class_prob = case_when( -->
+<!--       pred_class2 == "G1" ~ G1, -->
+<!--       pred_class2 == "G2" ~ G2, -->
+<!--       pred_class2 == "G3" ~ G3, -->
+<!--       pred_class2 == "G4" ~ G4, -->
+<!--     )) %>%  -->
+<!--   select(cbsa_id, G1, G2, G3, G4, pred_class2, class_prob) %>%  -->
+<!--   distinct() %>%  -->
+<!--   select(cbsa_id, pred_class2, class_prob) %>%  -->
+<!--   right_join(data_mlca, by = "cbsa_id") -->
+
+<!-- reg_model <- vglm(pred_class2 ~ region + metropolitan + inst_num + tot_pop + pop_density + perc_ba + med_income + perc_pov + perc_unemployed + perc_white + perc_black + perc_hisp + perc_asian, -->
+<!--               data = reg_data, -->
+<!--               family = multinomial(refLevel = 1)) -->
+
+<!-- summary(reg_model) -->
+
+<!-- coef_vec <- coef(reg_model)                 # vector of all coefficients -->
+<!-- vc       <- vcov(reg_model)                 # full covariance matrix -->
+<!-- se_vec   <- sqrt(diag(vc))              # standard errorscoef_vec <- coef(model)                 # vector of all coefficients -->
+<!-- vc       <- vcov(reg_model)                 # full covariance matrix -->
+<!-- se_vec   <- sqrt(diag(vc))              # standard errors -->
+
+
+<!-- apa_table <- data.frame( -->
+<!--   term     = names(coef_vec), -->
+<!--   estimate = coef_vec, -->
+<!--   SE       = se_vec, -->
+<!--   z        = coef_vec / se_vec, -->
+<!--   p        = 2 * (1 - pnorm(abs(coef_vec / se_vec))), -->
+<!--   OR       = exp(coef_vec), -->
+<!--   CI_low   = exp(coef_vec - 1.96 * se_vec), -->
+<!--   CI_high  = exp(coef_vec + 1.96 * se_vec) -->
+<!-- ) %>% -->
+<!--   mutate( -->
+<!--     estimate = round(estimate, 3), -->
+<!--     SE       = round(SE, 3), -->
+<!--     z        = round(z, 2), -->
+<!--     p        = round(p, 3), -->
+<!--     OR       = round(OR, 3), -->
+<!--     CI       = paste0("[", round(CI_low, 3), ", ", round(CI_high, 3), "]") -->
+<!--   ) %>% -->
+<!--   select(term, estimate, SE, z, p, OR, CI) -->
+
+<!-- apa_table -->
+
+<!-- apa_gt <- apa_table %>% -->
+<!--   gt() %>% -->
+<!--   cols_label( -->
+<!--     term     = "Predictor", -->
+<!--     estimate = "B", -->
+<!--     SE       = "SE", -->
+<!--     z        = "z", -->
+<!--     p        = "p", -->
+<!--     OR       = "OR", -->
+<!--     CI       = "95% CI" -->
+<!--   ) %>% -->
+<!--   tab_options( -->
+<!--     table.font.size = 12, -->
+<!--     data_row.padding = px(2), -->
+<!--     table.width = pct(80), -->
+<!--     column_labels.font.weight = "bold" -->
+<!--   ) -->
+
+<!-- apa_gt -->
+
+<!-- ``` -->
 

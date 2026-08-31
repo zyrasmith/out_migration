@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Hyevin Shin">
+
+<title>MLCA</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="MLCA_v2_files/libs/clipboard/clipboard.min.js"></script>
+<script src="MLCA_v2_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="MLCA_v2_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="MLCA_v2_files/libs/quarto-html/popper.min.js"></script>
+<script src="MLCA_v2_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="MLCA_v2_files/libs/quarto-html/anchor.min.js"></script>
+<link href="MLCA_v2_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="MLCA_v2_files/libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="MLCA_v2_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="MLCA_v2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="MLCA_v2_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">MLCA</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Hyevin Shin </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [libraries]</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'tidyverse' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'purrr' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'lubridate' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.5.2     ✔ tibble    3.2.1
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+✔ purrr     1.0.4     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'readxl' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidycensus)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'tidycensus' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(multilevLCA)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'multilevLCA' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>multilevLCA: Estimates and plots single- and multilevel latent class models.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(psych)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'psych' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'psych'
+
+The following objects are masked from 'package:ggplot2':
+
+    %+%, alpha</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tigris)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'tigris' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>To enable caching of data, set `options(tigris_use_cache = TRUE)`
+in your R script or .Rprofile.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(nnet)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'nnet' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(VGAM)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'VGAM' was built under R version 4.4.3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: stats4
+Loading required package: splines
+
+Attaching package: 'VGAM'
+
+The following object is masked from 'package:psych':
+
+    logistic</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(gt)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'gt' was built under R version 4.4.3</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list =</span> <span class="fu">ls</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [IPEDS/Carnegie Classification Data]</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="co"># load IPEDS data and merge with the Carnegie Classification</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>ipeds24 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/hd2024.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 6072 Columns: 72
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (23): INSTNM, IALIAS, ADDR, CITY, STABBR, ZIP, CHFNM, CHFTITLE, EIN, UEI...
+dbl (49): UNITID, FIPS, OBEREG, GENTELE, OPEFLAG, SECTOR, ICLEVEL, CONTROL, ...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ipeds_cost <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/cost1_2024.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5867 Columns: 418
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (198): XROOMCAP, XMEALSWK, XAPPFEEU, XAPPFEEG, XAPPFEED, FAFQ2URL, XROOM...
+dbl (214): UNITID, ROOM, ROOMCAP, ALLONCAM, TUITVARY, BOARD, MEALSWK, APPLFE...
+lgl   (6): CHG10AY0, CHG10AY1, CHG10AY2, CHG10PY0, CHG10PY1, CHG10PY2
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co">#ipeds_schoolsize &lt;- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>carnegie <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"../data/sources/2025-Public-Data-File.xlsx"</span>, <span class="at">sheet =</span> <span class="dv">2</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>ic2024 <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/ic2024.csv"</span>) <span class="co">#NM: new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5963 Columns: 111
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr   (1): XDISABPC
+dbl (110): UNITID, PEO1ISTR, PEO2ISTR, PEO3ISTR, PEO4ISTR, PEO5ISTR, PEO6IST...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>sfa <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/sfa2324.csv"</span>) <span class="co">#NM: new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 5575 Columns: 183
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (91): XSCUGRAD, XSCUGDGSK, XSCUGNDGS, XSCUGFFN, XSCUGFFP, XSCFA2, XSCFA2...
+dbl (92): UNITID, SCUGRAD, SCUGDGSK, SCUGNDGS, SCUGFFN, SCUGFFP, SCFA2, SCFA...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>adm <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/adm2024.csv"</span>) <span class="co">#NM: new</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 1956 Columns: 101
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (44): XAPPLCN, XAPPLCNM, XAPPLCNW, XAPPLCNAN, XAPPLCNUN, XADMSSN, XADMSS...
+dbl (57): UNITID, ADMCON1, ADMCON2, ADMCON3, ADMCON4, ADMCON5, ADMCON6, ADMC...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>enroll <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/effy2024.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(EFFYALEV <span class="sc">==</span> <span class="dv">3</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(UNITID, EFFYALEV, EFYTOTLT, EFYAIANT, EFYBKAAT, EFYNHPIT, EFYWHITT, EFYHISPT, EFYASIAT) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 115026 Columns: 72
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (34): XEYTOTLT, XEYTOTLM, XEYTOTLW, XEFYAIAT, XEFYAIAM, XEFYAIAW, XEFYAS...
+dbl (38): UNITID, EFFYALEV, EFFYLEV, LSTUDY, EFYTOTLT, EFYTOTLM, EFYTOTLW, E...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>ipeds_distance <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/effy2024_dist.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(EFFYDLEV <span class="sc">==</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(UNITID, EFFYDLEV, EFYDETOT, EFYDEEXC)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 21997 Columns: 10
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (4): XEYDETOT, XEYDEEXC, XEYDESOM, XEYDENON
+dbl (6): UNITID, EFFYDLEV, EFYDETOT, EFYDEEXC, EFYDESOM, EFYDENON
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Let's replace this with the size variable in IPEDS (instsize)</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ipeds_schoolsize &lt;- ipeds_schoolsize |&gt; </span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="co">#     filter(EFALEVEL == 1) |&gt; #Level of student (1 == all students total)</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co">#     select(UNITID, EFTOTLT) |&gt; #Grand total</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="co">#     mutate(size = case_when(</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="co">#       EFTOTLT &lt;= 3000 ~ 0,  #small</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="co">#       EFTOTLT &lt;= 10000 ~ 1,  #medium</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="co">#       EFTOTLT &gt; 10000 ~ 2, #large</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="co">#       TRUE ~ NA_real_))</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>carnegie <span class="ot">&lt;-</span> carnegie <span class="sc">|&gt;</span> </span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(unitid, hsi)</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="co">#NM: Merged new files</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> ipeds24 <span class="sc">%&gt;%</span> </span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(carnegie, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"UNITID"</span> <span class="ot">=</span> <span class="st">"unitid"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ipeds_cost, <span class="at">by =</span> <span class="st">"UNITID"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">#left_join(ipeds_schoolsize, by = "UNITID") %&gt;% #NM:New</span></span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ic2024, <span class="at">by =</span> <span class="st">"UNITID"</span> ) <span class="sc">%&gt;%</span> <span class="co">#NM:New</span></span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(sfa, <span class="at">by =</span> <span class="st">"UNITID"</span>) <span class="sc">%&gt;%</span> <span class="co">#NM:New</span></span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(adm, <span class="at">by =</span> <span class="st">"UNITID"</span>) <span class="sc">%&gt;%</span>  <span class="co">#NM:New</span></span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(enroll, <span class="at">by =</span> <span class="st">"UNITID"</span>)</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a><span class="co"># select variables and create a dataset for analysis</span></span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> </span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename_all</span>(tolower) <span class="sc">|&gt;</span> <span class="co">#converts all column names in a data frame to lowercase</span></span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(unitid, instnm, city, stabbr, fips, countycd, countynm, cbsa, cbsatype, csa, obereg,</span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>           locale, zip, stabbr, longitud, latitude, </span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a>           control, iclevel, instcat, deggrant, instsize,</span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>           hloffer,</span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>           carnegieic, carnegiesaec, carnegiealf, carnegieapm, carnegiersch,</span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>           hbcu, hsi, tribal,</span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>           room, relaffil, distnced, athassoc,</span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>           admssn, applcn, openadmp, loan_a, tuition1, upgrntp, </span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>           efytotlt, efyaiant, efybkaat, efynhpit, efywhitt, efyhispt, efyasiat)</span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a><span class="co"># assign to "data"</span></span>
+<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(fips <span class="sc">&lt;=</span> <span class="dv">56</span>) <span class="sc">|&gt;</span>                                 <span class="co"># Keep only 50 states and DC</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a> <span class="co"># filter(cbsa != -2) |&gt;                                 # Remove colleges not located in CBSAs </span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filter(!is.na(control), control != 3) |&gt;              # 3: private for-profit</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(iclevel), iclevel <span class="sc">!=</span> <span class="dv">3</span>) <span class="sc">|&gt;</span>              <span class="co"># 3: less than 2 years</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(carnegiealf), carnegiealf <span class="sc">!=</span> <span class="dv">6</span>) <span class="sc">%&gt;%</span>     <span class="co"># 6: graduate-focused</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(instcat <span class="sc">&gt;=</span> <span class="dv">2</span> <span class="sc">&amp;</span> instcat <span class="sc">&lt;=</span> <span class="dv">4</span>)                   <span class="co"># 1: degree-granting, graduate with no undergraduate degrees</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>                                                        <span class="co"># 5-6: non-degree-granting</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter(carnegieapm == 1)                             # Keep only colleges classified as "mixed" undergraduate programs</span></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="do">##' [Data Cleaning]</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span> </span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">public =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>            control <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: private</span></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>            control <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: public </span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>            control <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">2</span>,                             <span class="co"># 2: for-profit</span></span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),   </span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">twoyear =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>            iclevel <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: 4 or more</span></span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>            iclevel <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: at least 2 &amp; less than 4</span></span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),     </span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>         <span class="co"># msi = case_when(                                 # 0: non of them</span></span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a>         <span class="co">#    hbcu == 1 ~ 1,                                # 1: HBCU</span></span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true" tabindex="-1"></a>         <span class="co">#    hsi == 1 ~ 2,                                 # 2: HSI</span></span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true" tabindex="-1"></a>         <span class="co">#    tribal == 1 ~ 3,                              # 3: TCU</span></span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true" tabindex="-1"></a>         <span class="co">#    hbcu == 2 &amp; hsi == 0 &amp; tribal == 2 ~ 0,</span></span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true" tabindex="-1"></a>         <span class="co">#    is.na(hbcu) | is.na(hsi) | is.na(tribal) ~ NA_real_,</span></span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true" tabindex="-1"></a>         <span class="co">#    TRUE ~ NA_real_),</span></span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true" tabindex="-1"></a>         <span class="at">msi =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true" tabindex="-1"></a>           hbcu <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> hsi <span class="sc">==</span> <span class="dv">1</span> <span class="sc">|</span> tribal <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>, </span>
+<span id="cb43-28"><a href="#cb43-28" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span>),</span>
+<span id="cb43-29"><a href="#cb43-29" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-30"><a href="#cb43-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">rurality =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-31"><a href="#cb43-31" aria-hidden="true" tabindex="-1"></a>            locale <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">31</span>,<span class="dv">32</span>,<span class="dv">33</span>,<span class="dv">41</span>,<span class="dv">42</span>,<span class="dv">43</span>) <span class="sc">~</span> <span class="dv">0</span>,         <span class="co"># 0: Town + Rural</span></span>
+<span id="cb43-32"><a href="#cb43-32" aria-hidden="true" tabindex="-1"></a>            locale <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">21</span>,<span class="dv">22</span>,<span class="dv">23</span>) <span class="sc">~</span> <span class="dv">1</span>,                  <span class="co"># 1: Suburb</span></span>
+<span id="cb43-33"><a href="#cb43-33" aria-hidden="true" tabindex="-1"></a>            locale <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11</span>,<span class="dv">12</span>,<span class="dv">13</span>) <span class="sc">~</span> <span class="dv">2</span>,                  <span class="co"># 2: City</span></span>
+<span id="cb43-34"><a href="#cb43-34" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),        </span>
+<span id="cb43-35"><a href="#cb43-35" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-36"><a href="#cb43-36" aria-hidden="true" tabindex="-1"></a>         <span class="at">size =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-37"><a href="#cb43-37" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: &lt; 1,000</span></span>
+<span id="cb43-38"><a href="#cb43-38" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: 1,000 - 4,999</span></span>
+<span id="cb43-39"><a href="#cb43-39" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">2</span>,                             <span class="co"># 1: 5,000 - 9,999</span></span>
+<span id="cb43-40"><a href="#cb43-40" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="dv">3</span>,                             <span class="co"># 2: 10,000 - 19,999</span></span>
+<span id="cb43-41"><a href="#cb43-41" aria-hidden="true" tabindex="-1"></a>           instsize <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="dv">4</span>,                             <span class="co"># 3: &gt;=20,000</span></span>
+<span id="cb43-42"><a href="#cb43-42" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb43-43"><a href="#cb43-43" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-44"><a href="#cb43-44" aria-hidden="true" tabindex="-1"></a>         <span class="at">tuition =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-45"><a href="#cb43-45" aria-hidden="true" tabindex="-1"></a>           tuition1 <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> obereg <span class="sc">!=</span> <span class="dv">0</span> <span class="sc">~</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb43-46"><a href="#cb43-46" aria-hidden="true" tabindex="-1"></a>           tuition1 <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> obereg <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-47"><a href="#cb43-47" aria-hidden="true" tabindex="-1"></a>           tuition1 <span class="sc">&lt;</span> <span class="dv">10000</span> <span class="sc">~</span> <span class="dv">0</span>,                           <span class="co"># 0: &lt; $10,000</span></span>
+<span id="cb43-48"><a href="#cb43-48" aria-hidden="true" tabindex="-1"></a>           tuition1 <span class="sc">&gt;=</span> <span class="dv">10000</span> <span class="sc">&amp;</span> tuition1 <span class="sc">&lt;</span> <span class="dv">20000</span> <span class="sc">~</span> <span class="dv">1</span>,       <span class="co"># 1: $10,000 - $19,999</span></span>
+<span id="cb43-49"><a href="#cb43-49" aria-hidden="true" tabindex="-1"></a>          <span class="co"># tuition1 &gt;= 20000 &amp; tuition1 &lt; 30000 ~ 2,       # 2: $20,000 - $29,999</span></span>
+<span id="cb43-50"><a href="#cb43-50" aria-hidden="true" tabindex="-1"></a>           tuition1 <span class="sc">&gt;=</span> <span class="dv">20000</span> <span class="sc">&amp;</span> tuition1 <span class="sc">&lt;</span> <span class="dv">40000</span> <span class="sc">~</span> <span class="dv">2</span>,       <span class="co"># 3: $30,000 - $39,999</span></span>
+<span id="cb43-51"><a href="#cb43-51" aria-hidden="true" tabindex="-1"></a>          <span class="co"># tuition1 &gt;= 40000 &amp; tuition1 &lt; 50000 ~ 4,       # 4: $40,000 - $49,999</span></span>
+<span id="cb43-52"><a href="#cb43-52" aria-hidden="true" tabindex="-1"></a>           tuition1 <span class="sc">&gt;=</span> <span class="dv">40000</span>                    <span class="sc">~</span> <span class="dv">3</span>,       <span class="co"># 5: &gt; $50,000</span></span>
+<span id="cb43-53"><a href="#cb43-53" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb43-54"><a href="#cb43-54" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-55"><a href="#cb43-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-56"><a href="#cb43-56" aria-hidden="true" tabindex="-1"></a>         <span class="at">housing =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-57"><a href="#cb43-57" aria-hidden="true" tabindex="-1"></a>           room <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                                 <span class="co"># 0: no housing</span></span>
+<span id="cb43-58"><a href="#cb43-58" aria-hidden="true" tabindex="-1"></a>           room <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                                 <span class="co"># 1: offer housing</span></span>
+<span id="cb43-59"><a href="#cb43-59" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),    </span>
+<span id="cb43-60"><a href="#cb43-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-61"><a href="#cb43-61" aria-hidden="true" tabindex="-1"></a>         <span class="at">religious =</span> <span class="fu">ifelse</span>(relaffil <span class="sc">==</span> <span class="sc">-</span><span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>),        <span class="co"># 0: no religious</span></span>
+<span id="cb43-62"><a href="#cb43-62" aria-hidden="true" tabindex="-1"></a>                                                          <span class="co"># 1: any religious</span></span>
+<span id="cb43-63"><a href="#cb43-63" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-64"><a href="#cb43-64" aria-hidden="true" tabindex="-1"></a>        <span class="co">#We need to remove colleges that offer completely distance education from our sample</span></span>
+<span id="cb43-65"><a href="#cb43-65" aria-hidden="true" tabindex="-1"></a>          <span class="at">distance =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-66"><a href="#cb43-66" aria-hidden="true" tabindex="-1"></a>           distnced <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: not completely distanced learning</span></span>
+<span id="cb43-67"><a href="#cb43-67" aria-hidden="true" tabindex="-1"></a>           distnced <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: completely distanced learning</span></span>
+<span id="cb43-68"><a href="#cb43-68" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span><span class="cn">NA_real_</span>),    </span>
+<span id="cb43-69"><a href="#cb43-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-70"><a href="#cb43-70" aria-hidden="true" tabindex="-1"></a>         <span class="at">sports =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-71"><a href="#cb43-71" aria-hidden="true" tabindex="-1"></a>           athassoc <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                             <span class="co"># 0: not a member</span></span>
+<span id="cb43-72"><a href="#cb43-72" aria-hidden="true" tabindex="-1"></a>           athassoc <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,                             <span class="co"># 1: member of National Athletic Association</span></span>
+<span id="cb43-73"><a href="#cb43-73" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span><span class="cn">NA_real_</span>),    </span>
+<span id="cb43-74"><a href="#cb43-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-75"><a href="#cb43-75" aria-hidden="true" tabindex="-1"></a>         <span class="at">loan =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-76"><a href="#cb43-76" aria-hidden="true" tabindex="-1"></a>           <span class="fu">is.na</span>(loan_a) <span class="sc">~</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb43-77"><a href="#cb43-77" aria-hidden="true" tabindex="-1"></a>           loan_a <span class="sc">&lt;=</span> <span class="fu">quantile</span>(loan_a, <span class="fl">0.25</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="dv">0</span>,     <span class="co"># 0: lowest</span></span>
+<span id="cb43-78"><a href="#cb43-78" aria-hidden="true" tabindex="-1"></a>           loan_a <span class="sc">&lt;=</span> <span class="fu">quantile</span>(loan_a, <span class="fl">0.50</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="dv">1</span>,     <span class="co"># 1: low </span></span>
+<span id="cb43-79"><a href="#cb43-79" aria-hidden="true" tabindex="-1"></a>           loan_a <span class="sc">&lt;=</span> <span class="fu">quantile</span>(loan_a, <span class="fl">0.75</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="dv">2</span>,     <span class="co"># 2: high</span></span>
+<span id="cb43-80"><a href="#cb43-80" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">3</span>),                                              <span class="co"># 3: highest</span></span>
+<span id="cb43-81"><a href="#cb43-81" aria-hidden="true" tabindex="-1"></a> </span>
+<span id="cb43-82"><a href="#cb43-82" aria-hidden="true" tabindex="-1"></a><span class="co"># Q. Since MLCA requires variables starting at 0, is it appropriate to divide loan amount into quartiles (0–3)?</span></span>
+<span id="cb43-83"><a href="#cb43-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-84"><a href="#cb43-84" aria-hidden="true" tabindex="-1"></a>         <span class="at">asc =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-85"><a href="#cb43-85" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                         <span class="co"># 0: Higher Access, Lower Earnings </span></span>
+<span id="cb43-86"><a href="#cb43-86" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="dv">1</span>,                         <span class="co"># 1: Higher Access, Medium Earnings</span></span>
+<span id="cb43-87"><a href="#cb43-87" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">6</span> <span class="sc">~</span> <span class="dv">2</span>,                         <span class="co"># 2: Higher Access, Higher Earnings</span></span>
+<span id="cb43-88"><a href="#cb43-88" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">3</span>,                         <span class="co"># 3: Lower Access, Lower Earnings</span></span>
+<span id="cb43-89"><a href="#cb43-89" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">4</span>,                         <span class="co"># 4: Lower Access, Medium Earnings</span></span>
+<span id="cb43-90"><a href="#cb43-90" aria-hidden="true" tabindex="-1"></a>           carnegiesaec <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="dv">5</span>,                         <span class="co"># 5: Lower Access, Higher Earnings</span></span>
+<span id="cb43-91"><a href="#cb43-91" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb43-92"><a href="#cb43-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-93"><a href="#cb43-93" aria-hidden="true" tabindex="-1"></a>         <span class="at">awardlev =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-94"><a href="#cb43-94" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>) <span class="sc">~</span> <span class="dv">0</span>,                    <span class="co"># 0: associates </span></span>
+<span id="cb43-95"><a href="#cb43-95" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">1</span>,                            <span class="co"># 1: baccalaureate</span></span>
+<span id="cb43-96"><a href="#cb43-96" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">==</span> <span class="dv">4</span> <span class="sc">~</span> <span class="dv">2</span>,                           <span class="co"># 2: undergrad / grad-Master's</span></span>
+<span id="cb43-97"><a href="#cb43-97" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">==</span> <span class="dv">5</span> <span class="sc">~</span> <span class="dv">3</span>,                           <span class="co"># 3: undergrad / grad-Doctorate </span></span>
+<span id="cb43-98"><a href="#cb43-98" aria-hidden="true" tabindex="-1"></a>           </span>
+<span id="cb43-99"><a href="#cb43-99" aria-hidden="true" tabindex="-1"></a>           <span class="fu">is.na</span>(carnegiealf) <span class="sc">&amp;</span> (hloffer <span class="sc">==</span> <span class="dv">3</span> <span class="sc">|</span> hloffer <span class="sc">==</span> <span class="dv">4</span>) <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-100"><a href="#cb43-100" aria-hidden="true" tabindex="-1"></a>           carnegiealf <span class="sc">==</span> <span class="sc">-</span><span class="dv">2</span> <span class="sc">&amp;</span> (hloffer <span class="sc">==</span> <span class="dv">3</span> <span class="sc">|</span> hloffer <span class="sc">==</span> <span class="dv">4</span>) <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-101"><a href="#cb43-101" aria-hidden="true" tabindex="-1"></a>           hloffer <span class="sc">==</span> <span class="dv">5</span> <span class="sc">&amp;</span> instcat <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb43-102"><a href="#cb43-102" aria-hidden="true" tabindex="-1"></a>           </span>
+<span id="cb43-103"><a href="#cb43-103" aria-hidden="true" tabindex="-1"></a>           <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb43-104"><a href="#cb43-104" aria-hidden="true" tabindex="-1"></a>         <span class="co">#Check: x %&gt;% filter(is.na(awardlev)) %&gt;% View()</span></span>
+<span id="cb43-105"><a href="#cb43-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-106"><a href="#cb43-106" aria-hidden="true" tabindex="-1"></a>         <span class="at">focus =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-107"><a href="#cb43-107" aria-hidden="true" tabindex="-1"></a>            carnegieapm <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">12</span>) <span class="sc">~</span> <span class="dv">1</span>,  <span class="co"># 1: Special Focus</span></span>
+<span id="cb43-108"><a href="#cb43-108" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span>),                                       <span class="co"># 0: Not special focus</span></span>
+<span id="cb43-109"><a href="#cb43-109" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb43-110"><a href="#cb43-110" aria-hidden="true" tabindex="-1"></a>        <span class="at">research =</span> <span class="fu">case_when</span>( </span>
+<span id="cb43-111"><a href="#cb43-111" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="sc">-</span><span class="dv">2</span> <span class="sc">~</span> <span class="dv">0</span>,                   <span class="co">#NM- 0: No research designation</span></span>
+<span id="cb43-112"><a href="#cb43-112" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="dv">3</span> <span class="sc">~</span> <span class="dv">1</span>,                    <span class="co">#NM- 1: Research Colleges and Universities </span></span>
+<span id="cb43-113"><a href="#cb43-113" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="dv">2</span>,                    <span class="co">#NM- 2: High Spending</span></span>
+<span id="cb43-114"><a href="#cb43-114" aria-hidden="true" tabindex="-1"></a>            carnegiersch <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">3</span>,                    <span class="co">#NM- 3: Very High Spending  </span></span>
+<span id="cb43-115"><a href="#cb43-115" aria-hidden="true" tabindex="-1"></a>            <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),          </span>
+<span id="cb43-116"><a href="#cb43-116" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-117"><a href="#cb43-117" aria-hidden="true" tabindex="-1"></a>         <span class="at">cbsa =</span> <span class="fu">as.character</span>(cbsa),</span>
+<span id="cb43-118"><a href="#cb43-118" aria-hidden="true" tabindex="-1"></a>         <span class="at">cbsatype =</span> <span class="fu">as.character</span>(cbsatype),</span>
+<span id="cb43-119"><a href="#cb43-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-120"><a href="#cb43-120" aria-hidden="true" tabindex="-1"></a>        <span class="at">pell =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-121"><a href="#cb43-121" aria-hidden="true" tabindex="-1"></a>          upgrntp <span class="sc">&lt;</span> <span class="dv">10</span>                   <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-122"><a href="#cb43-122" aria-hidden="true" tabindex="-1"></a>          upgrntp <span class="sc">&gt;=</span> <span class="dv">10</span> <span class="sc">&amp;</span> upgrntp <span class="sc">&lt;</span> <span class="dv">30</span>   <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb43-123"><a href="#cb43-123" aria-hidden="true" tabindex="-1"></a>          <span class="co">#upgrntp &gt;= 20 &amp; upgrntp &lt; 30   ~ 2,</span></span>
+<span id="cb43-124"><a href="#cb43-124" aria-hidden="true" tabindex="-1"></a>          upgrntp <span class="sc">&gt;=</span> <span class="dv">30</span> <span class="sc">&amp;</span> upgrntp <span class="sc">&lt;</span> <span class="dv">50</span>   <span class="sc">~</span> <span class="dv">2</span>,</span>
+<span id="cb43-125"><a href="#cb43-125" aria-hidden="true" tabindex="-1"></a>         <span class="co"># upgrntp &gt;= 40 &amp; upgrntp &lt; 50   ~ 4,</span></span>
+<span id="cb43-126"><a href="#cb43-126" aria-hidden="true" tabindex="-1"></a>          upgrntp <span class="sc">&gt;=</span> <span class="dv">50</span>                  <span class="sc">~</span> <span class="dv">3</span>,</span>
+<span id="cb43-127"><a href="#cb43-127" aria-hidden="true" tabindex="-1"></a>          <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>)</span>
+<span id="cb43-128"><a href="#cb43-128" aria-hidden="true" tabindex="-1"></a>          </span>
+<span id="cb43-129"><a href="#cb43-129" aria-hidden="true" tabindex="-1"></a>       )</span>
+<span id="cb43-130"><a href="#cb43-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-131"><a href="#cb43-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-132"><a href="#cb43-132" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
+<span id="cb43-133"><a href="#cb43-133" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(distance <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span>                       <span class="co"># remove observations with only distance education</span></span>
+<span id="cb43-134"><a href="#cb43-134" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cbsa) <span class="sc">%&gt;%</span> </span>
+<span id="cb43-135"><a href="#cb43-135" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">inst_num =</span> <span class="fu">n_distinct</span>(unitid),</span>
+<span id="cb43-136"><a href="#cb43-136" aria-hidden="true" tabindex="-1"></a>         <span class="at">inst_num =</span> <span class="fu">as.numeric</span>(inst_num)) <span class="sc">%&gt;%</span> </span>
+<span id="cb43-137"><a href="#cb43-137" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb43-138"><a href="#cb43-138" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">admrate =</span> admssn<span class="sc">/</span>applcn) <span class="sc">%&gt;%</span> </span>
+<span id="cb43-139"><a href="#cb43-139" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(admrate = if_else(openadmp == 1, 1, admrate)) |&gt; </span></span>
+<span id="cb43-140"><a href="#cb43-140" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">selectivity =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-141"><a href="#cb43-141" aria-hidden="true" tabindex="-1"></a>         openadmp <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-142"><a href="#cb43-142" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">0</span>,                        <span class="co">#0: open </span></span>
+<span id="cb43-143"><a href="#cb43-143" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">&gt;=</span> <span class="fl">0.75</span> <span class="sc">&amp;</span> admrate <span class="sc">&lt;</span> <span class="dv">1</span> <span class="sc">~</span> <span class="dv">1</span>,       <span class="co">#1: less selective</span></span>
+<span id="cb43-144"><a href="#cb43-144" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">&gt;=</span> <span class="fl">0.40</span> <span class="sc">&amp;</span> admrate <span class="sc">&lt;</span> <span class="fl">0.75</span> <span class="sc">~</span> <span class="dv">2</span>,    <span class="co">#2: selective</span></span>
+<span id="cb43-145"><a href="#cb43-145" aria-hidden="true" tabindex="-1"></a>         admrate <span class="sc">&lt;</span> <span class="fl">0.40</span> <span class="sc">~</span> <span class="dv">3</span>,                      <span class="co">#3: more selective</span></span>
+<span id="cb43-146"><a href="#cb43-146" aria-hidden="true" tabindex="-1"></a>         <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_real_</span>),</span>
+<span id="cb43-147"><a href="#cb43-147" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb43-148"><a href="#cb43-148" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_black =</span> efybkaat<span class="sc">/</span>efytotlt,              <span class="co">#Percent of degree-seeking undergrads by race/ethnicity</span></span>
+<span id="cb43-149"><a href="#cb43-149" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_white =</span> efywhitt<span class="sc">/</span>efytotlt,</span>
+<span id="cb43-150"><a href="#cb43-150" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_hisp =</span> efyhispt<span class="sc">/</span>efytotlt,</span>
+<span id="cb43-151"><a href="#cb43-151" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_nhpi =</span> (efyaiant <span class="sc">+</span> efynhpit)<span class="sc">/</span>efytotlt,</span>
+<span id="cb43-152"><a href="#cb43-152" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_asian =</span> efyasiat<span class="sc">/</span>efytotlt,</span>
+<span id="cb43-153"><a href="#cb43-153" aria-hidden="true" tabindex="-1"></a>         <span class="at">i_perc_nonwhite =</span> <span class="dv">1</span> <span class="sc">-</span> i_perc_white,</span>
+<span id="cb43-154"><a href="#cb43-154" aria-hidden="true" tabindex="-1"></a>         <span class="at">nonwhite =</span> <span class="fu">ntile</span>(i_perc_nonwhite, <span class="dv">4</span>),</span>
+<span id="cb43-155"><a href="#cb43-155" aria-hidden="true" tabindex="-1"></a>         <span class="at">nonwhite =</span> nonwhite <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb43-156"><a href="#cb43-156" aria-hidden="true" tabindex="-1"></a>         ) <span class="sc">%&gt;%</span> </span>
+<span id="cb43-157"><a href="#cb43-157" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">region =</span> obereg) <span class="sc">%&gt;%</span> </span>
+<span id="cb43-158"><a href="#cb43-158" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cbsa =</span> <span class="fu">as.character</span>(cbsa))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"../data/sources/effy2024.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(EFFYLEV <span class="sc">==</span> <span class="dv">2</span> <span class="sc">|</span> EFFYLEV <span class="sc">==</span> <span class="dv">4</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(UNITID, EFFYALEV, EFYTOTLT) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">EFFYALEV =</span> <span class="fu">if_else</span>(EFFYALEV <span class="sc">==</span> <span class="dv">2</span>, <span class="st">"undergrad"</span>, <span class="st">"grad"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols =</span> <span class="st">"UNITID"</span>,</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_from =</span> EFFYALEV, </span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from =</span> EFYTOTLT) <span class="sc">%&gt;%</span> </span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_pop =</span> undergrad <span class="sc">+</span> grad,</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">per_undergrad =</span> undergrad<span class="sc">/</span>total_pop,</span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">per_grad =</span> grad<span class="sc">/</span>total_pop)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 115026 Columns: 72
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (34): XEYTOTLT, XEYTOTLM, XEYTOTLW, XEFYAIAT, XEFYAIAM, XEFYAIAW, XEFYAS...
+dbl (38): UNITID, EFFYALEV, EFFYLEV, LSTUDY, EFYTOTLT, EFYTOTLM, EFYTOTLW, E...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="do">## [Census/ACS Data]</span></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="do">## ---------------------------</span></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>land_area <span class="ot">&lt;-</span> <span class="fu">core_based_statistical_areas</span>(</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cb =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">year =</span> <span class="dv">2024</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GEOID, ALAND)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+  |                                                                            
+  |                                                                      |   0%
+  |                                                                            
+  |                                                                      |   1%
+  |                                                                            
+  |=                                                                     |   1%
+  |                                                                            
+  |=                                                                     |   2%
+  |                                                                            
+  |==                                                                    |   2%
+  |                                                                            
+  |==                                                                    |   3%
+  |                                                                            
+  |===                                                                   |   4%
+  |                                                                            
+  |===                                                                   |   5%
+  |                                                                            
+  |====                                                                  |   6%
+  |                                                                            
+  |=====                                                                 |   6%
+  |                                                                            
+  |=====                                                                 |   7%
+  |                                                                            
+  |=====                                                                 |   8%
+  |                                                                            
+  |======                                                                |   9%
+  |                                                                            
+  |=======                                                               |  10%
+  |                                                                            
+  |========                                                              |  11%
+  |                                                                            
+  |========                                                              |  12%
+  |                                                                            
+  |=========                                                             |  13%
+  |                                                                            
+  |===========                                                           |  15%
+  |                                                                            
+  |============                                                          |  17%
+  |                                                                            
+  |=============                                                         |  19%
+  |                                                                            
+  |==============                                                        |  21%
+  |                                                                            
+  |===============                                                       |  21%
+  |                                                                            
+  |================                                                      |  23%
+  |                                                                            
+  |=================                                                     |  25%
+  |                                                                            
+  |===================                                                   |  27%
+  |                                                                            
+  |====================                                                  |  29%
+  |                                                                            
+  |=====================                                                 |  31%
+  |                                                                            
+  |========================                                              |  34%
+  |                                                                            
+  |=========================                                             |  35%
+  |                                                                            
+  |==========================                                            |  37%
+  |                                                                            
+  |===========================                                           |  38%
+  |                                                                            
+  |============================                                          |  40%
+  |                                                                            
+  |=============================                                         |  41%
+  |                                                                            
+  |==============================                                        |  43%
+  |                                                                            
+  |===============================                                       |  45%
+  |                                                                            
+  |================================                                      |  45%
+  |                                                                            
+  |=================================                                     |  47%
+  |                                                                            
+  |=================================                                     |  48%
+  |                                                                            
+  |==================================                                    |  48%
+  |                                                                            
+  |==================================                                    |  49%
+  |                                                                            
+  |===================================                                   |  49%
+  |                                                                            
+  |===================================                                   |  50%
+  |                                                                            
+  |===================================                                   |  51%
+  |                                                                            
+  |====================================                                  |  52%
+  |                                                                            
+  |=====================================                                 |  52%
+  |                                                                            
+  |=====================================                                 |  53%
+  |                                                                            
+  |======================================                                |  54%
+  |                                                                            
+  |=======================================                               |  56%
+  |                                                                            
+  |========================================                              |  57%
+  |                                                                            
+  |=========================================                             |  58%
+  |                                                                            
+  |==========================================                            |  60%
+  |                                                                            
+  |===========================================                           |  61%
+  |                                                                            
+  |===========================================                           |  62%
+  |                                                                            
+  |============================================                          |  62%
+  |                                                                            
+  |============================================                          |  63%
+  |                                                                            
+  |=============================================                         |  64%
+  |                                                                            
+  |==============================================                        |  65%
+  |                                                                            
+  |==============================================                        |  66%
+  |                                                                            
+  |===============================================                       |  67%
+  |                                                                            
+  |===============================================                       |  68%
+  |                                                                            
+  |================================================                      |  68%
+  |                                                                            
+  |================================================                      |  69%
+  |                                                                            
+  |==================================================                    |  71%
+  |                                                                            
+  |===================================================                   |  72%
+  |                                                                            
+  |===================================================                   |  73%
+  |                                                                            
+  |====================================================                  |  74%
+  |                                                                            
+  |=====================================================                 |  75%
+  |                                                                            
+  |=====================================================                 |  76%
+  |                                                                            
+  |======================================================                |  76%
+  |                                                                            
+  |======================================================                |  77%
+  |                                                                            
+  |=======================================================               |  78%
+  |                                                                            
+  |=======================================================               |  79%
+  |                                                                            
+  |========================================================              |  80%
+  |                                                                            
+  |=========================================================             |  82%
+  |                                                                            
+  |==========================================================            |  83%
+  |                                                                            
+  |===========================================================           |  84%
+  |                                                                            
+  |============================================================          |  85%
+  |                                                                            
+  |============================================================          |  86%
+  |                                                                            
+  |=============================================================         |  87%
+  |                                                                            
+  |=============================================================         |  88%
+  |                                                                            
+  |==============================================================        |  88%
+  |                                                                            
+  |==============================================================        |  89%
+  |                                                                            
+  |===============================================================       |  90%
+  |                                                                            
+  |================================================================      |  91%
+  |                                                                            
+  |=================================================================     |  92%
+  |                                                                            
+  |=================================================================     |  93%
+  |                                                                            
+  |==================================================================    |  94%
+  |                                                                            
+  |==================================================================    |  95%
+  |                                                                            
+  |===================================================================   |  95%
+  |                                                                            
+  |===================================================================   |  96%
+  |                                                                            
+  |====================================================================  |  97%
+  |                                                                            
+  |===================================================================== |  98%
+  |                                                                            
+  |======================================================================|  99%
+  |                                                                            
+  |======================================================================| 100%</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>census <span class="ot">&lt;-</span> <span class="fu">get_acs</span>(<span class="at">geography =</span> <span class="st">"cbsa"</span>,</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">year =</span> <span class="dv">2024</span>,</span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">variables =</span> <span class="fu">c</span>(<span class="st">"B01003_001E"</span>, <span class="co"># Total population</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B19013_001E"</span>, <span class="co"># Median Household Income in the Past 12 Months</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DP03_0119PE"</span>, <span class="co"># % families below poverty line</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DP03_0005PE"</span>, <span class="co"># % unemployed over 16 years old</span></span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"DP02_0068PE"</span>, <span class="co"># % bach or higher</span></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_003E"</span>, <span class="co"># total white (alone, not hispanic)</span></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_004E"</span>, <span class="co"># total black (alone, not hispanic)</span></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_012E"</span>, <span class="co"># total hispanic</span></span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_006E"</span>, <span class="co"># total asian (alone, not hispanic)</span></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"B03002_001E"</span>  <span class="co"># total by ethnicity</span></span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>                  ),</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a>                  <span class="at">output =</span> <span class="st">"wide"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(land_area)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Getting data from the 2020-2024 5-year ACS</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Fetching data by table type ("B/C", "S", "DP") and combining the result.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(GEOID)`</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>census <span class="ot">&lt;-</span> census <span class="sc">|&gt;</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">perc_white =</span> B03002_003E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_black =</span> B03002_004E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_hisp =</span> B03002_012E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_asian =</span> B03002_006E<span class="sc">/</span>B03002_001E<span class="sc">*</span><span class="dv">100</span>,</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">tot_pop =</span> B01003_001E<span class="sc">/</span><span class="dv">100000</span>,</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">pop_density =</span> B01003_001E<span class="sc">/</span>(ALAND<span class="sc">/</span><span class="fl">2589988.10</span>)) <span class="sc">|&gt;</span> <span class="co">#population per sq mile</span></span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">perc_ba =</span> DP02_0068PE,</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">med_income =</span> B19013_001E,</span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_pov =</span> DP03_0119PE,</span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">perc_unemployed =</span> DP03_0005PE) <span class="sc">|&gt;</span> </span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(tot_pop, pop_density, perc_ba,</span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>         med_income, perc_pov, perc_unemployed,</span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>         perc_white, perc_black, perc_hisp, perc_asian,</span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>         GEOID) <span class="sc">|&gt;</span> </span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">GEOID =</span> <span class="fu">as.character</span>(GEOID))</span>
+<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(census, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"cbsa"</span> <span class="ot">=</span> <span class="st">"GEOID"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>data_mlca <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> </span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(unitid, instnm, stabbr, cbsa, cbsatype, region,  </span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>         public, twoyear, size, rurality, </span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>         awardlev, </span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>         religious, focus, housing,</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>         inst_num, selectivity, pell,</span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>         tot_pop, pop_density, perc_ba, med_income, perc_pov, perc_unemployed,</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>         perc_white, perc_black, perc_hisp, perc_asian,</span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>         i_perc_white, i_perc_black, i_perc_hisp, i_perc_asian, nonwhite) <span class="sc">%&gt;%</span> </span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a><span class="co">#metropolitan, tuition,msi, distance,sports,research, </span></span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a><span class="fu">describe</span>(data_mlca)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                vars    n      mean        sd    median   trimmed      mad
+unitid             1 3464 235967.77 118649.19 198525.00 220445.07 58465.59
+instnm*            2 3464   1714.28    992.43   1712.50   1713.84  1277.26
+stabbr*            3 3464     25.68     14.53     26.00     25.72    19.27
+cbsa*              4 3464    352.35    213.85    381.00    354.91   280.21
+cbsatype*          5 3464      2.08      0.44      2.00      2.04     0.00
+region             6 3464      4.50      2.09      5.00      4.44     2.97
+public             7 3464      0.79      0.71      1.00      0.74     1.48
+twoyear            8 3464      0.34      0.48      0.00      0.31     0.00
+size               9 3464      1.17      1.16      1.00      1.01     1.48
+rurality          10 3464      1.19      0.85      1.00      1.24     1.48
+awardlev          11 3442      0.96      1.11      1.00      0.83     1.48
+religious         12 3464      0.21      0.40      0.00      0.13     0.00
+focus             13 3464      0.35      0.48      0.00      0.31     0.00
+housing           14 3460      0.55      0.50      1.00      0.57     0.00
+inst_num          15 3464     46.10     68.94     14.00     30.72    17.79
+selectivity       16 3374      0.76      0.91      0.00      0.64     0.00
+pell              17 3450      1.86      0.81      2.00      1.85     1.48
+tot_pop           18 3254     36.27     53.61     10.38     23.39    14.56
+pop_density       19 3254    743.48    897.54    359.84    544.81   390.87
+perc_ba           20 3254     35.39      9.19     36.50     35.42     8.60
+med_income        21 3254  81837.51  18132.35  79878.50  80879.19 17562.14
+perc_pov          22 3254      8.87      2.87      8.60      8.56     2.22
+perc_unemployed   23 3254      3.27      0.77      3.20      3.27     0.74
+perc_white        24 3254     59.50     19.37     60.78     59.99    24.36
+perc_black        25 3254     11.87     10.32      8.29     10.29     9.33
+perc_hisp         26 3254     17.62     15.41     12.22     15.21    11.59
+perc_asian        27 3254      5.51      5.95      3.21      4.46     3.13
+i_perc_white      28 3458      0.48      0.26      0.50      0.48     0.30
+i_perc_black      29 3458      0.17      0.20      0.10      0.13     0.10
+i_perc_hisp       30 3458      0.18      0.18      0.11      0.14     0.10
+i_perc_asian      31 3458      0.04      0.07      0.02      0.03     0.02
+nonwhite          32 3458      1.50      1.12      1.00      1.50     1.48
+                      min       max     range  skew kurtosis      se
+unitid          100654.00 500333.00 399679.00  1.18    -0.03 2015.93
+instnm*              1.00   3432.00   3431.00  0.00    -1.21   16.86
+stabbr*              1.00     51.00     50.00 -0.08    -1.32    0.25
+cbsa*                1.00    726.00    725.00 -0.16    -1.23    3.63
+cbsatype*            1.00      3.00      2.00  0.38     1.96    0.01
+region               0.00      8.00      8.00  0.17    -0.93    0.04
+public               0.00      2.00      2.00  0.32    -1.00    0.01
+twoyear              0.00      1.00      1.00  0.65    -1.57    0.01
+size                 0.00      4.00      4.00  0.94     0.09    0.02
+rurality             0.00      2.00      2.00 -0.37    -1.51    0.01
+awardlev             0.00      3.00      3.00  0.77    -0.83    0.02
+religious            0.00      1.00      1.00  1.45     0.12    0.01
+focus                0.00      1.00      1.00  0.63    -1.60    0.01
+housing              0.00      1.00      1.00 -0.22    -1.95    0.01
+inst_num             1.00    217.00    216.00  1.74     1.48    1.17
+selectivity          0.00      3.00      3.00  0.89    -0.33    0.02
+pell                 0.00      3.00      3.00  0.06    -1.07    0.01
+tot_pop              0.13    197.99    197.86  1.97     3.02    0.94
+pop_density          2.61   3224.72   3222.11  1.73     1.94   15.73
+perc_ba             11.40     69.70     58.30 -0.07    -0.37    0.16
+med_income       31354.00 162111.00 130757.00  0.75     1.42  317.87
+perc_pov             2.80     30.50     27.70  1.76     6.42    0.05
+perc_unemployed      0.40      6.60      6.20  0.13    -0.01    0.01
+perc_white           3.58     94.47     90.89 -0.20    -0.86    0.34
+perc_black           0.05     74.45     74.40  1.53     3.02    0.18
+perc_hisp            0.48     95.00     94.52  1.46     2.24    0.27
+perc_asian           0.01     41.61     41.60  2.63    10.01    0.10
+i_perc_white         0.00      1.00      1.00 -0.13    -0.93    0.00
+i_perc_black         0.00      1.00      1.00  2.03     3.87    0.00
+i_perc_hisp          0.00      1.00      1.00  1.79     3.22    0.00
+i_perc_asian         0.00      0.95      0.95  3.74    23.15    0.00
+nonwhite             0.00      3.00      3.00  0.00    -1.36    0.02</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> data_mlca <span class="sc">%&gt;%</span> </span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cbsa) <span class="sc">%&gt;%</span> </span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">cbsa_id =</span> <span class="fu">cur_group_id</span>()</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a><span class="co"># data_mlca %&gt;% anti_join(x, by = "unitid") %&gt;% View()</span></span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>data_mlca <span class="ot">&lt;-</span> x</span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write_rds</span>(data_mlca, <span class="st">"../data/analytic_v2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables:</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="co">#   Y-        Columns with indicator variables for level 1 class membership (predictors of institution-level classes)</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>                <span class="co"># public, two_year, size, msi, award level, research, selectivity </span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>              </span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a><span class="co">#   iT-       Number of lower-level latent classes</span></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   id_high-  Name of column with higher-level id</span></span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>                <span class="co"># CBSA</span></span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   iM-       Number of higher-level latent classes</span></span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   Z-        Columns with lower-level covariates (predictors of level 1 class membership)</span></span>
+<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>                <span class="co"># rurality, housing, religious, sports</span></span>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   Zh-       Columns with higher-level covariates (predictors of level 2 class membership)</span></span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>                <span class="co"># Variables- region, number of IHEs, total population, percent bachelors degree, median income, percent poverty, percent white, percent black, percent hispanic, percent asian</span></span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Level-1 indicators: Observed institution characteristics used to define the latent institution classes</span></span>
+<span id="cb56-20"><a href="#cb56-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Level-1 covariates: Institution-level predictors that explain class membership</span></span>
+<span id="cb56-21"><a href="#cb56-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Level-2 covariates: CBSA-level regional variables that explain differences in institution class probabilities across regions</span></span>
+<span id="cb56-22"><a href="#cb56-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-23"><a href="#cb56-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-24"><a href="#cb56-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Lower-level indicators based on framework for insitutional diversity in: </span></span>
+<span id="cb56-25"><a href="#cb56-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Harris, M.S. An Empirical Typology of the Institutional Diversity of U.S. Colleges and Universities. Innov High Educ 45, 183–199 (2020). https://doi.org/10.1007/s10755-019-09494-6</span></span>
+<span id="cb56-26"><a href="#cb56-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-27"><a href="#cb56-27" aria-hidden="true" tabindex="-1"></a><span class="co">#indicators</span></span>
+<span id="cb56-28"><a href="#cb56-28" aria-hidden="true" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb56-29"><a href="#cb56-29" aria-hidden="true" tabindex="-1"></a>  <span class="co">#systemic- structural and governance characteristics</span></span>
+<span id="cb56-30"><a href="#cb56-30" aria-hidden="true" tabindex="-1"></a>  <span class="st">"public"</span>, <span class="st">"size"</span>, <span class="co">#"twoyear",</span></span>
+<span id="cb56-31"><a href="#cb56-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb56-32"><a href="#cb56-32" aria-hidden="true" tabindex="-1"></a>  <span class="co">#programmatic- degree level and academic disciplinary offerings</span></span>
+<span id="cb56-33"><a href="#cb56-33" aria-hidden="true" tabindex="-1"></a>  <span class="st">"awardlev"</span>, <span class="st">"focus"</span>,  <span class="co"># "research",</span></span>
+<span id="cb56-34"><a href="#cb56-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb56-35"><a href="#cb56-35" aria-hidden="true" tabindex="-1"></a>  <span class="co">#procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, but we do not include that in this analysis)</span></span>
+<span id="cb56-36"><a href="#cb56-36" aria-hidden="true" tabindex="-1"></a>  <span class="co">#"tuition",</span></span>
+<span id="cb56-37"><a href="#cb56-37" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb56-38"><a href="#cb56-38" aria-hidden="true" tabindex="-1"></a>  <span class="co">#constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)</span></span>
+<span id="cb56-39"><a href="#cb56-39" aria-hidden="true" tabindex="-1"></a>  <span class="st">"selectivity"</span>, <span class="st">"pell"</span>, <span class="st">"nonwhite"</span>) <span class="co"># "msi", </span></span>
+<span id="cb56-40"><a href="#cb56-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-41"><a href="#cb56-41" aria-hidden="true" tabindex="-1"></a>Z <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"i_perc_white"</span>, <span class="st">"i_perc_black"</span>, <span class="st">"i_perc_hisp"</span>, <span class="st">"i_perc_asian"</span>, <span class="st">"housing"</span>, <span class="st">"rurality"</span>, <span class="st">"religious"</span>)       <span class="co">#level-1 covariates   "sports", </span></span>
+<span id="cb56-42"><a href="#cb56-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-43"><a href="#cb56-43" aria-hidden="true" tabindex="-1"></a>Zh <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"cbsatype"</span>, <span class="st">"region"</span>, <span class="st">"inst_num"</span>, <span class="st">"tot_pop"</span>, <span class="st">"pop_density"</span>, <span class="st">"perc_ba"</span>, <span class="st">"med_income"</span>, <span class="st">"perc_pov"</span>, <span class="st">"perc_unemployed"</span>, <span class="st">"perc_white"</span>, <span class="st">"perc_black"</span>, <span class="st">"perc_hisp"</span>, <span class="st">"perc_asian"</span>)   <span class="co">#level-2 covariates  "metropolitan",</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>model_selection <span class="ot">&lt;-</span> <span class="fu">multiLCA</span>(</span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data_mlca,</span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">Y              =</span> Y,</span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">iT             =</span> <span class="dv">6</span><span class="sc">:</span><span class="dv">12</span>,</span>
+<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">Z              =</span> Z,</span>
+<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">iM             =</span> <span class="dv">2</span><span class="sc">:</span><span class="dv">6</span>,</span>
+<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_high        =</span> <span class="fu">c</span>(<span class="st">"cbsa_id"</span>),</span>
+<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Zh             =</span> Zh,</span>
+<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">incomplete     =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">extout         =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose        =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">sequential     =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb57-15"><a href="#cb57-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">reord          =</span> <span class="cn">FALSE</span></span>
+<span id="cb57-16"><a href="#cb57-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting single-level measurement model (step 1)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 2)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+Fitting multilevel measurement model (step 3)...
+$step1
+      BIClow   BIChigh  AIC      ICL_BIClow ICL_BIChigh
+iT=6  41672.86 41498.66 40952.9  -          -          
+iT=7  41541.26 41337.78 40700.3  -          -          
+iT=8  41632.64 41399.88 40670.68 -          -          
+iT=9  41525.12 41263.08 40442.16 -          -          
+iT=10 41599.84 41308.53 40395.88 -          -          
+iT=11 41538.27 41217.68 40213.31 -          -          
+iT=12 41599.56 41249.69 40153.6  -          -          
+
+$step2
+         BIClow   BIChigh  AIC      ICL_BIClow ICL_BIChigh
+iT*,iM=2 40769.88 40494.66 39632.46 42163.81   40691.99   
+iT*,iM=3 40829.79 40541.4  39637.93 42209.8    40756.5    
+iT*,iM=4 40821.49 40519.93 39575.17 42116.19   41711.99   
+iT*,iM=5 40848.54 40533.8  39547.78 42215.27   41524.15   
+iT*,iM=6 40799.42 40471.51 39444.21 41971.01   41741.53   
+
+$step3
+          BIClow   BIChigh  AIC      ICL_BIClow ICL_BIChigh
+iT=6,iM*  41495.79 41277.67 40594.33 42376.87   42801.39   
+iT=7,iM*  41143.74 40889.02 40091.03 42184.32   42230.94   
+iT=8,iM*  41092.77 40801.45 39888.8  42414.51   42039.02   
+iT=9,iM*  41262.19 40934.28 39906.98 42817.78   42526.15   
+iT=10,iM* 40817.04 40452.53 39310.57 42311.85   41879.06   
+iT=11,iM* 40964.97 40563.86 39307.25 42243.04   41844.8    
+iT=12,iM* 41247.52 40809.81 39438.55 42706.95   41986.7    
+
+$optimal
+      
+iT= 10
+iM=  6</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>analytic_model <span class="ot">&lt;-</span> model_selection</span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>analytic_model</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+CALL:
+multiLCA(data = data_mlca, Y = Y, iT = 6:12, id_high = c("cbsa_id"), 
+    iM = 2:6, Z = Z, Zh = Zh, incomplete = FALSE, extout = TRUE, 
+    sequential = TRUE, reord = FALSE, verbose = TRUE)
+
+SPECIFICATION:
+                    
+ Multilevel LC model
+
+MISSING VALUES ON THE INDICATORS:
+     
+ None
+
+FINAL SAMPLE SIZE:
+     
+ 3134
+
+ESTIMATION DETAILS:
+
+ EMiter   LLfirst    LLlast
+   1000 -19830.11 -19406.29
+
+---------------------------
+
+GROUP PROPORTIONS:
+            
+P(G1) 0.0044
+P(G2) 0.2637
+P(G3) 0.1266
+P(G4) 0.1884
+P(G5) 0.0661
+P(G6) 0.3508
+
+CLASS PROPORTIONS:
+             G1     G2     G3     G4     G5     G6
+P(C1|G)  0.0294 0.0000 0.0267 0.0568 0.0000 0.0496
+P(C2|G)  0.0000 0.3560 0.0000 0.0903 0.0000 0.1637
+P(C3|G)  0.1135 0.0000 0.2641 0.0652 0.0000 0.0000
+P(C4|G)  0.0000 0.0955 0.0058 0.0784 0.2318 0.1508
+P(C5|G)  0.1358 0.0244 0.3784 0.1550 0.0000 0.1210
+P(C6|G)  0.1615 0.0000 0.1526 0.0300 0.1610 0.0000
+P(C7|G)  0.0663 0.0412 0.0488 0.1937 0.0000 0.0833
+P(C8|G)  0.0585 0.0230 0.0571 0.0448 0.0000 0.0000
+P(C9|G)  0.4335 0.0000 0.0663 0.1415 0.1114 0.1164
+P(C10|G) 0.0014 0.4599 0.0000 0.1445 0.4958 0.3152
+
+RESPONSE PROBABILITIES:
+
+                       C1     C2     C3     C4     C5     C6     C7     C8
+P(public.0|C)      0.9184 0.6662 0.0019 0.0468 0.1365 0.3588 1.0000 0.6131
+P(public.1|C)      0.0726 0.3338 0.9981 0.9532 0.0187 0.5994 0.0000 0.3869
+P(public.2|C)      0.0090 0.0000 0.0000 0.0000 0.8448 0.0418 0.0000 0.0000
+P(size.0|C)        0.0436 0.2501 0.0209 0.0000 0.8013 0.0263 0.0569 0.0000
+P(size.1|C)        0.9476 0.6990 0.1673 0.0095 0.1770 0.3916 0.7562 0.0002
+P(size.2|C)        0.0000 0.0470 0.3631 0.3132 0.0139 0.2425 0.1662 0.2082
+P(size.3|C)        0.0000 0.0039 0.3182 0.3969 0.0051 0.1449 0.0207 0.3468
+P(size.4|C)        0.0088 0.0000 0.1306 0.2805 0.0028 0.1946 0.0000 0.4449
+P(awardlev.0|C)    0.0000 0.0033 0.9990 0.0000 0.8094 0.0000 0.0067 0.0000
+P(awardlev.1|C)    0.9098 0.7897 0.0010 0.0005 0.1405 0.2237 0.0420 0.0000
+P(awardlev.2|C)    0.0746 0.2070 0.0000 0.4365 0.0341 0.3600 0.3831 0.0373
+P(awardlev.3|C)    0.0156 0.0000 0.0000 0.5630 0.0160 0.4163 0.5682 0.9627
+P(focus|C)         0.8848 0.2240 0.0292 0.0088 0.8184 0.1043 0.1846 0.0636
+P(selectivity.0|C) 0.0000 0.0109 0.9905 0.0380 0.8547 0.0594 0.0507 0.0344
+P(selectivity.1|C) 0.2019 0.6458 0.0061 0.7425 0.0972 0.5696 0.5268 0.1369
+P(selectivity.2|C) 0.3543 0.3227 0.0034 0.2195 0.0365 0.3361 0.4022 0.3833
+P(selectivity.3|C) 0.4438 0.0206 0.0000 0.0000 0.0116 0.0348 0.0204 0.4454
+P(pell.0|C)        0.0184 0.0014 0.0159 0.0000 0.0156 0.0036 0.0101 0.0070
+P(pell.1|C)        0.9661 0.3497 0.5723 0.5134 0.0607 0.0193 0.4485 0.9143
+P(pell.2|C)        0.0000 0.6271 0.3522 0.4823 0.1591 0.5064 0.5018 0.0699
+P(pell.3|C)        0.0155 0.0218 0.0596 0.0043 0.7646 0.4708 0.0395 0.0088
+P(nonwhite.0|C)    0.2870 0.4625 0.0000 0.4837 0.0547 0.0000 0.2512 0.0513
+P(nonwhite.1|C)    0.4800 0.4376 0.1010 0.4049 0.0668 0.0000 0.4571 0.2986
+P(nonwhite.2|C)    0.1625 0.0999 0.4109 0.1114 0.2706 0.3373 0.2836 0.5481
+P(nonwhite.3|C)    0.0706 0.0000 0.4881 0.0000 0.6079 0.6626 0.0081 0.1021
+                       C9    C10
+P(public.0|C)      0.9306 0.0000
+P(public.1|C)      0.0282 1.0000
+P(public.2|C)      0.0413 0.0000
+P(size.0|C)        0.9088 0.0418
+P(size.1|C)        0.0912 0.6518
+P(size.2|C)        0.0000 0.2442
+P(size.3|C)        0.0000 0.0597
+P(size.4|C)        0.0000 0.0025
+P(awardlev.0|C)    0.3274 0.9612
+P(awardlev.1|C)    0.6723 0.0326
+P(awardlev.2|C)    0.0002 0.0063
+P(awardlev.3|C)    0.0000 0.0000
+P(focus|C)         0.7741 0.0799
+P(selectivity.0|C) 0.3625 0.9890
+P(selectivity.1|C) 0.2814 0.0047
+P(selectivity.2|C) 0.2657 0.0063
+P(selectivity.3|C) 0.0904 0.0000
+P(pell.0|C)        0.0530 0.0042
+P(pell.1|C)        0.1533 0.4571
+P(pell.2|C)        0.4016 0.4902
+P(pell.3|C)        0.3922 0.0485
+P(nonwhite.0|C)    0.4482 0.3568
+P(nonwhite.1|C)    0.1806 0.3738
+P(nonwhite.2|C)    0.2066 0.2316
+P(nonwhite.3|C)    0.1646 0.0378
+
+---------------------------
+
+MODEL AND CLASSIFICATION STATISTICS:
+                     
+R2entrlow      0.8907
+R2entrhigh     0.3434
+BIClow     40817.0402
+BIChigh    40452.5307
+ICLBIClow   42311.847
+ICLBIChigh 41879.0624
+AIC        39310.5739</code></pre>
+</div>
+</div>
+<section id="r" class="level1">
+<h1>```{r}</h1>
+<p>set.seed(1234)</p>
+</section>
+<section id="testing-8-lower-level-classes-2-higher-level-clusters" class="level1">
+<h1>testing 8 lower-level classes, 2 higher-level clusters</h1>
+<p>test_l8_h2&lt;- multiLCA( data = data_mlca, Y = Y, iT = 8, Z = Z, iM = 2, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="testing-9-lower-level-classes-2-higher-level-clusters" class="level1">
+<h1>testing 9 lower-level classes, 2 higher-level clusters</h1>
+<p>test_l9_h2&lt;- multiLCA( data = data_mlca, Y = Y, iT = 9, Z = Z, iM = 2, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="testing-10-lower-level-classes-2-higher-level-clusters" class="level1">
+<h1>testing 10 lower-level classes, 2 higher-level clusters</h1>
+<p>test_l10_h2&lt;- multiLCA( data = data_mlca, Y = Y, iT = 10, Z = Z, iM = 2, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="testing-11-lower-level-classes-2-higher-level-clusters" class="level1">
+<h1>testing 11 lower-level classes, 2 higher-level clusters</h1>
+<p>test_l11_h2&lt;- multiLCA( data = data_mlca, Y = Y, iT = 11, Z = Z, iM = 2, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="testing-8-lower-level-classes-3-higher-level-clusters" class="level1">
+<h1>testing 8 lower-level classes, 3 higher-level clusters</h1>
+<p>test_l8_h3&lt;- multiLCA( data = data_mlca, Y = Y, iT = 8, Z = Z, iM = 3, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="testing-9-lower-level-classes-3-higher-level-clusters" class="level1">
+<h1>testing 9 lower-level classes, 3 higher-level clusters</h1>
+<p>test_l9_h3&lt;- multiLCA( data = data_mlca, Y = Y, iT = 9, Z = Z, iM = 3, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="no-solution-found" class="level1">
+<h1>NO SOLUTION FOUND</h1>
+</section>
+<section id="testing-10-lower-level-classes-3-higher-level-clusters" class="level1">
+<h1># testing 10 lower-level classes, 3 higher-level clusters</h1>
+</section>
+<section id="test_l10_h3--multilca" class="level1">
+<h1>test_l10_h3&lt;- multiLCA(</h1>
+</section>
+<section id="data-data_mlca" class="level1">
+<h1>data = data_mlca,</h1>
+</section>
+<section id="y-y" class="level1">
+<h1>Y = Y,</h1>
+</section>
+<section id="it-10" class="level1">
+<h1>iT = 10,</h1>
+</section>
+<section id="z-z" class="level1">
+<h1>Z = Z,</h1>
+</section>
+<section id="im-3" class="level1">
+<h1>iM = 3,</h1>
+</section>
+<section id="id_high-ccbsa_id" class="level1">
+<h1>id_high = c(“cbsa_id”),</h1>
+</section>
+<section id="zh-zh" class="level1">
+<h1>Zh = Zh,</h1>
+</section>
+<section id="incomplete-false" class="level1">
+<h1>incomplete = FALSE,</h1>
+</section>
+<section id="extout-true" class="level1">
+<h1>extout = TRUE,</h1>
+</section>
+<section id="verbose-true" class="level1">
+<h1>verbose = TRUE,</h1>
+</section>
+<section id="sequential-true" class="level1">
+<h1>sequential = TRUE,</h1>
+</section>
+<section id="reord-false" class="level1">
+<h1>reord = FALSE</h1>
+</section>
+<section id="section" class="level1">
+<h1>)</h1>
+</section>
+<section id="testing-11-lower-level-classes-3-higher-level-clusters" class="level1">
+<h1>testing 11 lower-level classes, 3 higher-level clusters</h1>
+<p>test_l11_h3 &lt;- multiLCA( data = data_mlca, Y = Y, iT = 11, Z = Z, iM = 3, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="testing-8-lower-level-classes-4-higher-level-clusters" class="level1">
+<h1>testing 8 lower-level classes, 4 higher-level clusters</h1>
+<p>test_l8_h4 &lt;- multiLCA( data = data_mlca, Y = Y, iT = 8, Z = Z, iM = 4, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="no-solution-found-1" class="level1">
+<h1>NO SOLUTION FOUND</h1>
+</section>
+<section id="testing-9-lower-level-classes-4-higher-level-clusters" class="level1">
+<h1># testing 9 lower-level classes, 4 higher-level clusters</h1>
+</section>
+<section id="test_l9_h4--multilca" class="level1">
+<h1>test_l9_h4&lt;- multiLCA(</h1>
+</section>
+<section id="data-data_mlca-1" class="level1">
+<h1>data = data_mlca,</h1>
+</section>
+<section id="y-y-1" class="level1">
+<h1>Y = Y,</h1>
+</section>
+<section id="it-9" class="level1">
+<h1>iT = 9,</h1>
+</section>
+<section id="z-z-1" class="level1">
+<h1>Z = Z,</h1>
+</section>
+<section id="im-4" class="level1">
+<h1>iM = 4,</h1>
+</section>
+<section id="id_high-ccbsa_id-1" class="level1">
+<h1>id_high = c(“cbsa_id”),</h1>
+</section>
+<section id="zh-zh-1" class="level1">
+<h1>Zh = Zh,</h1>
+</section>
+<section id="incomplete-false-1" class="level1">
+<h1>incomplete = FALSE,</h1>
+</section>
+<section id="extout-true-1" class="level1">
+<h1>extout = TRUE,</h1>
+</section>
+<section id="verbose-true-1" class="level1">
+<h1>verbose = TRUE,</h1>
+</section>
+<section id="sequential-true-1" class="level1">
+<h1>sequential = TRUE,</h1>
+</section>
+<section id="reord-false-1" class="level1">
+<h1>reord = FALSE</h1>
+</section>
+<section id="section-1" class="level1">
+<h1>)</h1>
+</section>
+<section id="testing-10-lower-level-classes-4-higher-level-clusters" class="level1">
+<h1>testing 10 lower-level classes, 4 higher-level clusters</h1>
+<p>test_l10_h4&lt;- multiLCA( data = data_mlca, Y = Y, iT = 10, Z = Z, iM = 4, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+</section>
+<section id="no-solution-found-2" class="level1">
+<h1>NO SOLUTION FOUND</h1>
+</section>
+<section id="testing-11-lower-level-classes-4-higher-level-clusters" class="level1">
+<h1># testing 11 lower-level classes, 4 higher-level clusters</h1>
+</section>
+<section id="test_l11_h4--multilca" class="level1">
+<h1>test_l11_h4&lt;- multiLCA(</h1>
+</section>
+<section id="data-data_mlca-2" class="level1">
+<h1>data = data_mlca,</h1>
+</section>
+<section id="y-y-2" class="level1">
+<h1>Y = Y,</h1>
+</section>
+<section id="it-11" class="level1">
+<h1>iT = 11,</h1>
+</section>
+<section id="z-z-2" class="level1">
+<h1>Z = Z,</h1>
+</section>
+<section id="im-4-1" class="level1">
+<h1>iM = 4,</h1>
+</section>
+<section id="id_high-ccbsa_id-2" class="level1">
+<h1>id_high = c(“cbsa_id”),</h1>
+</section>
+<section id="zh-zh-2" class="level1">
+<h1>Zh = Zh,</h1>
+</section>
+<section id="incomplete-false-2" class="level1">
+<h1>incomplete = FALSE,</h1>
+</section>
+<section id="extout-true-2" class="level1">
+<h1>extout = TRUE,</h1>
+</section>
+<section id="verbose-true-2" class="level1">
+<h1>verbose = TRUE,</h1>
+</section>
+<section id="sequential-true-2" class="level1">
+<h1>sequential = TRUE,</h1>
+</section>
+<section id="reord-false-2" class="level1">
+<h1>reord = FALSE</h1>
+</section>
+<section id="section-2" class="level1">
+<h1>)</h1>
+</section>
+<section id="no-solution-found-3" class="level1">
+<h1>NO SOLUTION FOUND</h1>
+</section>
+<section id="testing-8-lower-level-classes-5-higher-level-clusters" class="level1">
+<h1># testing 8 lower-level classes, 5 higher-level clusters</h1>
+</section>
+<section id="test_l8_h5---multilca" class="level1">
+<h1>test_l8_h5 &lt;- multiLCA(</h1>
+</section>
+<section id="data-data_mlca-3" class="level1">
+<h1>data = data_mlca,</h1>
+</section>
+<section id="y-y-3" class="level1">
+<h1>Y = Y,</h1>
+</section>
+<section id="it-8" class="level1">
+<h1>iT = 8,</h1>
+</section>
+<section id="z-z-3" class="level1">
+<h1>Z = Z,</h1>
+</section>
+<section id="im-5" class="level1">
+<h1>iM = 5,</h1>
+</section>
+<section id="id_high-ccbsa_id-3" class="level1">
+<h1>id_high = c(“cbsa_id”),</h1>
+</section>
+<section id="zh-zh-3" class="level1">
+<h1>Zh = Zh,</h1>
+</section>
+<section id="incomplete-false-3" class="level1">
+<h1>incomplete = FALSE,</h1>
+</section>
+<section id="extout-true-3" class="level1">
+<h1>extout = TRUE,</h1>
+</section>
+<section id="verbose-true-3" class="level1">
+<h1>verbose = TRUE,</h1>
+</section>
+<section id="sequential-true-3" class="level1">
+<h1>sequential = TRUE,</h1>
+</section>
+<section id="reord-false-3" class="level1">
+<h1>reord = FALSE</h1>
+</section>
+<section id="section-3" class="level1">
+<h1>)</h1>
+</section>
+<section id="no-solution-found-4" class="level1">
+<h1>NO SOLUTION FOUND</h1>
+</section>
+<section id="testing-9-lower-level-classes-5-higher-level-clusters" class="level1">
+<h1># testing 9 lower-level classes, 5 higher-level clusters</h1>
+</section>
+<section id="test_l9_h5---multilca" class="level1">
+<h1>test_l9_h5 &lt;- multiLCA(</h1>
+</section>
+<section id="data-data_mlca-4" class="level1">
+<h1>data = data_mlca,</h1>
+</section>
+<section id="y-y-4" class="level1">
+<h1>Y = Y,</h1>
+</section>
+<section id="it-9-1" class="level1">
+<h1>iT = 9,</h1>
+</section>
+<section id="z-z-4" class="level1">
+<h1>Z = Z,</h1>
+</section>
+<section id="im-5-1" class="level1">
+<h1>iM = 5,</h1>
+</section>
+<section id="id_high-ccbsa_id-4" class="level1">
+<h1>id_high = c(“cbsa_id”),</h1>
+</section>
+<section id="zh-zh-4" class="level1">
+<h1>Zh = Zh,</h1>
+</section>
+<section id="incomplete-false-4" class="level1">
+<h1>incomplete = FALSE,</h1>
+</section>
+<section id="extout-true-4" class="level1">
+<h1>extout = TRUE,</h1>
+</section>
+<section id="verbose-true-4" class="level1">
+<h1>verbose = TRUE,</h1>
+</section>
+<section id="sequential-true-4" class="level1">
+<h1>sequential = TRUE,</h1>
+</section>
+<section id="reord-false-4" class="level1">
+<h1>reord = FALSE</h1>
+</section>
+<section id="section-4" class="level1">
+<h1>)</h1>
+</section>
+<section id="no-solution-found-5" class="level1">
+<h1>NO SOLUTION FOUND</h1>
+</section>
+<section id="testing-10-lower-level-classes-5-higher-level-clusters" class="level1">
+<h1># testing 10 lower-level classes, 5 higher-level clusters</h1>
+</section>
+<section id="test_l10_h5---multilca" class="level1">
+<h1>test_l10_h5 &lt;- multiLCA(</h1>
+</section>
+<section id="data-data_mlca-5" class="level1">
+<h1>data = data_mlca,</h1>
+</section>
+<section id="y-y-5" class="level1">
+<h1>Y = Y,</h1>
+</section>
+<section id="it-10-1" class="level1">
+<h1>iT = 10,</h1>
+</section>
+<section id="z-z-5" class="level1">
+<h1>Z = Z,</h1>
+</section>
+<section id="im-5-2" class="level1">
+<h1>iM = 5,</h1>
+</section>
+<section id="id_high-ccbsa_id-5" class="level1">
+<h1>id_high = c(“cbsa_id”),</h1>
+</section>
+<section id="zh-zh-5" class="level1">
+<h1>Zh = Zh,</h1>
+</section>
+<section id="incomplete-false-5" class="level1">
+<h1>incomplete = FALSE,</h1>
+</section>
+<section id="extout-true-5" class="level1">
+<h1>extout = TRUE,</h1>
+</section>
+<section id="verbose-true-5" class="level1">
+<h1>verbose = TRUE,</h1>
+</section>
+<section id="sequential-true-5" class="level1">
+<h1>sequential = TRUE,</h1>
+</section>
+<section id="reord-false-5" class="level1">
+<h1>reord = FALSE</h1>
+</section>
+<section id="section-5" class="level1">
+<h1>)</h1>
+</section>
+<section id="testing-11-lower-level-classes-5-higher-level-clusters" class="level1">
+<h1>testing 11 lower-level classes, 5 higher-level clusters</h1>
+<p>test_l11_h5 &lt;- multiLCA( data = data_mlca, Y = Y, iT = 11, Z = Z, iM = 5, id_high = c(“cbsa_id”), Zh = Zh, incomplete = FALSE, extout = TRUE, verbose = TRUE, sequential = TRUE, reord = FALSE )</p>
+<p>test_l8_h2 test_l9_h2 test_l10_h2 test_l11_h2</p>
+<p>test_l8_h3 test_l9_h3 #test_l10_h3 test_l11_h3</p>
+<p>test_l8_h4 #test_l9_h4 test_l10_h4 #test_l11_h4</p>
+<p>#test_l8_h5 #test_l9_h5 #test_l10_h5 test_l11_h5</p>
+<pre><code>
+
+# ```{r}
+
+set.seed(1234)
+
+#Single-level LCA without covariates
+test_1 &lt;- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 6:12,
+  # Z              = Z,
+  # iM             = 2:5,
+  # id_high        = c("cbsa_id"),
+  # Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+#Single-level LCA with covariates
+test_1c &lt;- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 6:12,
+  Z              = Z,
+  # iM             = 2:5,
+  # id_high        = c("cbsa_id"),
+  # Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+test_1
+test_1c
+
+summary(test_1)
+summary(test_1c)
+
+
+
+#Full multilevel analysis with covariates
+final_model &lt;- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 6:12,
+  Z              = Z,
+  iM             = 2:5,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
+
+
+
+final_model
+summary(final_model)
+plot(final_model)
+
+</code></pre>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>l1_proportions <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(analytic_model<span class="sc">$</span>mPi)  <span class="co">#  Lower-level class proportions given the higher-level latent classes and the covariates</span></span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>l1_proportions</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                    G1            G2            G3         G4            G5
+P(C1|G)   2.939777e-02  0.000000e+00  2.674849e-02 0.05679593  0.000000e+00
+P(C2|G)  4.616194e-207  3.559923e-01  0.000000e+00 0.09027351  0.000000e+00
+P(C3|G)   1.134602e-01 2.267053e-185  2.640959e-01 0.06516945  0.000000e+00
+P(C4|G)   2.249480e-73  9.546998e-02  5.815606e-03 0.07835353  2.317548e-01
+P(C5|G)   1.358499e-01  2.443192e-02  3.784107e-01 0.15495259  0.000000e+00
+P(C6|G)   1.614866e-01  0.000000e+00  1.526164e-01 0.02998431  1.609984e-01
+P(C7|G)   6.632904e-02  4.115814e-02  4.882436e-02 0.19365712  0.000000e+00
+P(C8|G)   5.852816e-02  2.302953e-02  5.714442e-02 0.04482710 1.211020e-187
+P(C9|G)   4.335388e-01  0.000000e+00  6.634414e-02 0.14145838  1.114165e-01
+P(C10|G)  1.409552e-03  4.599182e-01 1.624397e-224 0.14452807  4.958303e-01
+                    G6
+P(C1|G)   4.959563e-02
+P(C2|G)   1.636682e-01
+P(C3|G)  2.000312e-137
+P(C4|G)   1.508380e-01
+P(C5|G)   1.209943e-01
+P(C6|G)   0.000000e+00
+P(C7|G)   8.329357e-02
+P(C8|G)   0.000000e+00
+P(C9|G)   1.163653e-01
+P(C10|G)  3.152449e-01</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>l1_probabilities <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(analytic_model<span class="sc">$</span>mPhi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a>l2_posterior <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(analytic_model<span class="sc">$</span>mPW)</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>l2_classes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">group_id =</span> <span class="fu">row.names</span>(analytic_model<span class="sc">$</span>mPW),</span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Predicted_Class =</span> <span class="fu">apply</span>(l2_posterior, <span class="dv">1</span>, which.max),</span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Prob_Class1 =</span> l2_posterior[, <span class="dv">1</span>],</span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Prob_Class2 =</span> l2_posterior[, <span class="dv">2</span>],</span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Prob_Class1 =</span> l2_posterior[, <span class="dv">3</span>],</span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Prob_Class1 =</span> l2_posterior[, <span class="dv">4</span>],</span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Prob_Class2 =</span> l2_posterior[, <span class="dv">5</span>],</span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">L2_Prob_Class1 =</span> l2_posterior[, <span class="dv">6</span>]</span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a>l2_class_data <span class="ot">&lt;-</span> data_mlca <span class="sc">%&gt;%</span></span>
+<span id="cb65-17"><a href="#cb65-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cbsa_id =</span> <span class="fu">as.character</span>(cbsa_id)) <span class="sc">%&gt;%</span> </span>
+<span id="cb65-18"><a href="#cb65-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(l2_classes, </span>
+<span id="cb65-19"><a href="#cb65-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"cbsa_id"</span> <span class="ot">=</span> <span class="st">"group_id"</span>)) </span>
+<span id="cb65-20"><a href="#cb65-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb65-21"><a href="#cb65-21" aria-hidden="true" tabindex="-1"></a>l2_class_summary <span class="ot">&lt;-</span> l2_class_data <span class="sc">%&gt;%</span> </span>
+<span id="cb65-22"><a href="#cb65-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cbsa, L2_Predicted_Class ) <span class="sc">%&gt;%</span> </span>
+<span id="cb65-23"><a href="#cb65-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<!-- ```{r} -->
+<!--  #Predicted lower-level class conditional on institutional characteristics -->
+<!-- # predicted_class <- multinom( "awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian",data = lc_l2) -->
+<!-- data_mlca$.row_id <- seq_len(nrow(data_mlca)) -->
+<!-- optimal_model <- multiLCA( -->
+<!--   data = data_mlca, -->
+<!--   Y              = c("public", "twoyear", "size", "msi", -->
+<!--        "research", "selectivity", "focus", -->
+<!--        "rurality", "housing", "religious"), -->
+<!--   iT             = 9, -->
+<!--   Z              = c("awardlev", "sports", "i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian"), -->
+<!--   iM             = 4, -->
+<!--   id_high        = c("cbsa_id"), -->
+<!--   Zh             = c("region", "metropolitan", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian"), -->
+<!--   incomplete     = FALSE, -->
+<!--   extout         = TRUE, -->
+<!--   verbose        = TRUE, -->
+<!--   sequential     = TRUE, -->
+<!--   reord          = FALSE, -->
+<!--   dataout        = TRUE -->
+<!-- ) -->
+<!-- ``` -->
+<!-- ```{r Multinomial logistic regression} -->
+<!-- reg_data <- as.data.frame(optimal_model[["mPW_N"]]) %>%  -->
+<!--   mutate(pred_class2 = case_when( -->
+<!--     G1 == pmax(G1, G2, G3, G4) ~ "G1", -->
+<!--     G2 == pmax(G1, G2, G3, G4) ~ "G2", -->
+<!--     G3 == pmax(G1, G2, G3, G4) ~ "G3", -->
+<!--     G4 == pmax(G1, G2, G3, G4) ~ "G4"), -->
+<!--     class_prob = case_when( -->
+<!--       pred_class2 == "G1" ~ G1, -->
+<!--       pred_class2 == "G2" ~ G2, -->
+<!--       pred_class2 == "G3" ~ G3, -->
+<!--       pred_class2 == "G4" ~ G4, -->
+<!--     )) %>%  -->
+<!--   select(cbsa_id, G1, G2, G3, G4, pred_class2, class_prob) %>%  -->
+<!--   distinct() %>%  -->
+<!--   select(cbsa_id, pred_class2, class_prob) %>%  -->
+<!--   right_join(data_mlca, by = "cbsa_id") -->
+<!-- reg_model <- vglm(pred_class2 ~ region + metropolitan + inst_num + tot_pop + pop_density + perc_ba + med_income + perc_pov + perc_unemployed + perc_white + perc_black + perc_hisp + perc_asian, -->
+<!--               data = reg_data, -->
+<!--               family = multinomial(refLevel = 1)) -->
+<!-- summary(reg_model) -->
+<!-- coef_vec <- coef(reg_model)                 # vector of all coefficients -->
+<!-- vc       <- vcov(reg_model)                 # full covariance matrix -->
+<!-- se_vec   <- sqrt(diag(vc))              # standard errorscoef_vec <- coef(model)                 # vector of all coefficients -->
+<!-- vc       <- vcov(reg_model)                 # full covariance matrix -->
+<!-- se_vec   <- sqrt(diag(vc))              # standard errors -->
+<!-- apa_table <- data.frame( -->
+<!--   term     = names(coef_vec), -->
+<!--   estimate = coef_vec, -->
+<!--   SE       = se_vec, -->
+<!--   z        = coef_vec / se_vec, -->
+<!--   p        = 2 * (1 - pnorm(abs(coef_vec / se_vec))), -->
+<!--   OR       = exp(coef_vec), -->
+<!--   CI_low   = exp(coef_vec - 1.96 * se_vec), -->
+<!--   CI_high  = exp(coef_vec + 1.96 * se_vec) -->
+<!-- ) %>% -->
+<!--   mutate( -->
+<!--     estimate = round(estimate, 3), -->
+<!--     SE       = round(SE, 3), -->
+<!--     z        = round(z, 2), -->
+<!--     p        = round(p, 3), -->
+<!--     OR       = round(OR, 3), -->
+<!--     CI       = paste0("[", round(CI_low, 3), ", ", round(CI_high, 3), "]") -->
+<!--   ) %>% -->
+<!--   select(term, estimate, SE, z, p, OR, CI) -->
+<!-- apa_table -->
+<!-- apa_gt <- apa_table %>% -->
+<!--   gt() %>% -->
+<!--   cols_label( -->
+<!--     term     = "Predictor", -->
+<!--     estimate = "B", -->
+<!--     SE       = "SE", -->
+<!--     z        = "z", -->
+<!--     p        = "p", -->
+<!--     OR       = "OR", -->
+<!--     CI       = "95% CI" -->
+<!--   ) %>% -->
+<!--   tab_options( -->
+<!--     table.font.size = 12, -->
+<!--     data_row.padding = px(2), -->
+<!--     table.width = pct(80), -->
+<!--     column_labels.font.weight = "bold" -->
+<!--   ) -->
+<!-- apa_gt -->
+<!-- ``` -->
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
