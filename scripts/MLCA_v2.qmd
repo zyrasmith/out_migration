@@ -417,7 +417,7 @@ Y <- c(
   "awardlev", "focus", "research",
   
   #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, but we do not include that in this analysis)
-  #"tuition",
+  #"tuition", #ADD VARIABLE FOR THE PERCENTAGE OF STUDENTS WHO ARE EXCLUSIVELY ENROLLED IN ONLINE COURSES
   
   #constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)
   "selectivity", "pell", "msi", "nonwhite") # 
