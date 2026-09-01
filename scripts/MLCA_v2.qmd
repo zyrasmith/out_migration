@@ -35,15 +35,18 @@ ipeds24 <- read_csv("../data/sources/hd2024.csv")
 ipeds_cost <- read_csv("../data/sources/cost1_2024.csv")
 #ipeds_schoolsize <- read_csv("../data/sources/ef2024a.csv") #enrollment Fall 2024
 carnegie <- read_excel("../data/sources/2025-Public-Data-File.xlsx", sheet = 2)
-ic2024 <- read_csv("../data/sources/ic2024.csv") #NM: new
-sfa <- read_csv("../data/sources/sfa2324.csv") #NM: new
-adm <- read_csv("../data/sources/adm2024.csv") #NM: new
+ic2024 <- read_csv("../data/sources/ic2024.csv")
+sfa <- read_csv("../data/sources/sfa2324.csv")
+adm <- read_csv("../data/sources/adm2024.csv")
 enroll <- read_csv("../data/sources/effy2024.csv") %>%
-  filter(EFFYALEV == 3) %>% 
+  filter(EFFYALEV == 3) %>%  #degree/certificate-seeking undergraduates
   select(UNITID, EFFYALEV, EFYTOTLT, EFYAIANT, EFYBKAAT, EFYNHPIT, EFYWHITT, EFYHISPT, EFYASIAT) 
-ipeds_distance <- read_csv("../data/sources/effy2024_dist.csv") %>% 
-  filter(EFFYDLEV == 2) %>% 
-  select(UNITID, EFFYDLEV, EFYDETOT, EFYDEEXC)
+#ipeds_distance <- read_csv("../data/sources/effy2024_dist.csv") %>% 
+#  filter(EFFYDLEV == 2) %>%  #undergrad total
+#  select(UNITID, EFFYDLEV, EFYDETOT, EFYDEEXC)
+ipeds_dist <- read_csv("../data/sources/ef2024a_dist.csv") |> 
+  filter(EFDELEV == 2) |>    #undergrad total
+  select(UNITID, EFDELEV, EFDETOT, EFDEEXC, XEFDEEXC)
 
 #Let's replace this with the size variable in IPEDS (instsize)
 # ipeds_schoolsize <- ipeds_schoolsize |> 
@@ -58,15 +61,16 @@ ipeds_distance <- read_csv("../data/sources/effy2024_dist.csv") %>%
 carnegie <- carnegie |> 
   select(unitid, hsi)
 
-#NM: Merged new files
+# merge files
 data <- ipeds24 %>% 
   left_join(carnegie, by = c("UNITID" = "unitid")) %>% 
   left_join(ipeds_cost, by = "UNITID") |> 
-  #left_join(ipeds_schoolsize, by = "UNITID") %>% #NM:New
-  left_join(ic2024, by = "UNITID" ) %>% #NM:New
-  left_join(sfa, by = "UNITID") %>% #NM:New
-  left_join(adm, by = "UNITID") %>%  #NM:New
-  left_join(enroll, by = "UNITID")
+  #left_join(ipeds_schoolsize, by = "UNITID") %>%
+  left_join(ic2024, by = "UNITID" ) %>%
+  left_join(sfa, by = "UNITID") %>%
+  left_join(adm, by = "UNITID") %>%
+  left_join(enroll, by = "UNITID") |> 
+  left_join(ipeds_dist, by = "UNITID")
 
 
 
@@ -74,14 +78,15 @@ data <- ipeds24 %>%
 x <- data |> 
     rename_all(tolower) |> #converts all column names in a data frame to lowercase
     select(unitid, instnm, city, stabbr, fips, countycd, countynm, cbsa, cbsatype, csa, obereg,
-           locale, zip, stabbr, longitud, latitude, 
+           locale, zip, longitud, latitude, 
            control, iclevel, instcat, deggrant, instsize,
            hloffer,
            carnegieic, carnegiesaec, carnegiealf, carnegieapm, carnegiersch,
            hbcu, hsi, tribal,
            room, relaffil, distnced, athassoc,
            admssn, applcn, openadmp, loan_a, tuition1, upgrntp, 
-           efytotlt, efyaiant, efybkaat, efynhpit, efywhitt, efyhispt, efyasiat)
+           efytotlt, efyaiant, efybkaat, efynhpit, efywhitt, efyhispt, efyasiat,
+           efdelev, efdetot, efdeexc, xefdeexc)
 
 # assign to "data"
 data <- x
@@ -172,11 +177,25 @@ x <- data |>
                                                           # 1: any religious
          
         #We need to remove colleges that offer completely distance education from our sample
-          distance = case_when(
+         distance = case_when(
            distnced == 2 ~ 0,                             # 0: not completely distanced learning
            distnced == 1 ~ 1,                             # 1: completely distanced learning
            TRUE ~NA_real_),    
 
+         online_perc = case_when(
+            is.na(efdetot) ~ NA_real_,
+            is.na(efdeexc) & xefdeexc == "A" ~ 0,         # "A": not applicable
+            is.na(efdeexc) ~ NA_real_,                    # other missing cases
+            TRUE ~ efdeexc / efdetot),
+
+         online = case_when(
+            is.na(online_perc) ~ NA_real_,
+            online_perc == 0 ~ 0,                         # none
+            online_perc < 0.25 ~ 1,                       # more than 0%, less than 25%
+            online_perc < 0.50 ~ 2,                       # 25% to less than 50%
+            online_perc <= 1 ~ 3,                         # 50% to 100%
+            TRUE ~ NA_real_),
+                
          sports = case_when(
            athassoc == 2 ~ 0,                             # 0: not a member
            athassoc == 1 ~ 1,                             # 1: member of National Athletic Association
@@ -351,7 +370,7 @@ data_mlca <- data %>%
          public, twoyear, size, rurality, 
          awardlev, 
          religious, focus, housing, research, msi,
-         inst_num, selectivity, pell,
+         inst_num, selectivity, pell, online,
          tot_pop, pop_density, perc_ba, med_income, perc_pov, perc_unemployed,
          perc_white, perc_black, perc_hisp, perc_asian,
          i_perc_white, i_perc_black, i_perc_hisp, i_perc_asian, nonwhite) %>% 
@@ -416,11 +435,13 @@ Y <- c(
   #programmatic- degree level and academic disciplinary offerings
   "awardlev", "focus", "research",
   
-  #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, but we do not include that in this analysis)
-  #"tuition", #ADD VARIABLE FOR THE PERCENTAGE OF STUDENTS WHO ARE EXCLUSIVELY ENROLLED IN ONLINE COURSES
+  #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, and we include that in this analysis)
+  "online",  #ADD VARIABLE FOR THE PERCENTAGE OF STUDENTS WHO ARE EXCLUSIVELY ENROLLED IN ONLINE COURSES
+             #categorized share of undergraduates enrolled exclusively in distance education
+  #"tuition",
   
   #constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)
-  "selectivity", "pell", "msi", "nonwhite") # 
+  "selectivity", "pell", "msi", "nonwhite") #level-1 indicators 
 
 Z <- c("i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian", "housing", "rurality", "religious")       #level-1 covariates   "sports", 
 
