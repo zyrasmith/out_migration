@@ -106,7 +106,7 @@ data <- x
 ```{r Create Sample}
 x <- data %>% 
   filter(fips <= 56) |>                                 # Keep only 50 states and DC
- # filter(cbsa != -2) |>                                # Remove colleges not located in CBSAs 
+  filter(cbsa != -2) |>                                 # Remove colleges not located in CBSAs 
   # filter(!is.na(control), control != 3) |>            # 3: private for-profit
   filter(!is.na(iclevel), iclevel != 3) |>              # 3: less than 2 years
   filter(!is.na(carnegiealf), carnegiealf != 6) %>%     # 6: graduate-focused
@@ -540,8 +540,7 @@ model_selection <- multiLCA(
   Y              = Y,
   iT             = 6:12,
   Z              = Z,
-#  iM             = 2:6,                  # online, adult, parttime: % = 8/2, quartile = 9/2
-  iM             = 4:6,                   # 10/4 😂
+  iM             = 2:6,
   id_high        = c("cbsa_id"),
   Zh             = Zh,
   incomplete     = FALSE,
