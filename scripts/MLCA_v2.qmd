@@ -50,6 +50,7 @@ ipeds_dist <- read_csv("../data/sources/ef2024a_dist.csv") |>
   select(UNITID, EFDELEV, EFDETOT, EFDEEXC, XEFDEEXC)
 ipeds_learner <- read_csv("../data/sources/ef2024b.csv") |> 
   filter(LSTUDY == 2, EFBAGE %in% c(1, 7)) |>     #undergrad total / all age categories total, age 25 and over total
+#number of institutions (= UNITID): 2,487
   select(UNITID, EFBAGE, EFAGE06, EFAGE09) |> 
   pivot_wider(names_from = EFBAGE, 
               values_from = c(EFAGE06, EFAGE09))
@@ -164,17 +165,20 @@ x <- data |>
            instsize == 5 ~ 4,                             # 3: >=20,000
            TRUE ~ NA_real_),
          
-         tuition = case_when(
-           tuition1 == 0 & obereg != 0 ~ NA_real_,
-           tuition1 == 0 & obereg == 0 ~ 0,
-           tuition1 < 10000 ~ 0,                           # 0: < $10,000
-           tuition1 >= 10000 & tuition1 < 20000 ~ 1,       # 1: $10,000 - $19,999
-          # tuition1 >= 20000 & tuition1 < 30000 ~ 2,       # 2: $20,000 - $29,999
-           tuition1 >= 20000 & tuition1 < 40000 ~ 2,       # 3: $30,000 - $39,999
-          # tuition1 >= 40000 & tuition1 < 50000 ~ 4,       # 4: $40,000 - $49,999
-           tuition1 >= 40000                    ~ 3,       # 5: > $50,000
-           TRUE ~ NA_real_),
-         
+#         tuition = case_when(
+#           tuition1 == 0 & obereg != 0 ~ NA_real_,
+#           tuition1 == 0 & obereg == 0 ~ 0,
+#           tuition1 < 10000 ~ 0,                           # 0: < $10,000          - 1334
+#           tuition1 >= 10000 & tuition1 < 20000 ~ 1,       # 1: $10,000 - $19,999  - 689
+          # tuition1 >= 20000 & tuition1 < 30000 ~ 2,      # 2: $20,000 - $29,999
+#           tuition1 >= 20000 & tuition1 < 40000 ~ 2,       # 3: $30,000 - $39,999  - 531
+          # tuition1 >= 40000 & tuition1 < 50000 ~ 4,      # 4: $40,000 - $49,999
+#           tuition1 >= 40000                    ~ 3,       # 5: > $50,000          - 384
+#           TRUE ~ NA_real_),                               #                       - 316
+
+         tuitionnn = ntile(tuition1, 4) - 1,               # 0~3: quartiles
+
+#check missing values: sum(is.na(ipeds_cost$TUITION1))  [1] 2,368 (= about 40% of the sample)
 
          housing = case_when(
            room == 2 ~ 0,                                 # 0: no housing
@@ -206,10 +210,14 @@ x <- data |>
 
         online = ntile(online_perc, 4) - 1,               # 0~3: quartiles
 
+#check missing values: sum(is.na(ipeds_dist$EFDETOT))  [1] 0
+
         evening = case_when(
           slo7 == 0 ~ 0,                                  # 0: no weekend/evening courses
           slo7 == 1 ~ 1,                                  # 1: allows classes only on weekends or only in evenings
           TRUE ~ NA_real_),
+
+#check missing values: sum(is.na(ic2024$SLO7))  [1] 0
         
         adult_perc = case_when(
             is.na(efage09_7) ~ NA_real_,
@@ -220,27 +228,32 @@ x <- data |>
             is.na(efage09_7) ~ NA_real_,
             is.na(efage09_1) ~ NA_real_,
             TRUE ~ efage09_7 / efage09_1),
+
         adult = ntile(adult_perc, 4) - 1,                 # 0~3: quartiles
-        
+
+#check missing values: sum(is.na(ipeds_learner$EFAGE09_1))  [1] 0
+#check missing values: sum(is.na(ipeds_learner$EFAGE09_7))  [1] 9
+
         parttime_perc = case_when(
             is.na(efage06_1) ~ NA_real_,
             is.na(efage09_1) ~ NA_real_,
             TRUE ~ efage06_1 / efage09_1),
 
-#        parttime = case_when(
-#            is.na(parttime_perc) ~ NA_real_,
-#            parttime_perc == 0 ~ 0,                       # none                        - 73
-#            parttime_perc < 0.25 ~ 1,                     # more than 0%, less than 25% - 828
-#            parttime_perc < 0.50 ~ 2,                     # 25% to less than 50%        - 344
-#            parttime_perc <= 1 ~ 3,                       # 50% to 100%                 - 769
-#            TRUE ~ NA_real_),                             # NA                          - 1450
+        parttime = case_when(
+            is.na(parttime_perc) ~ NA_real_,
+            parttime_perc == 0 ~ 0,                       # none                        - 73
+            parttime_perc < 0.25 ~ 1,                     # more than 0%, less than 25% - 828
+            parttime_perc < 0.50 ~ 2,                     # 25% to less than 50%        - 344
+            parttime_perc <= 1 ~ 3,                       # 50% to 100%                 - 769
+            TRUE ~ NA_real_),                             # NA                          - 1450
 
          parttime = ntile(parttime_perc, 4) - 1,          # 0~3: quartiles        
+#check missing values: sum(is.na(ipeds_learner$EFAGE06_1))  [1] 0
 
          sports = case_when(
            athassoc == 2 ~ 0,                             # 0: not a member
            athassoc == 1 ~ 1,                             # 1: member of National Athletic Association
-           TRUE ~NA_real_),    
+           TRUE ~NA_real_),
 
          loan = case_when(
            is.na(loan_a) ~ NA_real_,
@@ -413,7 +426,7 @@ data_mlca <- data %>%
          public, twoyear, size, rurality, 
          awardlev, 
          religious, focus, housing, research, msi,
-         inst_num, selectivity, pell, online, evening, adult, parttime,
+         inst_num, selectivity, pell, online, evening, adult, tuitionnn, parttime,
          tot_pop, pop_density, perc_ba, med_income, perc_pov, perc_unemployed,
          perc_white, perc_black, perc_hisp, perc_asian,
          i_perc_white, i_perc_black, i_perc_hisp, i_perc_asian, nonwhite) %>% 
@@ -477,13 +490,17 @@ Y <- c(
   "awardlev", "focus", "research",
   
   #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, and we include that in this analysis)
+            #-the institution / management? operation?
   "online",  #ADD VARIABLE FOR THE PERCENTAGE OF STUDENTS WHO ARE EXCLUSIVELY ENROLLED IN ONLINE COURSES
-  "evening",
              #categorized share of undergraduates enrolled exclusively in distance education
-  #"tuition",
+  "evening",
+  "tuitionnn",
+#(1)including tuition as quartiles: iT= 8 & iM= 2            (#obs = 1779)
+#(2)including tuition & parttime quartiles: iT= 8 & iM= 2    (#obs = 1779)
   
   #constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)
-  "selectivity", "pell", "msi", "nonwhite", "adult", "parttime") #level-1 indicators 
+  "selectivity", "pell", "msi", "nonwhite", "adult", "parttime"
+  ) #level-1 indicators 
 
 Z <- c("i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian", "housing", "rurality", "religious")       #level-1 covariates   "sports", 
 
