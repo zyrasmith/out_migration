@@ -19,6 +19,7 @@ library(nnet)
 library(VGAM)
 library(gt)
 library(car)
+library(writexl)
 
 
 rm(list = ls())
@@ -160,9 +161,9 @@ x <- data |>
          size = case_when(
            instsize == 1 ~ 0,                             # 0: < 1,000
            instsize == 2 ~ 1,                             # 1: 1,000 - 4,999
-           instsize == 3 ~ 2,                             # 1: 5,000 - 9,999
-           instsize == 4 ~ 3,                             # 2: 10,000 - 19,999
-           instsize == 5 ~ 4,                             # 3: >=20,000
+           instsize == 3 ~ 2,                             # 2: 5,000 - 9,999
+           instsize == 4 ~ 3,                             # 3: 10,000 - 19,999
+           instsize == 5 ~ 4,                             # 4: >=20,000
            TRUE ~ NA_real_),
          
 #         tuition = case_when(
@@ -509,6 +510,120 @@ Zh <- c("cbsatype", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income
 
 
 ```
+
+
+```{r}
+## ---------------------------
+## Descriptive Statistics
+## ---------------------------
+
+
+# ---------------------------
+# Level 1: Institution-level variables
+# ---------------------------
+
+# Categorical Level-1 variables
+l1_cat <- c("public", "size", "awardlev", "focus", "research", "online",
+            "evening", "selectivity", "pell", "msi", "nonwhite",
+            "housing", "rurality", "religious")
+
+# Continuous Level-1 variables
+l1_cont <- c("i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian")
+
+
+# Frequency and percentage for categorical variables
+l1_categorical_desc <- data_mlca |> 
+  select(all_of(l1_cat)) |> 
+  pivot_longer(cols = everything(),
+               names_to = "Variable",
+               values_to = "Category") |> 
+  count(Variable, Category, name = "N") |> 
+  group_by(Variable)  |> 
+  mutate(Percent = round(100 * N / sum(N), 2)) |> 
+  ungroup()
+
+l1_categorical_desc
+
+
+# Descriptive statistics for continuous variables
+l1_continuous_desc <- data_mlca |> 
+  summarise(across(all_of(l1_cont),
+                   list(N = ~sum(!is.na(.)),
+                        Mean = ~mean(., na.rm = TRUE),
+                        SD = ~sd(., na.rm = TRUE),
+                        Min = ~min(., na.rm = TRUE),
+                        Max = ~max(., na.rm = TRUE)))) |> 
+  pivot_longer(everything(),
+               names_to = c("Variable", ".value"),
+               names_pattern = "(.+)_(N|Mean|SD|Min|Max)$") |> 
+  mutate(across(c(Mean, SD, Min, Max), ~round(., 3)))
+
+l1_continuous_desc
+
+
+# ---------------------------
+# Level 2: CBSA-level variables
+# ---------------------------
+
+# Keep one observation per CBSA
+cbsa_data <- data_mlca |> 
+  distinct(cbsa_id, .keep_all = TRUE)
+
+
+# Categorical Level-2 variable
+l2_categorical_desc <- cbsa_data |> 
+  count(cbsatype, name = "N") |> 
+  mutate(Percent = round(100 * N / sum(N), 2))
+
+l2_categorical_desc
+
+
+# Continuous Level-2 variables
+l2_cont <- c("inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov",
+             "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian")
+
+l2_continuous_desc <- cbsa_data |> 
+  summarise(across(
+    all_of(l2_cont),
+    list(N = ~sum(!is.na(.)),
+         Mean = ~mean(., na.rm = TRUE),
+         SD = ~sd(., na.rm = TRUE),
+         Min = ~min(., na.rm = TRUE),
+         Max = ~max(., na.rm = TRUE)))) |>
+  pivot_longer(everything(),
+               names_to = c("Variable", ".value"),
+               names_pattern = "(.+)_(N|Mean|SD|Min|Max)$") |> 
+  mutate(across(c(Mean, SD, Min, Max), ~round(., 2)))
+
+l2_continuous_desc
+
+
+# ---------------------------
+# Sample sizes
+# ---------------------------
+
+cat("Number of institutions:", nrow(data_mlca), "\n")
+cat("Number of CBSAs:", nrow(cbsa_data), "\n")
+
+
+# ---------------------------
+# Save descriptive statistics
+# ---------------------------
+
+sample_sizes <- tibble(
+  Level = c("Institutions", "CBSAs"),
+  N = c(nrow(data_mlca), nrow(cbsa_data)))
+
+write_xlsx(
+  list("L1 categorical" = l1_categorical_desc,
+       "L1 continuous" = l1_continuous_desc,
+       "L2 categorical" = l2_categorical_desc,
+       "L2 continuous" = l2_continuous_desc,
+       "Sample sizes" = sample_sizes),
+  "../data/MLCA_descriptive_statistics.xlsx")
+
+```
+
 
 ```{r multicollinearity}
 # Level-1 indicators (Y)
