@@ -670,9 +670,9 @@ set.seed(1234)
 model_selection <- multiLCA(
   data = data_mlca,
   Y              = Y,
-  iT             = 6:12,
+  iT             = 6:15,
   Z              = Z,
-  iM             = 2:6,
+  iM             = 2:8,
   id_high        = c("cbsa_id"),
   Zh             = Zh,
   incomplete     = FALSE,
