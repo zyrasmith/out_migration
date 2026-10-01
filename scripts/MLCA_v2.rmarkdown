@@ -158,10 +158,6 @@ x <- data |>
             locale %in% c(11,12,13) ~ 2,                  # 2: City
             TRUE ~ NA_real_),        
          
-         rurality = factor(rurality,
-                           levels = c(0, 1, 2),
-                           labels = c("Town/Rural", "Suburb", "City")),
-
          size = case_when(
            instsize == 1 ~ 0,                             # 0: < 1,000
            instsize == 2 ~ 1,                             # 1: 1,000 - 4,999
@@ -544,7 +540,6 @@ l1_cont <- c("online_perc", "i_perc_nonwhite", "i_perc_white",
 # Proportion for categorical variables
 l1_categorical_desc <- data_mlca |>
   select(all_of(l1_cat)) |>
-  mutate(across(everything(), as.character)) |>
   pivot_longer(cols = everything(),
                names_to = "Variable",
                values_to = "Category") |>
@@ -1229,4 +1224,5 @@ write_csv(inst_cbsa_classification, "../data_paper2/inst_cbsa_classification.csv
 <!-- apa_gt -->
 
 <!-- ``` -->
+
 
