@@ -2,6 +2,10 @@
 title: MLCA
 author: Hyevin Shin
 format: pdf
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
 ```{r setup}
@@ -674,7 +678,7 @@ vif(vif_zh_model)
 ```
 
 
-```{r}
+```{r mlca}
 
 set.seed(1234)
 
@@ -699,57 +703,150 @@ analytic_model
 ```
 
 
+```{r optimal 12/6}
+# Note: This model does not run successfully
+# The model above identified the optimal 12-class / 6-cluster solution "without" covariates (https://doi.org/10.1080/00273171.2025.2473935)
+# This is the actual 12/6 model with Level-1 and Level-2 covariates, but it currently returns a "solve(): solution not found" error
 
-```{r level 1 post-estimation}
+set.seed(1234)
 
-l1_proportions <- as.data.frame(analytic_model$mPi)  #	Lower-level class proportions given the higher-level latent classes and the covariates
+analytic_model <- multiLCA(
+  data = data_mlca,
+  Y              = Y,
+  iT             = 12,
+  Z              = Z,
+  iM             = 6,
+  id_high        = c("cbsa_id"),
+  Zh             = Zh,
+  incomplete     = FALSE,
+  extout         = TRUE,
+  verbose        = TRUE,
+  sequential     = TRUE,
+  reord          = FALSE
+)
 
-l1_proportions
-
-l1_probabilities <- as.data.frame(analytic_model$mPhi)
-
-
-#how to get the level 1 predicted class?
+analytic_model
 
 ```
 
 
-```{r level 2 predicted classes}
+```{r level 1 post-estimation}
 
+# mPi: lower-level class proportions/probabilities ("How prevalent is each L1 class?")
+# mPhi: item-response probabilities conditional on L1 class ("What does each institution class look like?")
+# mPMsumX: posterior probabilities of L1 class membership, marginalized over L2 classes ("Which L1 class is each institution most likely to belong to?")
+# mPW: posterior probabilities of L2 class membership ("Which L2 cluster is each CBSA most likely to belong to?")
+
+
+
+## ---------------------------
+## Level 1 post-estimation
+## ---------------------------
+
+# lower-level class proportions given the higher-level latent classes and the covariates
+l1_proportions <- as.data.frame(analytic_model$mPi)
+
+# item-response probabilities
+l1_probabilities <- as.data.frame(analytic_model$mPhi)
+
+
+# posterior probabilities of Level-1 class membership
+l1_posterior <- as.data.frame(analytic_model$mPMsumX)
+
+# sanity check: number of posterior rows should equal number of institutions
+stopifnot(nrow(l1_posterior) == nrow(data_mlca))
+
+# predicted Level-1 class = class with highest posterior probability
+l1_classes <- data_mlca |> 
+  select(unitid, instnm, cbsa, cbsa_id) |> 
+  mutate(L1_Predicted_Class = max.col(as.matrix(l1_posterior),ties.method = "first"),
+         L1_Max_Probability = apply(l1_posterior, 1, max))
+
+l1_classes
+
+
+# check institutions by predicted level-1 class
+l1_institutions_by_class <- l1_classes |> 
+  arrange(L1_Predicted_Class, instnm)
+
+l1_institutions_by_class
+
+
+# count number of institutions in each predicted level-1 class
+l1_class_counts <- l1_classes |> 
+  count(L1_Predicted_Class, name = "N_Institutions")
+
+l1_class_counts
+
+```
+
+
+```{r level 2 predicted clusters}
+
+# vU_modal: vector of posterior modal class assignments (the class with the highest posterior probability)
+# vU_modal is available for some model specifications, but is not provided as the relevant Level-2 assignment output here.
+# For the multilevel model, modal assignments can be obtained from:
+#   mPMsumX -> predicted L1 class for each institution
+#   mPW     -> predicted L2 cluster for each CBSA
+
+
+
+## ---------------------------
+## Level 2 predicted clusters
+## ---------------------------
+
+# posterior probabilities of Level-2 cluster membership
 l2_posterior <- as.data.frame(analytic_model$mPW)
 
-# add number of institutions in each CBSA in logistic regression model / vU_modal
-l2_classes <- data.frame(
-  group_id = row.names(analytic_model$mPW),
-  L2_Predicted_Class = apply(l2_posterior, 1, which.max),
-  L2_Prob_Class1 = l2_posterior[, 1],
-  L2_Prob_Class2 = l2_posterior[, 2],
-  L2_Prob_Class3 = l2_posterior[, 3],
-  L2_Prob_Class4 = l2_posterior[, 4],
-  L2_Prob_Class5 = l2_posterior[, 5],
-  L2_Prob_Class6 = l2_posterior[, 6]
+# sanity check: number of posterior rows should equal number of CBSAs
+stopifnot(nrow(l2_posterior) == n_distinct(data_mlca$cbsa_id))
+
+# sanity check2: number of posterior rows should equal number of CBSA IDs
+stopifnot(setequal(as.character(row.names(analytic_model$mPW)), unique(as.character(data_mlca$cbsa_id))))
+
+# assign each CBSA to the cluster with the highest posterior probability
+l2_clusters <- data.frame(
+  cbsa_id = row.names(analytic_model$mPW),
+  L2_Predicted_Class = max.col(as.matrix(l2_posterior), ties.method = "first"),
+  L2_Max_Probability = apply(l2_posterior, 1, max),
+  
+# posterior probability for each Level-2 cluster
+  Cluster1 = l2_posterior[, 1],
+  Cluster2 = l2_posterior[, 2],
+  Cluster3 = l2_posterior[, 3],
+  Cluster4 = l2_posterior[, 4],
+  Cluster5 = l2_posterior[, 5],
+  Cluster6 = l2_posterior[, 6]
 )
 
 
-l2_class_data <- data_mlca %>%
-  mutate(cbsa_id = as.character(cbsa_id)) %>% 
-  left_join(l2_classes, 
-            by = c("cbsa_id" = "group_id")) 
+# CBSA-level data: one row per CBSA
+cbsa_level_data <- data_mlca |>
+  mutate(cbsa_id = as.character(cbsa_id)) |>
+  distinct(cbsa_id, .keep_all = TRUE) |>
+  select(cbsa_id, cbsa, inst_num, all_of(setdiff(Zh, "inst_num")))
 
-l2_class_summary <- l2_class_data %>% 
-  select(cbsa, L2_Predicted_Class ) %>% 
-  distinct()
+# attach CBSA characteristics to predicted Level-2 clusters
+l2_clusters <- l2_clusters |>
+  left_join(cbsa_level_data, by = "cbsa_id")
 
-inst_cbsa_classification <- l2_class_data
+l2_clusters
 
-inst_cbsa_classification
+
+# count number of CBSAs and institutions in each predicted Level-2 cluster
+l2_cluster_counts <- l2_clusters |>
+  group_by(L2_Predicted_Class) |>
+  summarise(N_CBSAs = n(), N_Institutions = sum(inst_num), .groups = "drop")
+
+l2_cluster_counts
+
 ```
 
 
 
 ```{r Save data}
 
-write_csv(inst_cbsa_classification, "../data_paper2/inst_cbsa_classification.csv")
+write_csv(l2_cluster_counts, "../data_paper2/l2_cluster_counts.csv")
 
 ```
 
