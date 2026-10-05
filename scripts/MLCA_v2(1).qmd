@@ -864,132 +864,150 @@ stopifnot(sum(l2_cluster_counts$N_Institutions) == 3133)
 ## Level 2 multinomial logistic regression
 ## ---------------------------
 
-# Add the original institution-count predictor used in Zh
+# Create predicted Level-2 cluster assignment from posterior probabilities
 reg_data <- l2_clusters |>
-  left_join(
-    data_mlca |>
-      mutate(cbsa_id = as.character(cbsa_id)) |>
-      distinct(cbsa_id, .keep_all = TRUE) |>
-      select(cbsa_id, inst_num),
-    by = "cbsa_id"
-  ) |>
+  select(cbsa_id, L2_Predicted_Class, L2_Max_Probability) |>
   mutate(
-    L2_Predicted_Class = factor(
-      L2_Predicted_Class,
-      levels = 1:6
+    cbsa_id = as.character(cbsa_id),
+    pred_class2 = paste0("G", L2_Predicted_Class)
+  ) |>
+  select(cbsa_id, pred_class2, L2_Max_Probability) |>
+  right_join(
+    data_mlca |>
+      mutate(cbsa_id = as.character(cbsa_id)),
+    by = "cbsa_id"
+  )
+
+# Make Cluster 1 the reference category
+reg_data <- reg_data |>
+  mutate(
+    pred_class2 = factor(
+      pred_class2,
+      levels = paste0("G", 1:6)
     )
   )
 
 # Multinomial logistic regression
-# Cluster 1 is the reference category
 reg_model <- vglm(
-  L2_Predicted_Class ~
+  pred_class2 ~
     cbsatype + inst_num + tot_pop + pop_density +
     perc_ba + med_income + perc_pov + perc_unemployed +
     perc_white + perc_black + perc_hisp + perc_asian,
   data = reg_data,
-  family = multinomial(refLevel = 1, ynames = TRUE)
+  family = multinomial(refLevel = 1)
 )
 
 summary(reg_model)
 
 
-# Coefficients and standard errors
-coef_mat <- coef(reg_model, matrix = TRUE)
+## ---------------------------
+## Extract coefficients
+## ---------------------------
 
-coef_summary <- coef(summary(reg_model))
+coef_vec <- coef(reg_model)
+vc <- vcov(reg_model)
+se_vec <- sqrt(diag(vc))
 
-reg_long <- as.data.frame(coef_summary) |>
-  rownames_to_column("term") |>
-  rename(
-    Estimate = Estimate,
-    SE = `Std. Error`,
-    z = `z value`,
-    p = `Pr(>|z|)`
-  ) |>
+apa_table <- data.frame(
+  term = names(coef_vec),
+  estimate = coef_vec,
+  SE = se_vec,
+  z = coef_vec / se_vec,
+  p = 2 * (1 - pnorm(abs(coef_vec / se_vec))),
+  OR = exp(coef_vec),
+  CI_low = exp(coef_vec - 1.96 * se_vec),
+  CI_high = exp(coef_vec + 1.96 * se_vec)
+) |>
   mutate(
-    Comparison = str_extract(term, "(?<=:)[0-9]+$"),
-    Predictor = str_remove(term, ":[0-9]+$"),
-    Cluster = as.integer(Comparison) + 1,
     sig = case_when(
       p < .001 ~ "***",
       p < .01  ~ "**",
       p < .05  ~ "*",
       TRUE     ~ ""
     ),
-    Est = paste0(sprintf("%.3f", Estimate), sig),
-    SE = sprintf("%.3f", SE)
+    Est = paste0(sprintf("%.3f", estimate), sig),
+    SE_display = sprintf("%.3f", SE),
+    OR = round(OR, 3),
+    CI = paste0(
+      "[",
+      round(CI_low, 3),
+      ", ",
+      round(CI_high, 3),
+      "]"
+    )
+  )
+
+apa_table
+
+
+## ---------------------------
+## Reshape for Table 6
+## ---------------------------
+
+reg_long <- apa_table |>
+  rownames_to_column("row_id") |>
+  mutate(
+    Comparison = str_extract(term, "(?<=:)[0-9]+$"),
+    Predictor = str_remove(term, ":[0-9]+$"),
+    Cluster = as.integer(Comparison) + 1
   ) |>
-  select(Predictor, Cluster, Est, SE, Estimate, p)
+  filter(!is.na(Cluster)) |>
+  select(Predictor, Cluster, Est, SE_display)
 
-reg_long
-
-
-# Final regression results used for Table 6
-l2_regression_table <- reg_long |>
-  select(Predictor, Cluster, Est, SE)
-
-# Cluster sizes for the regression table
-cluster_n <- l2_cluster_counts |>
-  filter(L2_Predicted_Class != 1) |>
-  mutate(Cluster = L2_Predicted_Class) |>
-  select(Cluster, N_CBSAs, N_Institutions)
-
-l2_regression_table
-cluster_n
-
-```
-
-
-
-```{r Save}
-
-## ---------------------------
-## Multinomial logistic regression table
-## ---------------------------
-
-# Reshape regression results to wide format
-reg_table <- l2_regression_table |>
+reg_table <- reg_long |>
   mutate(
     Cluster = paste0("Cluster_", Cluster)
   ) |>
   pivot_wider(
     names_from = Cluster,
-    values_from = c(Est, SE),
+    values_from = c(Est, SE_display),
     names_glue = "{Cluster}_{.value}"
   ) |>
   select(
     Predictor,
-    Cluster_2_Est, Cluster_2_SE,
-    Cluster_3_Est, Cluster_3_SE,
-    Cluster_4_Est, Cluster_4_SE,
-    Cluster_5_Est, Cluster_5_SE,
-    Cluster_6_Est, Cluster_6_SE
+    Cluster_2_Est, Cluster_2_SE_display,
+    Cluster_3_Est, Cluster_3_SE_display,
+    Cluster_4_Est, Cluster_4_SE_display,
+    Cluster_5_Est, Cluster_5_SE_display,
+    Cluster_6_Est, Cluster_6_SE_display
   )
 
-# Add institution counts at the bottom
 institution_row <- tibble(
   Predictor = "N Institutions",
   Cluster_2_Est = as.character(
-    cluster_n$N_Institutions[cluster_n$Cluster == 2]
+    l2_cluster_counts$N_Institutions[
+      l2_cluster_counts$L2_Predicted_Class == 2
+    ]
   ),
-  Cluster_2_SE = "",
+  Cluster_2_SE_display = "",
+
   Cluster_3_Est = as.character(
-    cluster_n$N_Institutions[cluster_n$Cluster == 3]
+    l2_cluster_counts$N_Institutions[
+      l2_cluster_counts$L2_Predicted_Class == 3
+    ]
   ),
-  Cluster_3_SE = "",
+  Cluster_3_SE_display = "",
+
   Cluster_4_Est = as.character(
-    cluster_n$N_Institutions[cluster_n$Cluster == 4]
+    l2_cluster_counts$N_Institutions[
+      l2_cluster_counts$L2_Predicted_Class == 4
+    ]
   ),
-  Cluster_4_SE = "",
+  Cluster_4_SE_display = "",
+
   Cluster_5_Est = as.character(
-    cluster_n$N_Institutions[cluster_n$Cluster == 5]
+    l2_cluster_counts$N_Institutions[
+      l2_cluster_counts$L2_Predicted_Class == 5
+    ]
   ),
-  Cluster_5_SE = "",
+  Cluster_5_SE_display = "",
+
   Cluster_6_Est = as.character(
-    cluster_n$N_Institutions[cluster_n$Cluster == 6]
+    l2_cluster_counts$N_Institutions[
+      l2_cluster_counts$L2_Predicted_Class == 6
+    ]
   ),
-  Cluster_6_SE = ""
+  Cluster_6_SE_display = ""
 )
 
 reg_table <- bind_rows(
@@ -999,20 +1017,34 @@ reg_table <- bind_rows(
 
 reg_table
 
+```
 
+
+
+```{r Save}
 
 ## ---------------------------
 ## Save post-estimation outputs
 ## ---------------------------
 
 # Level 1: institution assignments by predicted class
-write_csv(l1_institutions_by_class, "../data_paper2/l1_institutions_by_class.csv")
+write_csv(
+  l1_institutions_by_class,
+  "../data_paper2/l1_institutions_by_class.csv"
+)
 
 # Level 2: CBSA and institution counts by predicted cluster
-write_csv(l2_cluster_counts, "../data_paper2/l2_cluster_counts.csv")
+write_csv(
+  l2_cluster_counts,
+  "../data_paper2/l2_cluster_counts.csv"
+)
 
 # Level 2: final regression table
-write_csv(reg_table, "../data_paper2/table6_multinomial_regression.csv")
+write_csv(
+  reg_table,
+  "../data_paper2/table6_multinomial_regression.csv"
+)
+
 
 
 ```
