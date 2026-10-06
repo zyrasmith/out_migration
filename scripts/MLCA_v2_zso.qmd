@@ -46,7 +46,7 @@ sfa <- read_csv("../data/sources/sfa2324.csv")
 adm <- read_csv("../data/sources/adm2024.csv")
 enroll <- read_csv("../data/sources/effy2024.csv") %>%
   filter(EFFYALEV == 3) %>%  #degree/certificate-seeking undergraduates
-  select(UNITID, EFFYALEV, EFYTOTLT, EFYAIANT, EFYBKAAT, EFYNHPIT, EFYWHITT, EFYHISPT, EFYASIAT) 
+  select(UNITID, EFFYALEV, EFYTOTLT, EFYAIANT, EFYBKAAT, EFYNHPIT, EFYWHITT, EFYHISPT, EFYASIAT, EFYNRALT) 
 #ipeds_distance <- read_csv("../data/sources/effy2024_dist.csv") %>% 
 #  filter(EFFYDLEV == 2) %>%  #undergrad total
 #  select(UNITID, EFFYDLEV, EFYDETOT, EFYDEEXC)
@@ -77,6 +77,12 @@ ipeds_learner <- read_csv("../data/sources/ef2024b.csv") |>
 
 carnegie <- carnegie |> 
   select(unitid, hsi)
+
+ipeds_exp <- read_csv("../data/sources/drvf2024.csv")
+
+ipeds_exp <- ipeds_exp |>
+  select(UNITID, F1INSTFT, F2INSTFT, F3INSTFT)
+
 ```
 
 
@@ -92,7 +98,8 @@ sources <- ipeds24 %>%
   left_join(adm, by = "UNITID") %>%
   left_join(enroll, by = "UNITID") |> 
   left_join(ipeds_dist, by = "UNITID") |> 
-  left_join(ipeds_learner, by = "UNITID")
+  left_join(ipeds_learner, by = "UNITID") |> 
+  left_join(ipeds_exp, by = "UNITID")
 
 
 
@@ -322,8 +329,13 @@ x <- initial_sample |>
            TRUE ~ NA_real_),
 
 
-        pell = ntile(upgrntp, 3) - 1,               # 0~3: quartiles
-          
+        pell = ntile(upgrntp, 3) - 1,                         # 0~3: quartiles
+        
+        instruction_exp_fte = coalesce(f1instft, f2instft, f3instft),
+        instruction_exp = ntile(instruction_exp_fte, 3) - 1,  # 0-2: tertiles
+
+        international_n = efynralt
+  
        )
 
 
@@ -440,7 +452,7 @@ data <- cleaned_data |>
 ```{r Check bivariate associations between variables}
 
 # install.packages("rstatix")
-# library(rstatix)
+ library(rstatix)
 
 
 test <- data %>% 
@@ -472,7 +484,7 @@ print(results_matrix)
 data_mlca <- data %>% 
   select(unitid, instnm, stabbr, cbsa, cbsatype, region,  
          public, twoyear, size, rurality, 
-         awardlev, 
+         awardlev, instruction_exp,
          religious, special_focus, housing, research, msi,
          inst_num, pell, evening, selectivity, # online,  parttime, online_perc,  adult, tuitionnn, 
          undergrad_pop, 
@@ -550,6 +562,7 @@ Y <- c(
  # "evening",
 #"tuitionnn",
   #"housing"
+"instruction_exp",
 #(1)including tuition as quartiles: iT= 8 & iM= 2            (#obs = 1779)
 #(2)including tuition & parttime quartiles: iT= 8 & iM= 2    (#obs = 1779)
   
@@ -742,15 +755,35 @@ l1_lca
 l1_lca$mPhi
 
 
+proportions <- as.data.frame(l1_lca$mU)
+
+l1_test <- data_mlca |>
+  select(
+    unitid, instnm, stabbr, cbsa, cbsa_id,
+    public, size, awardlev, special_focus,
+    instruction_exp, pell, nonwhite,
+    undergrad_pop, selectivity
+  ) |>
+  bind_cols(proportions |> select(C1:C7)) |>
+  rowwise() |>
+  mutate(
+    L1_Predicted_Class = names(pick(C1:C7))[which.max(c_across(C1:C7))],
+    L1_Max_Probability = max(c_across(C1:C7))
+  ) |>
+  ungroup()
+
+
+#---------------------------------------
+
 proportions <- as.data.frame(l1_lca$mU) 
 
 l1_test <- data_mlca |> 
   select(unitid, instnm, stabbr, cbsa, cbsa_id, awardlev, special_focus, public, pell, size) |>
          # religious,  housing, research, msi,
          # inst_num, pell, evening, tuitionnn, undergrad_pop) |> 
-  bind_cols(proportions |> select("C1", "C2", "C3", "C4", "C5", "C6"))|> #
+  bind_cols(proportions |> select("C1", "C2", "C3", "C4", "C5", "C6", "C7"))|> #
   rowwise() |>
-  mutate(L1_Predicted_Class = names(pick(C1:C6))[which.max(c_across(C1:C6))]) |>
+  mutate(L1_Predicted_Class = names(pick(C1:C7))[which.max(c_across(C1:C7))]) |>
   ungroup() 
 
 l1_test %>% group_by(L1_Predicted_Class, stabbr) %>% tally() %>% arrange(stabbr) 

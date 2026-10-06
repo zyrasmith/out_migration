@@ -940,6 +940,163 @@ cluster_n
 
 ```
 
+```{r}
+## ---------------------------
+## CBSA map by Level-2 cluster
+## ---------------------------
+
+library(sf)
+library(tigris)
+library(ggplot2)
+library(dplyr)
+
+options(tigris_use_cache = TRUE)
+
+
+# 0. State boundaries for reference
+state_map <- states(
+  year = 2024,
+  cb = TRUE,
+  class = "sf"
+) |>
+  filter(!STUSPS %in% c("AK", "HI", "PR"))
+
+
+# 1. Download CBSA boundaries
+cbsa_map <- core_based_statistical_areas(
+  year = 2024,
+  cb = TRUE,
+  class = "sf"
+)
+
+
+# 2. Prepare cluster assignments
+cluster_map_data <- l2_clusters |>
+  transmute(
+    GEOID = sprintf("%05d", as.integer(cbsa)),
+    Cluster = factor(
+      L2_Predicted_Class,
+      levels = 1:6,
+      labels = paste0("Cluster ", 1:6)
+    )
+  )
+
+
+# 3. Merge CBSA boundaries with predicted clusters
+cbsa_cluster_map <- cbsa_map |>
+  left_join(cluster_map_data, by = "GEOID")
+
+
+# 4. Keep CBSAs in the analytic sample
+cbsa_cluster_map <- cbsa_cluster_map |>
+  filter(!is.na(Cluster))
+
+
+# 5-1. Map: CBSA boundaries only
+
+map_boundary <- ggplot() +
+  
+  # CBSA boundaries
+  geom_sf(
+    data = cbsa_map,
+    fill = "white",
+    color = "black",
+    linewidth = 0.12
+  ) +
+  
+  # State boundaries
+  geom_sf(
+    data = state_map,
+    fill = NA,
+    color = "black",
+    linewidth = 0.20
+  ) +
+  
+  coord_sf(
+    xlim = c(-125, -66),
+    ylim = c(24, 50),
+    expand = FALSE
+  ) +
+  
+  labs(
+    title = "U.S. CBSA Boundaries"
+  ) +
+  
+  theme_void() +
+  
+  theme(
+    plot.title = element_text(
+      size = 16,
+      face = "bold"
+    )
+  )
+
+map_boundary
+
+
+# 5-2. Map: CBSA clusters
+
+map_cluster <- ggplot() +
+  
+  # Cluster-filled CBSA polygons
+  geom_sf(
+    data = cbsa_cluster_map,
+    aes(fill = Cluster),
+    color = "black",
+    linewidth = 0.12
+  ) +
+  
+  # State boundaries
+  geom_sf(
+    data = state_map,
+    fill = NA,
+    color = "black",
+    linewidth = 0.20
+  ) +
+  
+  # Cluster colors
+  scale_fill_manual(
+    values = c(
+      "Cluster 1" = "#08306B",
+      "Cluster 2" = "#2171B5",
+      "Cluster 3" = "#6BAED6",
+      "Cluster 4" = "#FFF3B0",
+      "Cluster 5" = "#F6C85F",
+      "Cluster 6" = "#D9A400"
+    ),
+    drop = FALSE
+  ) +
+  
+  coord_sf(
+    xlim = c(-125, -66),
+    ylim = c(24, 50),
+    expand = FALSE
+  ) +
+  
+  labs(
+    title = "CBSA Clusters",
+    subtitle = "Predicted Level-2 latent cluster membership",
+    fill = "Cluster"
+  ) +
+  
+  theme_void() +
+  
+  theme(
+    legend.position = "right",
+    
+    plot.title = element_text(
+      size = 16,
+      face = "bold"
+    ),
+    
+    plot.subtitle = element_text(
+      size = 11
+    )
+  )
+
+map_cluster
+```
+
 
 
 ```{r Save}
