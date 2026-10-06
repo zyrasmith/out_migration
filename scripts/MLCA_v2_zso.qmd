@@ -138,7 +138,9 @@ x <- sources %>%
                                                                    # 5-6: non-degree-granting
   filter(distnced != 1) |>                                         # 1: completely distanced learning                                   (-62)
   filter(opeflag == 1 | opeflag == 2) |>                           # Title IV eligible institutions                                     (-54)
-  filter(carnegieapm != 12)                                        # Remove theology colleges
+  filter(carnegieapm != 12) |>                                     # Remove theology colleges
+  filter(control != 3)
+
  
 
 
@@ -157,7 +159,7 @@ x <- initial_sample |>
          public = case_when(
             control == 2 ~ 0,                             # 0: private
             control == 1 ~ 1,                             # 1: public 
-            control == 3 ~ 2,                             # 2: for-profit
+            # control == 3 ~ 2,                             # 2: for-profit
             TRUE ~ NA_real_),   
          
          twoyear = case_when(
@@ -281,7 +283,7 @@ x <- initial_sample |>
            TRUE ~ NA_real_),
 
          awardlev = case_when(
-           carnegiealf == 2 ~ 0,                            # 0: associates 
+           carnegiealf %in% c(1, 2) ~ 0,                            # 0: associates 
            carnegiealf == 3 ~ 1,                            # 1: baccalaureate
            carnegiealf == 4 ~ 2,                            # 2: masters
            carnegiealf == 5 ~ 3,                            # 3: doctoral
@@ -479,6 +481,7 @@ print(results_matrix)
 ```
 
 
+<<<<<<< HEAD
 ```{r Explore dataset}
 
 data_mlca <- data %>% 
@@ -518,6 +521,8 @@ write_rds(data_mlca, "../data/analytic_v2_zso")
 
 ```
 
+=======
+>>>>>>> 41ef2cd155195504588a07e1f2044e8ea05d9d14
 Explore expenditures per FTE
 ```{r MCLA setup}
 
@@ -550,10 +555,10 @@ Explore expenditures per FTE
 #indicators
 Y <- c(
   #systemic- structural and governance characteristics
-  "public", "size", #"twoyear", # #
+  "public", # "size", "twoyear", # #
   
   #programmatic- degree level and academic disciplinary offerings
-  "awardlev", "special_focus", # "research",
+  "special_focus", "research", "awardlev", #
   
   #procedural- how programs are offered and implemented (Harris included % of students enrolled in distance-only classes, and we include that in this analysis)
             #-the institution / management? operation?
@@ -561,13 +566,17 @@ Y <- c(
              #categorized share of undergraduates enrolled exclusively in distance education
  # "evening",
 #"tuitionnn",
+<<<<<<< HEAD
   #"housing"
 "instruction_exp",
+=======
+  # "housing",
+>>>>>>> 41ef2cd155195504588a07e1f2044e8ea05d9d14
 #(1)including tuition as quartiles: iT= 8 & iM= 2            (#obs = 1779)
 #(2)including tuition & parttime quartiles: iT= 8 & iM= 2    (#obs = 1779)
   
   #constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)
- "pell", "nonwhite", "undergrad_pop", "selectivity" # "msi" # # #"parttime" ,  # , "adult",
+ "pell",  "undergrad_pop", "selectivity" # "msi" # # #"parttime" ,  # , "adult", "nonwhite",
   ) #level-1 indicators 
 
 Z <- c("i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian", "housing", "rurality", "religious")       #level-1 covariates   "sports", 
@@ -575,6 +584,63 @@ Z <- c("i_perc_white", "i_perc_black", "i_perc_hisp", "i_perc_asian", "housing",
 Zh <- c("cbsatype", "inst_num", "tot_pop", "pop_density", "perc_ba", "med_income", "perc_pov", "perc_unemployed", "perc_white", "perc_black", "perc_hisp", "perc_asian")   #level-2 covariates  "metropolitan", "region", 
 
 
+
+```
+
+
+```{r Explore dataset}
+
+l1_lca <- data |> 
+  select(unitid, instnm, stabbr, cbsa, cbsatype, region) |> 
+  bind_cols(data[Y])
+
+x <- l1_lca %>% 
+  drop_na() %>% 
+  group_by(cbsa) %>% 
+  mutate(
+    cbsa_id = cur_group_id()
+  ) %>% 
+  ungroup() |> 
+  as.data.frame()
+
+
+l1_lca_data <- x
+
+
+# data_mlca <- data %>% 
+#   select(unitid, instnm, stabbr, cbsa, cbsatype, region,  
+#          public, twoyear, size, rurality, 
+#          awardlev, 
+#          religious, special_focus, housing, research, msi,
+#          inst_num, pell, evening, selectivity, # online,  parttime, online_perc,  adult, tuitionnn, 
+#          undergrad_pop, 
+#          tot_pop, pop_density, perc_ba, med_income, perc_pov, perc_unemployed,
+#          perc_white, perc_black, perc_hisp, perc_asian,
+#          i_perc_white, i_perc_black, i_perc_hisp, i_perc_asian, i_perc_nonwhite, nonwhite) %>% 
+#   as.data.frame()
+
+#Check: 
+  # data_mlca %>%
+  # summarise(across(everything(), ~sum(is.na(.x)))) %>%
+  #   View()
+
+#metropolitan, tuition,msi, distance,sports,research, 
+
+describe(data_mlca)
+
+# x <- data_mlca %>% 
+#   drop_na() %>% 
+#   group_by(cbsa) %>% 
+#   mutate(
+#     cbsa_id = cur_group_id()
+#   ) %>% 
+#   as.data.frame()
+
+# data_mlca %>% anti_join(x, by = "unitid") %>% View()
+
+# data_mlca <- x
+
+# write_rds(data_mlca, "../data/analytic_v2_zso")
 
 ```
 
@@ -740,7 +806,7 @@ vif(vif_zh_model)
 set.seed(1234)
 
 l1_lca <- multiLCA(
-  data = data_mlca,
+  data = l1_lca_data,
   Y              = Y,
   iT             = 2:9,
   incomplete     = FALSE,
@@ -748,7 +814,7 @@ l1_lca <- multiLCA(
   verbose        = TRUE,
   sequential     = TRUE,
   reord          = FALSE,
-  NRmaxit        = 1000
+  NRmaxit        = 1500
 )
 
 l1_lca
@@ -777,10 +843,15 @@ l1_test <- data_mlca |>
 
 proportions <- as.data.frame(l1_lca$mU) 
 
+<<<<<<< HEAD
 l1_test <- data_mlca |> 
   select(unitid, instnm, stabbr, cbsa, cbsa_id, awardlev, special_focus, public, pell, size) |>
          # religious,  housing, research, msi,
          # inst_num, pell, evening, tuitionnn, undergrad_pop) |> 
+=======
+l1_test <- l1_lca_data |> 
+  select(unitid, instnm, stabbr, cbsa, cbsa_id) |> 
+>>>>>>> 41ef2cd155195504588a07e1f2044e8ea05d9d14
   bind_cols(proportions |> select("C1", "C2", "C3", "C4", "C5", "C6", "C7"))|> #
   rowwise() |>
   mutate(L1_Predicted_Class = names(pick(C1:C7))[which.max(c_across(C1:C7))]) |>
