@@ -416,7 +416,8 @@ pop_data <- read_csv("../data/sources/effy2024.csv") %>%
   select(-UNITID)
 
 data <- cleaned_data |>
-  left_join(pop_data, by = "unitid")
+  left_join(pop_data, by = "unitid") |> 
+  filter(i_total_pop >= 100)
 
 ```
 
@@ -521,7 +522,7 @@ census <- census |>
 ```{r analytic dataset}
 
 analytic <- data |> 
-  select(-c(twoyear, public, housing, religious, size, research_exp_fte, selectivity)) |> 
+  select(-c(twoyear, public, housing, religious, size, research_exp_fte)) |> 
   mutate(across(where(is.numeric), ~as.vector(scale(.)))) |> #Scale continuous variables
   left_join(census, by = c("cbsa" = "GEOID"))
 
@@ -540,7 +541,7 @@ Indicators for classifying postsecondary institutions are based on framework for
     online_progs, evening, instructional_exp_fte, tuitionnn
  
  Constituential- "student demographics, background, preparation, and abilities" (Harris, 2020 p.187)
-  msi, adult, pell, nonwhite, international_n, per_undergrad
+  msi, adult, pell, nonwhite, international_n, per_undergrad, selectivity
  
  
   
@@ -548,7 +549,7 @@ Indicators for classifying postsecondary institutions are based on framework for
 ```{r Hierarchical clustering of postsecondary institutions}
 
 x <- analytic |> 
-  select(unitid, inst_type, system, awardlev, special_focus, num_degrees, online_progs, evening, instruction_exp_fte, tuitionnn, msi, adult, pell, nonwhite, international_n,per_undergrad) |> 
+  select(unitid, inst_type, system, awardlev, special_focus, num_degrees, online_progs, evening, instruction_exp_fte, tuitionnn, msi, adult, pell, nonwhite, international_n,per_undergrad, selectivity) |> 
   column_to_rownames(var = "unitid") 
 # 
 # gower.dissimilarity.mtrx <- daisy(x, metric = "gower") 
@@ -587,17 +588,19 @@ round(as.matrix(gower.dissimilarity.mtrx), 3) |>
 res.agnes <- agnes(
   x = gower.dissimilarity.mtrx,
   diss = TRUE,
-  metric = "g",
+  metric = "eculidean",
   method = "average"
 )
   
 res.agnes
 
   # Compute cophentic distance
-  coph_model <- cophenetic(hc_model)
+  coph_model <- cophenetic(res.agnes)
+  plot(res.agnes)
   
   #Correlation between cophenetic distance and calculated distance
   cor(gower.dissimilarity.mtrx, coph_model)
+
 
 ```
 
@@ -606,8 +609,16 @@ res.agnes
 
 ```{r Optimal number of clusters}
 
-install.packages("factoextra")
+#install.packages("factoextra")
+#install.packages("NbClust")
+library(factoextra)
+library(NbClust)
+#library(tidyr)
+#packageVersion("tidyr")
 
+fviz_nbclust(analytic, hcut, method = "silhouette")
+fviz_nbclust(analytic, hcut, method = "wss")
+fviz_nbclust(analytic, hcut, method = "gap_stat")
 
 ```
 
