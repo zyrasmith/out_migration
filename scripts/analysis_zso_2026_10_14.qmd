@@ -664,34 +664,91 @@ fviz_nbclust(retained_scores, FUN = hcut, method = "silhouette")  #9
 fviz_nbclust(retained_scores, FUN = hcut, method = "gap_stat")    #10
 
 
-nb <- NbClust(retained_scores,                                    # 8        
+nb <- NbClust(retained_scores,                                    # 8
               distance = "euclidean",
-              min.nc = 2, 
-              max.nc = 10, 
+              min.nc = 2,
+              max.nc = 10,
               method = "ward.D2")
 
 
 clusters <- cutree(res.agnes_ward, k = 8)
+
+#Number of observations in each cluster
 table(clusters)
 
+#Add clusters to dataset with other variables
 x$cluster <- clusters
+
+#Use data for dimensions to describe the clusters
+aggregate(retained_scores, by = list(cluster = clusters), FUN = mean)
+  
+    # Cluster 1:
+    # Cluster 2:
+    # Cluster 3:
+    # Cluster 4:
+    # Cluster 5:
+    # Cluster 6:
+    # Cluster 7: 
+
+
+
+
+
 
 y <- x |> 
   rownames_to_column() |> 
   rename(unitid = rowname) |> 
   left_join(analytic |> 
-              select(unitid, instnm, stabbr),
+              select(unitid, instnm, stabbr, cbsa),
             by = "unitid") |>
   relocate(last_col(2):last_col())
   
-y |> filter(stabbr == "MD") |> arrange(cluster) |> print()
+#Check validity of the clusters by observing colleges in Maryland
+y |> filter(stabbr == "MD") |> select(instnm, cluster) |>  arrange(cluster) |> print()
+
+analytic2 <- y
 
 ```
 
 
 
+```{r Prep data for LPA}
+
+y <- analytic2 |> 
+  group_by(cbsa) |> 
+  mutate(n = n(),
+         p_c1 = sum(cluster == 1),
+         p_c2 = sum(cluster == 2),
+         p_c3 = sum(cluster == 3),
+         p_c4 = sum(cluster == 4),
+         p_c5 = sum(cluster == 5),
+         p_c6 = sum(cluster == 6),
+         p_c7 = sum(cluster == 7),
+         p_c8 = sum(cluster == 8)
+  ) |> 
+  ungroup() |> 
+  select(cbsa, p_c1, p_c2, p_c3, p_c4, p_c5, p_c6, p_c7, p_c8) |> 
+  distinct() |> 
+  column_to_rownames(var = "cbsa")  |> 
+  scale() |> 
+  as.data.frame()
+
+```
 
 
+
+```{r LPA}
+
+library(tidyLPA)
+
+prof1 <- y |> 
+  estimate_profiles(1:5)
+
+
+prof1
+compare_solutions(prof1, statistics = c("AIC", "BIC"))
+
+```
 
 
 
