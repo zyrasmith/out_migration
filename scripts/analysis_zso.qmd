@@ -13,6 +13,7 @@ execute:
 ##' [libraries]
 ## ---------------------------
 
+rm(list = ls())
 
 library(tidyverse)
 library(readxl)
@@ -28,7 +29,6 @@ library(writexl)
 library(stats)
 
 
-rm(list = ls())
 ```
 
 
@@ -207,7 +207,7 @@ x <- initial_sample |>
 
 
 
-        online_progs = ptotalde/ptotal,                   #Percent of programs that can be completed entirely online
+        online_progs = ptotalde/ptotal,                   #Proportion of programs that can be completed entirely online
 
 
 #check missing values: sum(is.na(ipeds_dist$EFDETOT))  [1] 0
@@ -334,7 +334,7 @@ x <- initial_sample |>
 
         international_n = efynralt, 
   
-        num_degrees = ntile(ptotal, 4) - 1,
+        # num_degrees = ntile(ptotal, 4) - 1,
         
         system = if_else(f1systyp == 1, 1, 0)
   
@@ -368,11 +368,17 @@ cleaned_data <- x |>
          nonwhite = 1 - i_perc_white
          ) %>% 
            
-  rename(region = obereg,
+  rename(
+        region = obereg,
          size = instsize,
          tuitionnn = tuition1,
-         pell = upgrntp) %>% 
-  mutate(cbsa = as.character(cbsa),
+         pell = upgrntp,
+         num_degrees = ptotal
+         ) %>% 
+  
+  mutate(
+         pell = pell/100,
+         cbsa = as.character(cbsa),
          unitid = as.character(unitid),
          region = as.factor(region),
          cbsatype = as.factor(cbsatype),
@@ -386,7 +392,7 @@ cleaned_data <- x |>
          religious = as.factor(religious),
          special_focus = as.factor(special_focus),
          housing = as.factor(housing),
-         evening = as.factor(evening)
+         evening = as.factor(evening),
          ) |> 
   
   select(
@@ -543,15 +549,54 @@ Indicators for classifying postsecondary institutions are based on framework for
   msi, adult, pell, nonwhite, international_n, per_undergrad
  
  
+ 
+```{r factor analysis}
+
+library(FactoMineR)
+library(factoextra)
+
+x <-  data |> 
+  select(-c(twoyear, public, housing, religious, size, research_exp_fte, selectivity)) |>  
+  column_to_rownames(var = "unitid") |> 
+  select(inst_type, system, awardlev, special_focus, num_degrees, online_progs, evening, instruction_exp_fte, tuitionnn, msi, adult, pell, nonwhite, international_n,per_undergrad) |> 
+  na.omit()
+  
+
+res.famd <- FAMD(x, ncp = 15, graph = FALSE)
+
+eig.val <- get_eigenvalue(res.famd)
+print(eig.val)
+
+fviz_screeplot(res.famd, addlabels = TRUE)
+
+#Contribution (%) of each variable to the first two dimensions
+var <- get_famd_var(res.famd)
+round(var$contrib[,1:8], 2)
+
+#Contribution to Dimension 1
+    #The red dashed line shows the expected contribution if every variable mattered equally. Varibles with bars above the line build the axis
+fviz_contrib(res.famd, "var", axes =  1)
+fviz_contrib(res.famd, "var", axes =  2)
+fviz_contrib(res.famd, "var", axes =  3)
+fviz_contrib(res.famd, "var", axes =  4)
+fviz_contrib(res.famd, "var", axes =  5)
+fviz_contrib(res.famd, "var", axes =  6)
+fviz_contrib(res.famd, "var", axes =  7)
+fviz_contrib(res.famd, "var", axes =  8)
+
+
+scores <- res.famd$ind$coord
+retained_scores <- scores[, 1:8]
+summary(retained_scores)
+
+```
+ 
   
  
 ```{r Hierarchical clustering of postsecondary institutions}
 
-x <- analytic |> 
-  select(unitid, inst_type, system, awardlev, special_focus, num_degrees, online_progs, evening, instruction_exp_fte, tuitionnn, msi, adult, pell, nonwhite, international_n,per_undergrad) |> 
-  column_to_rownames(var = "unitid") 
-# 
-# gower.dissimilarity.mtrx <- daisy(x, metric = "gower") 
+ 
+# gower.dissimilarity.mtrx <- daisy(x, metric = "gower") q()
 # round(as.matrix(gower.dissimilarity.mtrx), 3) |> 
 #   as.data.frame() |> 
 #   rownames_to_column()
@@ -579,25 +624,28 @@ x <- analytic |>
 #   
   
 
-gower.dissimilarity.mtrx <- daisy(x, metric = "gower")
-round(as.matrix(gower.dissimilarity.mtrx), 3) |>
+dissimilarity.mtrx <- daisy(retained_scores, metric = "euclidean")
+round(as.matrix(dissimilarity.mtrx), 3) |>
   as.data.frame() |>
   rownames_to_column()
   
-res.agnes <- agnes(
-  x = gower.dissimilarity.mtrx,
+
+
+res.agnes_ward <- agnes(
+  x = dissimilarity.mtrx,
   diss = TRUE,
-  metric = "g",
-  method = "average"
+  metric = "euclidean",
+  method = "ward"
 )
   
-res.agnes
+res.agnes_ward
 
-  # Compute cophentic distance
-  coph_model <- cophenetic(hc_model)
-  
-  #Correlation between cophenetic distance and calculated distance
-  cor(gower.dissimilarity.mtrx, coph_model)
+
+  # # Compute cophentic distance
+  # coph_model <- cophenetic(res.agnes_ward)
+  # 
+  # #Correlation between cophenetic distance and calculated distance
+  # cor(res.agnes_ward, coph_model)
 
 ```
 
@@ -605,9 +653,38 @@ res.agnes
 
 
 ```{r Optimal number of clusters}
+library(NbClust)
 
-install.packages("factoextra")
+set.seed(321)
 
+plot(res.agnes_ward)
+
+
+fviz_nbclust(retained_scores, FUN = hcut, method = "silhouette")  #9
+fviz_nbclust(retained_scores, FUN = hcut, method = "gap_stat")    #10
+
+
+nb <- NbClust(retained_scores,                                    # 8        
+              distance = "euclidean",
+              min.nc = 2, 
+              max.nc = 10, 
+              method = "ward.D2")
+
+
+clusters <- cutree(res.agnes_ward, k = 8)
+table(clusters)
+
+x$cluster <- clusters
+
+y <- x |> 
+  rownames_to_column() |> 
+  rename(unitid = rowname) |> 
+  left_join(analytic |> 
+              select(unitid, instnm, stabbr),
+            by = "unitid") |>
+  relocate(last_col(2):last_col())
+  
+y |> filter(stabbr == "MD") |> print()
 
 ```
 
