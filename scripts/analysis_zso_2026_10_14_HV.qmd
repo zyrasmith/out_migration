@@ -1505,17 +1505,31 @@ map1 <- ggplot() +
 
 
 # Figure 2. CBSA clusters
-cluster_colors <- c(
-  "Cluster 1" = "#274C77",
-  "Cluster 2" = "#32658A",
-  "Cluster 3" = "#4682B4",
-  "Cluster 4" = "#80B4D2",
-  "Cluster 5" = "#B8D6E8",
-  "Cluster 6" = "#354D63",
-  "Cluster 7" = "#64748B",
-  "Cluster 8" = "#B5C5D0",
-  "Not in sample" = "#E8E8E8"
+library(khroma)
+
+# num_colors <- length(unique(cbsa_map$cluster)) 
+cluster_colors <-  c(
+  "Cluster 1" = "#CC6677",
+  "Cluster 2" = "#332288",
+  "Cluster 3" = "#DDCC77",
+  "Cluster 4" = "#117733",
+  "Cluster 5" = "#88CCEE",
+  "Cluster 6" = "#AA4499",
+  "Cluster 7" = "#D18054",
+  "Cluster 8" = "#999933",
+  "Not in sample" = "#DDDDDD"
 )
+ 
+#   "Cluster 1" = "#274C77",
+#   "Cluster 2" = "#32658A",
+#   "Cluster 3" = "#4682B4",
+#   "Cluster 4" = "#80B4D2",
+#   "Cluster 5" = "#B8D6E8",
+#   "Cluster 6" = "#354D63",
+#   "Cluster 7" = "#64748B",
+#   "Cluster 8" = "#B5C5D0",
+#   "Not in sample" = "#E8E8E8"
+# )
 
 
 map2 <- ggplot() +
