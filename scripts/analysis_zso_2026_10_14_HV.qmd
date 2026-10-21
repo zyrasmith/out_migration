@@ -974,18 +974,25 @@ y|>  add_count(across(where(is.numeric))) |> describe()
 
 library(vegan)
 
+#sort explicitly to guarantee identical tie-breaking behavior
+y <- y[order(y$cbsa),]
+
 #Calculate Bray-Curtis dissimilarity matrix
 z <- y |> 
   # filter(cbsatype == 0) |>                     #Metropolitan statistical areas
   column_to_rownames(var = "cbsa") |> 
   select(-c(cbsatype, n))
 
+
+
 bc_dissimilarity_mtrx <- vegdist(z, method = "bray")
+
 
 round(as.matrix(bc_dissimilarity_mtrx), 3) |>
   as.data.frame() |>
   rownames_to_column()
   
+
 
 
 cbsa.res.agnes_ward <- agnes(
@@ -1488,20 +1495,20 @@ us_states <- us_states |>
   tigris::shift_geometry()
 
 
-# Figure 1. CBSA boundaries
-map1 <- ggplot() +
-  geom_sf(data = us_states, fill = "white",
-          color = NA) +
-  geom_sf(data = cbsa_map, fill = NA,
-          color = "grey65", linewidth = 0.15) +
-  geom_sf(data = us_states, fill = NA,
-          color = "grey30", linewidth = 0.3) +
-  coord_sf(datum = NA) +
-  labs(title = "U.S. Core-Based Statistical Areas") +
-  theme_void(base_size = 12) +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold")
-  )
+# # Figure 1. CBSA boundaries
+# map1 <- ggplot() +
+#   geom_sf(data = us_states, fill = "white",
+#           color = NA) +
+#   geom_sf(data = cbsa_map, fill = NA,
+#           color = "grey65", linewidth = 0.15) +
+#   geom_sf(data = us_states, fill = NA,
+#           color = "grey30", linewidth = 0.3) +
+#   coord_sf(datum = NA) +
+#   labs(title = "U.S. Core-Based Statistical Areas") +
+#   theme_void(base_size = 12) +
+#   theme(
+#     plot.title = element_text(hjust = 0.5, face = "bold")
+#   )
 
 
 # Figure 2. CBSA clusters
