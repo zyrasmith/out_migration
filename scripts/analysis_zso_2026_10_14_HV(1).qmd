@@ -1022,7 +1022,7 @@ round(as.matrix(bc_dissimilarity_mtrx), 3) |>
   as.data.frame() |>
   rownames_to_column()
   
-
+set.seed(321)
 
 cbsa.res.agnes_ward <- agnes(
   x = bc_dissimilarity_mtrx,
