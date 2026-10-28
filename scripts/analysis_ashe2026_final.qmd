@@ -1607,6 +1607,8 @@ cluster_key <- cbsa_clusters |>
   distinct(GEOID, .keep_all = TRUE)
 
 
+labels <- c("Singular Baccalaureate-Dominant Institution Areas", "Minimal Opportunity, Broad Access Anchor Institution Areas", "Extensive-Opportunity Higher Education Ecosystems", "Singular University Hubs", "Broad Access and MSI-Opportunity Areas", "Robust Higher Education Markets", "Private College Hubs", "Two-Year and Career-Focused Opportunity Areas", "Not in sample")
+
 # 3. CBSA boundaries and cluster data
 cbsa_map <- land_area |>
   sf::st_filter(
@@ -1617,9 +1619,11 @@ cbsa_map <- land_area |>
   mutate(
     cluster = replace_na(cluster, "Not in sample"),
     cluster = factor(cluster,
-      levels = c(paste("Cluster", 1:8), "Not in sample"))
-  ) |>
+      levels = c(paste("Cluster", 1:8), "Not in sample"),
+      labels = labels)) |>
   tigris::shift_geometry()
+
+
 
 
 # 4. Shift Alaska and Hawaii
@@ -1681,15 +1685,16 @@ map2 <- ggplot() +
   scale_fill_manual(
     values = cluster_colors,
     drop = FALSE,
-    name = "CBSA Cluster",
-    guide = guide_legend(nrow = 2, byrow = TRUE)
+    name = "CBSA Cluster"
+    # ,
+    # guide = guide_legend(nrow = 4, byrow = TRUE)
   ) +
   coord_sf(datum = NA) +
   labs(title = "Distribution of CBSA Clusters") +
   theme_void(base_size = 12) +
   theme(
     plot.title = element_text(hjust = 0.5, face = "bold"),
-    legend.position = "bottom"
+    legend.position = "right"
   )
 
 
