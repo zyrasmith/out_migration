@@ -1607,7 +1607,7 @@ cluster_key <- cbsa_clusters |>
   distinct(GEOID, .keep_all = TRUE)
 
 
-labels <- c("Singular Baccalaureate-Dominant Institution Areas", "Minimal Opportunity, Broad Access Anchor Institution Areas", "Extensive-Opportunity Higher Education Ecosystems", "Singular University Hubs", "Broad Access and MSI-Opportunity Areas", "Robust Higher Education Markets", "Private College Hubs", "Two-Year and Career-Focused Opportunity Areas", "Not in sample")
+labels <- c("Singular Baccalaureate-Dominant Institution Areas", "Minimal Opportunity, Broad-Access Anchor Institution Areas", "Extensive-Opportunity Higher Education Ecosystems", "Singular University Hubs", "Broad Access and MSI-Opportunity Areas", "Robust Higher Education Markets", "Private College Hubs", "Two-Year and Career-Focused Opportunity Areas", "Not in sample")
 
 # 3. CBSA boundaries and cluster data
 cbsa_map <- land_area |>
